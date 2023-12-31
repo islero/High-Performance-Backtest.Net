@@ -12,23 +12,43 @@ namespace High_Performance_Backtest.Tests
     /// </summary>
     public class SymbolDataSplitterTests
     {
-        [Fact]
-        public void TestCorrectResultPartsCount()
+        // --- Properties
+        public IEnumerable<IEnumerable<ISymbolData>> SplitResult { get; set; }
+
+        // --- Constructors
+        public SymbolDataSplitterTests()
         {
+            SplitResult = new List<IEnumerable<ISymbolData>>();
+
             DateTime startingDate = new DateTime(2023, 1, 1);
             int warmupCandlesCount = 2;
             ISymbolDataSplitter symbolDataSplitter = new SymbolDataSplitterV1(1, warmupCandlesCount, startingDate);
 
-            var generatedSymbolsData = GenerateFakeSymbolsData(new List<string> { "BTCUSDT", "ETHUSDT" }, 
+            var generatedSymbolsData = GenerateFakeSymbolsData(new List<string> { "BTCUSDT", "ETHUSDT" },
                 new List<CandlestickInterval> { CandlestickInterval.M5, CandlestickInterval.M15 },
                 startingDate.AddHours(-warmupCandlesCount), 672);
-            var result = symbolDataSplitter.SplitAsync(generatedSymbolsData).Result;
 
+            SplitResult = symbolDataSplitter.SplitAsync(generatedSymbolsData).Result;
+        }
+
+        /// <summary>
+        /// Testing if result contain correct parts count
+        /// </summary>
+        [Fact]
+        public void TestCorrectResultPartsCount()
+        {
             // --- Checking parts count
-            Assert.Equal(3, result.Count());
+            Assert.Equal(3, SplitResult.Count());
+        }
 
+        /// <summary>
+        /// Testing if result data contain correct Index Open Time
+        /// </summary>
+        [Fact]
+        public void TestCorrectIndexOpenTimes()
+        {
             // --- Checking parts index open time
-            foreach (var partSymbols in result)
+            foreach (var partSymbols in SplitResult)
             {
                 foreach (var part in partSymbols)
                 {
@@ -44,6 +64,57 @@ namespace High_Performance_Backtest.Tests
                 }
             }
         }
+
+        /// <summary>
+        /// Testing if latest parts have correct EndIndex Open Time
+        /// </summary>
+        [Fact]
+        public void TestCorrectEndIndexOpenTimes()
+        {
+            // --- Checking parts index open time
+            foreach (var partSymbols in SplitResult)
+            {
+                foreach (var part in partSymbols)
+                {
+                    var firstTimeframe = part.Timeframes.First();
+                    var firstCandle = firstTimeframe.Candlesticks.ElementAt(firstTimeframe.EndIndex);
+
+                    foreach (var timeframe in part.Timeframes)
+                    {
+                        var timeframeCandle = timeframe.Candlesticks.ElementAt(timeframe.EndIndex);
+
+                        Assert.Equal(firstCandle.OpenTime, timeframeCandle.OpenTime);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Testing multiple SymbolData instances where one of them has historical candles that begins after backtesting starting datetime
+        /// </summary>
+        [Fact]
+        public void TestSymbolDataWithStartDateOutOfRange()
+        {
+            DateTime startingDate = new DateTime(2023, 1, 1);
+            int warmupCandlesCount = 2;
+            ISymbolDataSplitter symbolDataSplitter = new SymbolDataSplitterV1(1, warmupCandlesCount, startingDate);
+
+            var correctRangeSymbolsData = GenerateFakeSymbolsData(new List<string> { "BTCUSDT" },
+                new List<CandlestickInterval> { CandlestickInterval.M5, CandlestickInterval.M15 },
+                startingDate.AddHours(-warmupCandlesCount), 6720);
+
+            var outOfRangeSymbolsData = GenerateFakeSymbolsData(new List<string> { "ETHUSDT" },
+                new List<CandlestickInterval> { CandlestickInterval.M5, CandlestickInterval.M15 },
+                new DateTime(2023, 3, 1), 672);
+
+            correctRangeSymbolsData.AddRange(outOfRangeSymbolsData);
+
+            SplitResult = symbolDataSplitter.SplitAsync(correctRangeSymbolsData).Result;
+
+            Assert.Equal(2, 1);
+        }
+
+        // TODO: Add tests that have timeframes sorted in incorrect order, and candles in incorrect order
 
         /// <summary>
         /// Generates Fake Symbols Data for testing purposes
