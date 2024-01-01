@@ -11,9 +11,9 @@ namespace High_Performance_Backtest.Tests
     public class SymbolDataSplitterTests : SymbolDataSplitterBase
     {
         // --- Properties
-        public IEnumerable<IEnumerable<ISymbolData>> SplitResult { get; set; }
+        private IEnumerable<IEnumerable<ISymbolData>> SplitResult { get; set; }
         private DateTime StartingDate { get; set; }
-        public int DaysPerSplit { get; set; }
+        private int DaysPerSplit { get; set; }
 
         // --- Constructors
         public SymbolDataSplitterTests()
