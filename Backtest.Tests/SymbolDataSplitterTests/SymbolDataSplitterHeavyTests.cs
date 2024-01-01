@@ -70,6 +70,32 @@ namespace Backtest.Tests.SymbolDataSplitterTests
         }
 
         /// <summary>
+        /// Test passing Candlesticks with incorrect order
+        /// </summary>
+        [Fact]
+        public async Task TestCandlestickIncorrectOrder()
+        {
+            var symbolsData = GenerateFakeSymbolsData(new List<string> { "ETHUSDT" },
+                new List<CandlestickInterval> { CandlestickInterval.M5, CandlestickInterval.M15, CandlestickInterval.M30 },
+                StartingDate, 672);
+
+            foreach (var symbol in symbolsData)
+            {
+                foreach (var timeframe in symbol.Timeframes)
+                {
+                    var firstCandle = timeframe.Candlesticks.First();
+                    var secondCandle = timeframe.Candlesticks.Skip(1).First();
+                    firstCandle.OpenTime = secondCandle.OpenTime.AddSeconds(1);
+                    firstCandle.CloseTime = secondCandle.CloseTime.AddSeconds(1);
+                }
+            }
+
+            var exception = await Assert.ThrowsAsync<ArgumentException>(async () => await SymbolDataSplitter.SplitAsync(symbolsData));
+
+            Assert.Equal("symbolsData argument contains invalid or not properly sorted data", exception.Message);
+        }
+
+        /// <summary>
         /// Test if symbols data contain duplicated symbols
         /// </summary>
         /// <returns></returns>
