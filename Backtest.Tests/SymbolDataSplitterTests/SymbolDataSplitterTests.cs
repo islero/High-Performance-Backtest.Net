@@ -1,10 +1,6 @@
-﻿using Backtest.Net.Candlesticks;
-using Backtest.Net.SymbolDataSplitters;
-using Backtest.Net.SymbolsData;
-using Backtest.Net.Timeframes;
-using Backtest.Net.Enums;
+﻿using Backtest.Net.Enums;
 using Backtest.Net.Interfaces;
-using System.Linq;
+using Backtest.Net.SymbolDataSplitters;
 using Backtest.Tests.SymbolDataSplitterTests;
 
 namespace High_Performance_Backtest.Tests
@@ -17,17 +13,19 @@ namespace High_Performance_Backtest.Tests
         // --- Properties
         public IEnumerable<IEnumerable<ISymbolData>> SplitResult { get; set; }
         private DateTime StartingDate { get; set; }
+        public int DaysPerSplit { get; set; }
 
         // --- Constructors
         public SymbolDataSplitterTests()
         {
             StartingDate = new DateTime(2023, 1, 1, 3, 6, 50);
-            int warmupCandlesCount = 2;
-            int daysPerSplit = 1;
-            ISymbolDataSplitter symbolDataSplitter = new SymbolDataSplitterV1(daysPerSplit, warmupCandlesCount, StartingDate, true);
+            DaysPerSplit = 1;
 
-            var generatedSymbolsData = GenerateFakeSymbolsData(new List<string> { "BTCUSDT", "ETHUSDT" },
-                new List<CandlestickInterval> { CandlestickInterval.M5, CandlestickInterval.M15 },
+            int warmupCandlesCount = 2;
+            ISymbolDataSplitter symbolDataSplitter = new SymbolDataSplitterV1(DaysPerSplit, warmupCandlesCount, StartingDate, true);
+
+            var generatedSymbolsData = GenerateFakeSymbolsData(new List<string> { "BTCUSDT", "ETHUSDT", "SOLUSDT" },
+                new List<CandlestickInterval> { CandlestickInterval.M5, CandlestickInterval.M15, CandlestickInterval.M30, CandlestickInterval.H1 },
                 StartingDate.AddHours(-warmupCandlesCount), 672);
 
             SplitResult = symbolDataSplitter.SplitAsync(generatedSymbolsData).Result;
@@ -108,7 +106,6 @@ namespace High_Performance_Backtest.Tests
         public void TestPartialSymbolDataSequentially()
         {
             DateTime ongoingDate = StartingDate;
-            int daysPerSplit = 1;
             foreach (var result in SplitResult)
             {
                 if (result == SplitResult.Last())
@@ -116,17 +113,19 @@ namespace High_Performance_Backtest.Tests
 
                 foreach (var symbol in result)
                 {
-                    var firstTimeframe = symbol.Timeframes.First();
-                    var firstCandle = firstTimeframe.Candlesticks.ElementAt(firstTimeframe.Index);
-                    Assert.Equal(ongoingDate, firstCandle.OpenTime);
+                    foreach (var timeframe in symbol.Timeframes)
+                    {
+                        var firstCandle = timeframe.Candlesticks.ElementAt(timeframe.Index);
+                        Assert.Equal(ongoingDate, firstCandle.OpenTime);
 
-                    DateTime nextPeriodOngoingDate = ongoingDate.AddDays(daysPerSplit);
+                        DateTime nextPeriodOngoingDate = ongoingDate.AddDays(DaysPerSplit);
 
-                    var lastCandle = firstTimeframe.Candlesticks.ElementAt(firstTimeframe.EndIndex);
-                    Assert.Equal(nextPeriodOngoingDate.AddSeconds(-1), lastCandle.CloseTime);
+                        var lastCandle = timeframe.Candlesticks.ElementAt(timeframe.EndIndex);
+                        Assert.Equal(nextPeriodOngoingDate.AddSeconds(-1), lastCandle.CloseTime);
+                    }
                 }
 
-                ongoingDate = ongoingDate.AddDays(daysPerSplit);
+                ongoingDate = ongoingDate.AddDays(DaysPerSplit);
             }
         }
     }

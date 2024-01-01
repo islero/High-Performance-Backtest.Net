@@ -3,6 +3,7 @@ using Backtest.Net.Timeframes;
 using Backtest.Net.Enums;
 using Backtest.Net.Interfaces;
 using System.Linq;
+using System.Collections.Generic;
 
 namespace Backtest.Net.SymbolDataSplitters
 {
@@ -41,6 +42,10 @@ namespace Backtest.Net.SymbolDataSplitters
             // --- Quick Symbol Data validation
             if (!QuickSymbolDataValidation(symbolsData))
                 throw new ArgumentException("symbolsData argument contains invalid or not properly sorted data");
+
+            // --- Symbol or timeframe duplicates validation
+            if (IsThereSymbolTimeframeDuplicates(symbolsData))
+                throw new Exception("symbolsData contain duplicated symbols or timeframes");
 
             // --- Getting correct warmup timeframe
             WarmupTimeframe = GetWarmupTimeframe(symbolsData);
@@ -274,6 +279,19 @@ namespace Backtest.Net.SymbolDataSplitters
 
             // --- Validation is passed
             return true;
+        }
+
+        /// <summary>
+        /// Checks for symbol or timeframe duplicates
+        /// </summary>
+        /// <param name="symbolsData"></param>
+        /// <returns></returns>
+        private bool IsThereSymbolTimeframeDuplicates(IEnumerable<ISymbolData> symbolsData)
+        {
+            bool symbolDuplicatesExist = symbolsData.GroupBy(x => x.Symbol).Any(symbol => symbol.Count() > 1);
+            var timeframeDuplicatesExist = symbolsData.SelectMany(symbolData => symbolData.Timeframes).GroupBy(timeframe => timeframe.Timeframe).Any(interval => interval.Count() > 1);
+
+            return symbolDuplicatesExist || timeframeDuplicatesExist;
         }
 
         /// <summary>

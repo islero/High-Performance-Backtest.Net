@@ -1,8 +1,6 @@
 ﻿using Backtest.Net.Enums;
 using Backtest.Net.Interfaces;
 using Backtest.Net.SymbolDataSplitters;
-using Microsoft.VisualStudio.TestPlatform.CommunicationUtilities;
-using System.Security.Authentication;
 
 namespace Backtest.Tests.SymbolDataSplitterTests
 {
@@ -11,19 +9,29 @@ namespace Backtest.Tests.SymbolDataSplitterTests
     /// </summary>
     public class SymbolDataSplitterHeavyTests : SymbolDataSplitterBase
     {
+        // --- Properties
+        private ISymbolDataSplitter SymbolDataSplitter { get; set; }
+        private DateTime StartingDate { get; set; }
+        private int WarmupCandlesCount { get; set; }
+
+        // --- Constructors
+        public SymbolDataSplitterHeavyTests()
+        {
+            StartingDate = new DateTime(2023, 1, 1);
+            WarmupCandlesCount = 2;
+
+            SymbolDataSplitter = new SymbolDataSplitterV1(1, WarmupCandlesCount, StartingDate);
+        }
+
         /// <summary>
         /// Testing multiple SymbolData instances where one of them has historical candles that begins after backtesting starting datetime
         /// </summary>
         [Fact]
         public void TestSymbolDataWithStartDateOutOfRange()
         {
-            DateTime startingDate = new DateTime(2023, 1, 1);
-            int warmupCandlesCount = 2;
-            ISymbolDataSplitter symbolDataSplitter = new SymbolDataSplitterV1(1, warmupCandlesCount, startingDate);
-
             var correctRangeSymbolsData = GenerateFakeSymbolsData(new List<string> { "BTCUSDT" },
                 new List<CandlestickInterval> { CandlestickInterval.M5, CandlestickInterval.M15 },
-                startingDate.AddHours(-warmupCandlesCount), 6720);
+                StartingDate.AddHours(-WarmupCandlesCount), 6720);
 
             var outOfRangeSymbolsData = GenerateFakeSymbolsData(new List<string> { "ETHUSDT" },
                 new List<CandlestickInterval> { CandlestickInterval.M5, CandlestickInterval.M15 },
@@ -31,7 +39,7 @@ namespace Backtest.Tests.SymbolDataSplitterTests
 
             correctRangeSymbolsData.AddRange(outOfRangeSymbolsData);
 
-            var splitResult = symbolDataSplitter.SplitAsync(correctRangeSymbolsData).Result;
+            var splitResult = SymbolDataSplitter.SplitAsync(correctRangeSymbolsData).Result;
 
             // --- Check if there are no zero records
             Assert.True(!splitResult.Any(x => !x.Any()));
@@ -52,18 +60,45 @@ namespace Backtest.Tests.SymbolDataSplitterTests
         [Fact]
         public async Task TestTimeframesIncorrectOrder()
         {
-            DateTime startingDate = new DateTime(2023, 1, 1);
-            int warmupCandlesCount = 2;
-
             var symbolsDataIncorrectTimeframesOrder = GenerateFakeSymbolsData(new List<string> { "ETHUSDT" },
                 new List<CandlestickInterval> { CandlestickInterval.M30, CandlestickInterval.M15, CandlestickInterval.M5 },
-                startingDate, 672);
+                StartingDate, 672);
 
-            ISymbolDataSplitter symbolDataSplitter = new SymbolDataSplitterV1(1, warmupCandlesCount, startingDate);
-
-            var exception = await Assert.ThrowsAsync<ArgumentException>(async () => await symbolDataSplitter.SplitAsync(symbolsDataIncorrectTimeframesOrder));
+            var exception = await Assert.ThrowsAsync<ArgumentException>(async () => await SymbolDataSplitter.SplitAsync(symbolsDataIncorrectTimeframesOrder));
 
             Assert.Equal("symbolsData argument contains invalid or not properly sorted data", exception.Message);
+        }
+
+        /// <summary>
+        /// Test if symbols data contain duplicated symbols
+        /// </summary>
+        /// <returns></returns>
+        [Fact]
+        public async Task TestDuplicatedSymbols()
+        {
+            var duplicatedSymbolsData = GenerateFakeSymbolsData(new List<string> { "ETHUSDT", "ETHUSDT" },
+                new List<CandlestickInterval> { CandlestickInterval.M5, CandlestickInterval.M15 },
+                new DateTime(2023, 1, 19), 672);
+
+            var exception = await Assert.ThrowsAsync<Exception>(async () => await SymbolDataSplitter.SplitAsync(duplicatedSymbolsData));
+
+            Assert.Equal("symbolsData contain duplicated symbols or timeframes", exception.Message);
+        }
+
+        /// <summary>
+        /// Test if symbols data contain duplicated timeframes
+        /// </summary>
+        /// <returns></returns>
+        [Fact]
+        public async Task TestDuplicatedTimeframes()
+        {
+            var duplicatedSymbolsData = GenerateFakeSymbolsData(new List<string> { "ETHUSDT" },
+                new List<CandlestickInterval> { CandlestickInterval.M5, CandlestickInterval.M5, CandlestickInterval.M15 },
+                new DateTime(2023, 1, 19), 672);
+
+            var exception = await Assert.ThrowsAsync<Exception>(async () => await SymbolDataSplitter.SplitAsync(duplicatedSymbolsData));
+
+            Assert.Equal("symbolsData contain duplicated symbols or timeframes", exception.Message);
         }
     }
 }
