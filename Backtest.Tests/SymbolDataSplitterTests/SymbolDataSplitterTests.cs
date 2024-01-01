@@ -5,28 +5,30 @@ using Backtest.Net.Timeframes;
 using Backtest.Net.Enums;
 using Backtest.Net.Interfaces;
 using System.Linq;
+using Backtest.Tests.SymbolDataSplitterTests;
 
 namespace High_Performance_Backtest.Tests
 {
     /// <summary>
     /// Testing Symbol Data Splitter
     /// </summary>
-    public class SymbolDataSplitterTests
+    public class SymbolDataSplitterTests : SymbolDataSplitterBase
     {
         // --- Properties
         public IEnumerable<IEnumerable<ISymbolData>> SplitResult { get; set; }
+        private DateTime StartingDate { get; set; }
 
         // --- Constructors
         public SymbolDataSplitterTests()
         {
-            DateTime startingDate = new DateTime(2023, 1, 1);
+            StartingDate = new DateTime(2023, 1, 1, 3, 6, 50);
             int warmupCandlesCount = 2;
             int daysPerSplit = 1;
-            ISymbolDataSplitter symbolDataSplitter = new SymbolDataSplitterV1(daysPerSplit, warmupCandlesCount, startingDate, true);
+            ISymbolDataSplitter symbolDataSplitter = new SymbolDataSplitterV1(daysPerSplit, warmupCandlesCount, StartingDate, true);
 
             var generatedSymbolsData = GenerateFakeSymbolsData(new List<string> { "BTCUSDT", "ETHUSDT" },
                 new List<CandlestickInterval> { CandlestickInterval.M5, CandlestickInterval.M15 },
-                startingDate.AddHours(-warmupCandlesCount), 672);
+                StartingDate.AddHours(-warmupCandlesCount), 672);
 
             SplitResult = symbolDataSplitter.SplitAsync(generatedSymbolsData).Result;
         }
@@ -90,41 +92,6 @@ namespace High_Performance_Backtest.Tests
         }
 
         /// <summary>
-        /// Testing multiple SymbolData instances where one of them has historical candles that begins after backtesting starting datetime
-        /// </summary>
-        [Fact]
-        public void TestSymbolDataWithStartDateOutOfRange()
-        {
-            DateTime startingDate = new DateTime(2023, 1, 1);
-            int warmupCandlesCount = 2;
-            ISymbolDataSplitter symbolDataSplitter = new SymbolDataSplitterV1(1, warmupCandlesCount, startingDate);
-
-            var correctRangeSymbolsData = GenerateFakeSymbolsData(new List<string> { "BTCUSDT" },
-                new List<CandlestickInterval> { CandlestickInterval.M5, CandlestickInterval.M15 },
-                startingDate.AddHours(-warmupCandlesCount), 6720);
-
-            var outOfRangeSymbolsData = GenerateFakeSymbolsData(new List<string> { "ETHUSDT" },
-                new List<CandlestickInterval> { CandlestickInterval.M5, CandlestickInterval.M15 },
-                new DateTime(2023, 1, 19), 672);
-
-            correctRangeSymbolsData.AddRange(outOfRangeSymbolsData);
-
-            SplitResult = symbolDataSplitter.SplitAsync(correctRangeSymbolsData).Result;
-
-            // --- Check if there are no zero records
-            Assert.True(!SplitResult.Any(x => !x.Any()));
-
-            for (int i = 0; i <= 17; i++)
-                Assert.Single(SplitResult.ElementAt(i));
-
-            for (int i = 18; i <= 20; i++)
-                Assert.Equal(2, SplitResult.ElementAt(i).Count());
-
-            for (int i = 21; i <= 23; i++)
-                Assert.Single(SplitResult.ElementAt(i));
-        }
-
-        /// <summary>
         /// Testing that parts have no 0 records
         /// </summary>
         [Fact]
@@ -140,7 +107,7 @@ namespace High_Performance_Backtest.Tests
         [Fact]
         public void TestPartialSymbolDataSequentially()
         {
-            DateTime ongoingDate = new DateTime(2023, 1, 1);
+            DateTime ongoingDate = StartingDate;
             int daysPerSplit = 1;
             foreach (var result in SplitResult)
             {
@@ -161,61 +128,6 @@ namespace High_Performance_Backtest.Tests
 
                 ongoingDate = ongoingDate.AddDays(daysPerSplit);
             }
-        }
-
-        // TODO: Add tests that have timeframes sorted in incorrect order, and candles in incorrect order
-
-        // TODO: Add test that check if passing incorrect start date affect testing somehow
-
-        /// <summary>
-        /// Generates Fake Symbols Data for testing purposes
-        /// </summary>
-        /// <param name="symbols"></param>
-        /// <param name="timeframes"></param>
-        /// <param name="startDate"></param>
-        /// <param name="candlesCount"></param>
-        /// <returns></returns>
-        private List<ISymbolData> GenerateFakeSymbolsData(List<string> symbols, List<CandlestickInterval> intervals, DateTime startDate, int candlesCount)
-        {
-            List<ISymbolData> result = new List<ISymbolData>();
-
-            // --- Create symbols
-            foreach (var symbol in symbols)
-            {
-                // --- Generating candles
-                List<ITimeframe> filledTimeframes = new List<ITimeframe>();
-                foreach (var interval in intervals)
-                {
-                    ITimeframe currentTimeframe = new TimeframeV1();
-                    currentTimeframe.Timeframe = interval;
-                    for (int i = 0; i < candlesCount; i++)
-                    {
-                        double basePrice = Random.Shared.NextDouble() * Random.Shared.Next(1000, 10000);
-                        double baseMovement = (basePrice * 0.8) * Random.Shared.NextSingle();
-                        
-                        ICandlestick candlestick = new CandlestickV1()
-                        {
-                            OpenTime = startDate.AddSeconds(i * (int)currentTimeframe.Timeframe),
-                            Open = (decimal)basePrice,
-                            High = (decimal)basePrice + (decimal)baseMovement,
-                            Low = (decimal)basePrice - (decimal)baseMovement,
-                            Close = Random.Shared.NextSingle() > 0.5 ? (decimal)basePrice + ((decimal)baseMovement * (decimal)0.7) : (decimal)basePrice - ((decimal)baseMovement * (decimal)0.7),
-                            CloseTime = startDate.AddSeconds(i * (int)currentTimeframe.Timeframe).AddSeconds((int)currentTimeframe.Timeframe).AddSeconds(-1)
-
-                        };
-                        currentTimeframe.Candlesticks = currentTimeframe.Candlesticks.Append(candlestick);
-                    }
-                    filledTimeframes.Add(currentTimeframe);
-                }
-
-                result.Add(new SymbolDataV1()
-                {
-                    Symbol = symbol,
-                    Timeframes = filledTimeframes,
-                });
-            }
-
-            return result;
         }
     }
 }

@@ -62,18 +62,6 @@ namespace Backtest.Net.SymbolDataSplitters
                         continue;
                     }
 
-                    // --- Check if symbol history already began
-                    /*if (!AreCandlesExistBeforeBacktestingOngoingDate(symbol, ongoingBacktestingTime))
-                    {
-                        // --- Adding days per split after whole part was formed
-                        if (symbol == symbolsData.Last())
-                        {
-                            ongoingBacktestingTime = ongoingBacktestingTime.AddDays(DaysPerSplit);
-                        }
-
-                        continue;
-                    }*/
-
                     // --- Creating new symbol data
                     ISymbolData symbolDataPart = new SymbolDataV1()
                     {
@@ -286,20 +274,6 @@ namespace Backtest.Net.SymbolDataSplitters
 
             // --- Validation is passed
             return true;
-        }
-
-        /// <summary>
-        /// Checks if any candles exist before ongoing date, as validation that symbols without history will not be split
-        /// </summary>
-        /// <param name="symbolData"></param>
-        /// <param name="ongoingBacktestingTime"></param>
-        /// <returns></returns>
-        private bool AreCandlesExistBeforeBacktestingOngoingDate(ISymbolData symbolData, DateTime ongoingBacktestingTime)
-        {
-            DateTime warmupBacktestingTime = ongoingBacktestingTime;
-            if (WarmupTimeframe != null)
-                warmupBacktestingTime = ongoingBacktestingTime.AddSeconds(-((int)WarmupTimeframe * WarmupCandlesCount));
-            return symbolData.Timeframes.Where(x => x.Candlesticks.Any()).All(x => x.Candlesticks.First().OpenTime < ongoingBacktestingTime);
         }
 
         /// <summary>
