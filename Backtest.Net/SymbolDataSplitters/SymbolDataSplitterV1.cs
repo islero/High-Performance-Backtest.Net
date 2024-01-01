@@ -289,7 +289,15 @@ namespace Backtest.Net.SymbolDataSplitters
         private bool IsThereSymbolTimeframeDuplicates(IEnumerable<ISymbolData> symbolsData)
         {
             bool symbolDuplicatesExist = symbolsData.GroupBy(x => x.Symbol).Any(symbol => symbol.Count() > 1);
-            var timeframeDuplicatesExist = symbolsData.SelectMany(symbolData => symbolData.Timeframes).GroupBy(timeframe => timeframe.Timeframe).Any(interval => interval.Count() > 1);
+            var timeframeDuplicatesExist = false;
+            foreach (var symbol in symbolsData)
+            {
+                if (!timeframeDuplicatesExist)
+                {
+                    timeframeDuplicatesExist = symbol.Timeframes.GroupBy(timeframe => timeframe.Timeframe).Any(interval => interval.Count() > 1);
+                    break;
+                }
+            }
 
             return symbolDuplicatesExist || timeframeDuplicatesExist;
         }
