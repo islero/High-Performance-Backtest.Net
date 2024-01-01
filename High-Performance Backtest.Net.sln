@@ -3,9 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.8.34330.188
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Backtest.Net", "Backtest.Net\Backtest.Net.csproj", "{46BDC73E-7282-48DE-A2C0-EBC0921344D5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Backtest.Net", "Backtest.Net\Backtest.Net.csproj", "{46BDC73E-7282-48DE-A2C0-EBC0921344D5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Backtest.Tests", "Backtest.Tests\Backtest.Tests.csproj", "{5276BF92-978A-4976-B64C-9513D912F85B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Backtest.Tests", "Backtest.Tests\Backtest.Tests.csproj", "{5276BF92-978A-4976-B64C-9513D912F85B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Backtest.Benchmarks", "Backtest.Benchmarks\Backtest.Benchmarks.csproj", "{727B11EA-4007-45C9-9C88-EA3C042EFA58}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,9 @@ Global
 		{5276BF92-978A-4976-B64C-9513D912F85B}.Debug|x64.Build.0 = Debug|x64
 		{5276BF92-978A-4976-B64C-9513D912F85B}.Release|x64.ActiveCfg = Release|x64
 		{5276BF92-978A-4976-B64C-9513D912F85B}.Release|x64.Build.0 = Release|x64
+		{727B11EA-4007-45C9-9C88-EA3C042EFA58}.Debug|x64.ActiveCfg = Debug|x64
+		{727B11EA-4007-45C9-9C88-EA3C042EFA58}.Debug|x64.Build.0 = Debug|x64
+		{727B11EA-4007-45C9-9C88-EA3C042EFA58}.Release|x64.ActiveCfg = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
