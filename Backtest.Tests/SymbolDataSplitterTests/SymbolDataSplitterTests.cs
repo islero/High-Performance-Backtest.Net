@@ -4,6 +4,7 @@ using Backtest.Net.SymbolsData;
 using Backtest.Net.Timeframes;
 using Backtest.Net.Enums;
 using Backtest.Net.Interfaces;
+using System.Linq;
 
 namespace High_Performance_Backtest.Tests
 {
@@ -18,11 +19,10 @@ namespace High_Performance_Backtest.Tests
         // --- Constructors
         public SymbolDataSplitterTests()
         {
-            SplitResult = new List<IEnumerable<ISymbolData>>();
-
             DateTime startingDate = new DateTime(2023, 1, 1);
             int warmupCandlesCount = 2;
-            ISymbolDataSplitter symbolDataSplitter = new SymbolDataSplitterV1(1, warmupCandlesCount, startingDate);
+            int daysPerSplit = 1;
+            ISymbolDataSplitter symbolDataSplitter = new SymbolDataSplitterV1(daysPerSplit, warmupCandlesCount, startingDate, true);
 
             var generatedSymbolsData = GenerateFakeSymbolsData(new List<string> { "BTCUSDT", "ETHUSDT" },
                 new List<CandlestickInterval> { CandlestickInterval.M5, CandlestickInterval.M15 },
@@ -45,7 +45,7 @@ namespace High_Performance_Backtest.Tests
         /// Testing if result data contain correct Index Open Time
         /// </summary>
         [Fact]
-        public void TestCorrectIndexOpenTimes()
+        public void TestIndexOpenTimeAreEqual()
         {
             // --- Checking parts index open time
             foreach (var partSymbols in SplitResult)
@@ -69,7 +69,7 @@ namespace High_Performance_Backtest.Tests
         /// Testing if latest parts have correct EndIndex Open Time
         /// </summary>
         [Fact]
-        public void TestCorrectEndIndexOpenTimes()
+        public void TestEndIndexesCloseTimeAreEqual()
         {
             // --- Checking parts index open time
             foreach (var partSymbols in SplitResult)
@@ -83,7 +83,7 @@ namespace High_Performance_Backtest.Tests
                     {
                         var timeframeCandle = timeframe.Candlesticks.ElementAt(timeframe.EndIndex);
 
-                        Assert.Equal(firstCandle.OpenTime, timeframeCandle.OpenTime);
+                        Assert.Equal(firstCandle.CloseTime, timeframeCandle.CloseTime);
                     }
                 }
             }
@@ -105,16 +105,67 @@ namespace High_Performance_Backtest.Tests
 
             var outOfRangeSymbolsData = GenerateFakeSymbolsData(new List<string> { "ETHUSDT" },
                 new List<CandlestickInterval> { CandlestickInterval.M5, CandlestickInterval.M15 },
-                new DateTime(2023, 3, 1), 672);
+                new DateTime(2023, 1, 19), 672);
 
             correctRangeSymbolsData.AddRange(outOfRangeSymbolsData);
 
             SplitResult = symbolDataSplitter.SplitAsync(correctRangeSymbolsData).Result;
 
-            Assert.Equal(2, 1);
+            // --- Check if there are no zero records
+            Assert.True(!SplitResult.Any(x => !x.Any()));
+
+            for (int i = 0; i <= 17; i++)
+                Assert.Single(SplitResult.ElementAt(i));
+
+            for (int i = 18; i <= 20; i++)
+                Assert.Equal(2, SplitResult.ElementAt(i).Count());
+
+            for (int i = 21; i <= 23; i++)
+                Assert.Single(SplitResult.ElementAt(i));
+        }
+
+        /// <summary>
+        /// Testing that parts have no 0 records
+        /// </summary>
+        [Fact]
+        public void TestPartsHaveNoZeroRecords()
+        {
+            bool zeroRecords = SplitResult.Any(x => !x.Any());
+            Assert.True(!zeroRecords);
+        }
+
+        /// <summary>
+        /// Check that Symbol data is sequential
+        /// </summary>
+        [Fact]
+        public void TestPartialSymbolDataSequentially()
+        {
+            DateTime ongoingDate = new DateTime(2023, 1, 1);
+            int daysPerSplit = 1;
+            foreach (var result in SplitResult)
+            {
+                if (result == SplitResult.Last())
+                    continue;
+
+                foreach (var symbol in result)
+                {
+                    var firstTimeframe = symbol.Timeframes.First();
+                    var firstCandle = firstTimeframe.Candlesticks.ElementAt(firstTimeframe.Index);
+                    Assert.Equal(ongoingDate, firstCandle.OpenTime);
+
+                    DateTime nextPeriodOngoingDate = ongoingDate.AddDays(daysPerSplit);
+
+                    var lastCandle = firstTimeframe.Candlesticks.ElementAt(firstTimeframe.EndIndex);
+                    Assert.Equal(nextPeriodOngoingDate.AddSeconds(-1), lastCandle.CloseTime);
+                }
+
+                ongoingDate = ongoingDate.AddDays(daysPerSplit);
+            }
         }
 
         // TODO: Add tests that have timeframes sorted in incorrect order, and candles in incorrect order
+
+        // TODO: Add test that check if passing incorrect start date affect testing somehow
 
         /// <summary>
         /// Generates Fake Symbols Data for testing purposes

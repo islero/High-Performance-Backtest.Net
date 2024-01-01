@@ -2,6 +2,7 @@
 using Backtest.Net.Timeframes;
 using Backtest.Net.Enums;
 using Backtest.Net.Interfaces;
+using System.Linq;
 
 namespace Backtest.Net.SymbolDataSplitters
 {
@@ -16,14 +17,16 @@ namespace Backtest.Net.SymbolDataSplitters
         protected int DaysPerSplit { get; } // How many days in one split range should exist
         protected int WarmupCandlesCount { get; } // The amount of warmup candles count
         protected DateTime BacktestingStartDateTime { get; } // Backtesting Start DateTime
+        protected bool CorrectEndIndex { get; } // Automatically corrects EndIndex if there is no more history for any other timeframe
         protected CandlestickInterval? WarmupTimeframe { get; set; } // The timeframe must be warmed up and all lower timeframes accordingly, if null - will be set automatically
 
         // --- Constructors
-        public SymbolDataSplitterV1(int daysPerSplit, int warmupCandlesCount, DateTime backtestingStartDateTime, CandlestickInterval? warmupTimeframe = null)
+        public SymbolDataSplitterV1(int daysPerSplit, int warmupCandlesCount, DateTime backtestingStartDateTime, bool correctEndIndex = false, CandlestickInterval? warmupTimeframe = null)
         {
             DaysPerSplit = daysPerSplit;
             WarmupCandlesCount = warmupCandlesCount;
             BacktestingStartDateTime = backtestingStartDateTime;
+            CorrectEndIndex = correctEndIndex;
             WarmupTimeframe = warmupTimeframe;
         }
 
@@ -44,7 +47,7 @@ namespace Backtest.Net.SymbolDataSplitters
 
             IEnumerable<IEnumerable<ISymbolData>> splitSymbolsData = new List<IEnumerable<ISymbolData>>();
 
-            DateTime targetDateTimePart = BacktestingStartDateTime;
+            DateTime ongoingBacktestingTime = BacktestingStartDateTime;
             while (!AreAllSymbolDataReachedHistoryEnd(symbolsData))
             {
                 var symbolsDataPart = new List<ISymbolData>();
@@ -53,8 +56,23 @@ namespace Backtest.Net.SymbolDataSplitters
                     // --- Checking if there any symbol with no more history
                     if (symbol.Timeframes.Any(x => x.NoMoreHistory))
                     {
+                        // --- Adding days per split to ongoing backtesting time
+                        ongoingBacktestingTime = AddDaysToOngoingBacktestingTime(ongoingBacktestingTime, symbol == symbolsData.Last());
+
                         continue;
                     }
+
+                    // --- Check if symbol history already began
+                    /*if (!AreCandlesExistBeforeBacktestingOngoingDate(symbol, ongoingBacktestingTime))
+                    {
+                        // --- Adding days per split after whole part was formed
+                        if (symbol == symbolsData.Last())
+                        {
+                            ongoingBacktestingTime = ongoingBacktestingTime.AddDays(DaysPerSplit);
+                        }
+
+                        continue;
+                    }*/
 
                     // --- Creating new symbol data
                     ISymbolData symbolDataPart = new SymbolDataV1()
@@ -65,19 +83,43 @@ namespace Backtest.Net.SymbolDataSplitters
                     foreach (var timeframe in symbol.Timeframes)
                     {
                         // --- Setting indexes without adjusting
-                        timeframe.Index = GetCandlesticksIndexByDateTime(timeframe.Candlesticks, targetDateTimePart);
+                        timeframe.Index = GetCandlesticksIndexByOpenTime(timeframe.Candlesticks, ongoingBacktestingTime);
                         timeframe.StartIndex = GetWarmupCandlestickIndex(timeframe.Index);
                         
-                        timeframe.EndIndex = GetCandlesticksIndexByDateTime(timeframe.Candlesticks, targetDateTimePart.AddDays(DaysPerSplit));
+                        // --- Calculating EndIndex
+                        timeframe.EndIndex = GetCandlesticksIndexByCloseTime(timeframe.Candlesticks, ongoingBacktestingTime.AddDays(DaysPerSplit).AddSeconds(-1));
+
+                        // --- Correcting EndIndex
+                        if (CorrectEndIndex && !timeframe.NoMoreHistory)
+                        {
+                            // --- Searching for a Timeframe that has no more history
+                            var targetTimeframe = symbol.Timeframes.FirstOrDefault(x => x.NoMoreHistory);
+                            if (targetTimeframe != null)
+                            {
+                                // --- Searching for target candle
+                                var targetCandle = targetTimeframe.Candlesticks.ElementAt(targetTimeframe.EndIndex);
+                                if (targetCandle != null)
+                                {
+                                    timeframe.EndIndex = GetCandlesticksIndexByCloseTime(timeframe.Candlesticks, targetCandle.CloseTime);
+                                }
+                            }
+                        }
+
+                        // --- Validating EndIndex
                         if (timeframe.EndIndex == -1)
                         {
                             timeframe.EndIndex = timeframe.Candlesticks.Count() - 1;
                             timeframe.NoMoreHistory = true;
                         }
 
+                        // --- Check if symbol history already began
+                        if (timeframe.Index == 0 && timeframe.StartIndex == 0 && timeframe.EndIndex == 0)
+                            continue;
+
                         // --- Deleting source candles and readjusting indexes
                         if (timeframe.StartIndex > 0)
                         {
+                            // --- Please, note that candles readjusting is corrupting source candles
                             // --- Perform readjusting
                             timeframe.Candlesticks = timeframe.Candlesticks.Skip(timeframe.StartIndex);
 
@@ -91,7 +133,7 @@ namespace Backtest.Net.SymbolDataSplitters
                         IEnumerable<ICandlestick> candlesticks = new List<ICandlestick>();
 
                         // --- Filling the candlesticks with data
-                        candlesticks = timeframe.Candlesticks.Take(timeframe.EndIndex).Select(candle => candle.Clone());
+                        candlesticks = timeframe.Candlesticks.Take(timeframe.EndIndex + 1).Select(candle => candle.Clone());
 
                         // --- Creating timeframe
                         ITimeframe timeframePart = new TimeframeV1()
@@ -108,31 +150,41 @@ namespace Backtest.Net.SymbolDataSplitters
                     }
 
                     // --- Adding a new item into symbolsDataPart
-                    symbolsDataPart.Add(symbolDataPart);
+                    if (symbolDataPart.Timeframes.Any())
+                        symbolsDataPart.Add(symbolDataPart);
 
-                    // --- Adding days per split after whole part was formed
-                    if(symbol == symbolsData.Last())
-                    {
-                        targetDateTimePart = targetDateTimePart.AddDays(DaysPerSplit);
-                    }
+                    // --- Adding days per split to ongoing backtesting time
+                    ongoingBacktestingTime = AddDaysToOngoingBacktestingTime(ongoingBacktestingTime, symbol == symbolsData.Last());
                 }
 
-                // --- Append symbolsDataPart
-                splitSymbolsData = splitSymbolsData.Append(symbolsDataPart);
+                // --- Append symbolsDataPart if it contain any record
+                if (symbolsDataPart.Any())
+                    splitSymbolsData = splitSymbolsData.Append(symbolsDataPart);
             }
 
             return splitSymbolsData;
         }
 
         /// <summary>
-        /// Returns the candlestick index of the targetDateTime, or -1 if the index wasn't found
+        /// Returns the candlestick index of the targetDateTime by candle OpenTime, or -1 if the index wasn't found
         /// </summary>
         /// <param name="timeframe"></param>
         /// <returns></returns>
-        protected int GetCandlesticksIndexByDateTime(IEnumerable<ICandlestick> candlesticks, DateTime targetDateTime)
+        protected int GetCandlesticksIndexByOpenTime(IEnumerable<ICandlestick> candlesticks, DateTime targetDateTime)
         {
             var candlesticksList = candlesticks.ToList();
             return candlesticksList.FindIndex(candle => candle.OpenTime >= targetDateTime);
+        }
+
+        /// <summary>
+        /// Returns the candlestick index of the targetDateTime by candle CloseTime, or -1 if the index wasn't found
+        /// </summary>
+        /// <param name="timeframe"></param>
+        /// <returns></returns>
+        protected int GetCandlesticksIndexByCloseTime(IEnumerable<ICandlestick> candlesticks, DateTime targetDateTime)
+        {
+            var candlesticksList = candlesticks.ToList();
+            return candlesticksList.FindIndex(candle => candle.CloseTime >= targetDateTime);
         }
 
         /// <summary>
@@ -234,6 +286,34 @@ namespace Backtest.Net.SymbolDataSplitters
 
             // --- Validation is passed
             return true;
+        }
+
+        /// <summary>
+        /// Checks if any candles exist before ongoing date, as validation that symbols without history will not be split
+        /// </summary>
+        /// <param name="symbolData"></param>
+        /// <param name="ongoingBacktestingTime"></param>
+        /// <returns></returns>
+        private bool AreCandlesExistBeforeBacktestingOngoingDate(ISymbolData symbolData, DateTime ongoingBacktestingTime)
+        {
+            DateTime warmupBacktestingTime = ongoingBacktestingTime;
+            if (WarmupTimeframe != null)
+                warmupBacktestingTime = ongoingBacktestingTime.AddSeconds(-((int)WarmupTimeframe * WarmupCandlesCount));
+            return symbolData.Timeframes.Where(x => x.Candlesticks.Any()).All(x => x.Candlesticks.First().OpenTime < ongoingBacktestingTime);
+        }
+
+        /// <summary>
+        /// Adding days per split to ongoing backtesting time
+        /// </summary>
+        /// <param name="ongoingBacktestingTime"></param>
+        /// <param name="isLastSymbol"></param>
+        /// <returns></returns>
+        private DateTime AddDaysToOngoingBacktestingTime(DateTime ongoingBacktestingTime, bool isLastSymbol)
+        {
+            if (isLastSymbol)
+                return ongoingBacktestingTime.AddDays(DaysPerSplit);
+
+            return ongoingBacktestingTime;
         }
     }
 }
