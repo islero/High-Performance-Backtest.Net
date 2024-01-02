@@ -14,7 +14,7 @@ namespace Backtest.Tests.SymbolDataSplitterTests
     /// <summary>
     /// Base class for SymbolDataSplitterTests
     /// </summary>
-    public abstract class SymbolDataSplitterBase
+    public abstract class SymbolDataSplitterTestsBase
     {
         /// <summary>
         /// Generates Fake Symbols Data for testing purposes

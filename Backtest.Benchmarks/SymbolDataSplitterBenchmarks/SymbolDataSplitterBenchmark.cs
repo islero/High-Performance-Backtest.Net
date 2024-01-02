@@ -5,11 +5,6 @@ using Backtest.Net.SymbolDataSplitters;
 using Backtest.Net.SymbolsData;
 using Backtest.Net.Timeframes;
 using BenchmarkDotNet.Attributes;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Backtest.Benchmarks.SymbolDataSplitterBenchmarks
 {

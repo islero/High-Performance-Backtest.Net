@@ -8,7 +8,7 @@ namespace High_Performance_Backtest.Tests
     /// <summary>
     /// Testing Symbol Data Splitter
     /// </summary>
-    public class SymbolDataSplitterTests : SymbolDataSplitterBase
+    public class SymbolDataSplitterTests : SymbolDataSplitterTestsBase
     {
         // --- Properties
         private IEnumerable<IEnumerable<ISymbolData>> SplitResult { get; set; }

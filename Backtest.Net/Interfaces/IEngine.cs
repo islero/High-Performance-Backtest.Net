@@ -5,6 +5,6 @@
     /// </summary>
     public interface IEngine
     {
-        public Task<IEnumerable<ISymbolData>> RunAsync(IEnumerable<IEnumerable<ISymbolData>> symbolDataParts);
+        public Task RunAsync(IEnumerable<IEnumerable<ISymbolData>> symbolDataParts);
     }
 }
