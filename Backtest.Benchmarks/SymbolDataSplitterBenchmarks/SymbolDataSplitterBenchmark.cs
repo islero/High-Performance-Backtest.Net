@@ -36,7 +36,7 @@ namespace Backtest.Benchmarks.SymbolDataSplitterBenchmarks
             WarmupCandlesCount = 2;
 
             generatedSymbolsData = GenerateFakeSymbolsData(new List<string> { "BTCUSDT", "ETHUSDT" },
-                new List<CandlestickInterval> { CandlestickInterval.M5, CandlestickInterval.M15 },
+                new List<CandlestickInterval> { CandlestickInterval.M5, CandlestickInterval.M15, CandlestickInterval.H1, CandlestickInterval.D1 },
                 StartingDate.AddHours(-WarmupCandlesCount), 10000);
         }
 
@@ -45,6 +45,14 @@ namespace Backtest.Benchmarks.SymbolDataSplitterBenchmarks
         public async Task SymbolDataSplitterV1()
         {
             ISymbolDataSplitter symbolDataSplitter = new SymbolDataSplitterV1(DaysPerSplit, WarmupCandlesCount, StartingDate, true);
+
+            var result = await symbolDataSplitter.SplitAsync(generatedSymbolsData!);
+        }
+
+        [Benchmark]
+        public async Task SymbolDataSplitterV1_Experiment()
+        {
+            ISymbolDataSplitter symbolDataSplitter = new SymbolDataSplitterV1_Experiment(DaysPerSplit, WarmupCandlesCount, StartingDate, true);
 
             var result = await symbolDataSplitter.SplitAsync(generatedSymbolsData!);
         }
