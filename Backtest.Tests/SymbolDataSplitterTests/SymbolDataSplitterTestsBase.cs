@@ -3,11 +3,7 @@ using Backtest.Net.Enums;
 using Backtest.Net.Interfaces;
 using Backtest.Net.SymbolsData;
 using Backtest.Net.Timeframes;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace Backtest.Tests.SymbolDataSplitterTests
 {
