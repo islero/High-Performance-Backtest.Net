@@ -19,22 +19,25 @@ namespace Backtest.Benchmarks.SymbolDataSplitterBenchmarks
     [MemoryDiagnoser]
     public class SymbolDataSplitterBenchmark
     {
+        // --- Fields
+        List<ISymbolData>? generatedSymbolsData;
+
         // --- Properties
-        private List<ISymbolData> GeneratedSymbolsData { get; set; }
         private DateTime StartingDate { get; set; }
         private int DaysPerSplit { get; set; }
         private int WarmupCandlesCount { get; set; }
 
-        // --- Constructors
-        public SymbolDataSplitterBenchmark()
+        // --- Setup
+        [GlobalSetup]
+        public void Setup()
         {
             StartingDate = new DateTime(2023, 1, 1, 3, 6, 50);
             DaysPerSplit = 1;
             WarmupCandlesCount = 2;
 
-            GeneratedSymbolsData = GenerateFakeSymbolsData(new List<string> { "BTCUSDT", "ETHUSDT" },
+            generatedSymbolsData = GenerateFakeSymbolsData(new List<string> { "BTCUSDT", "ETHUSDT" },
                 new List<CandlestickInterval> { CandlestickInterval.M5, CandlestickInterval.M15 },
-                StartingDate.AddHours(-WarmupCandlesCount), 1000);
+                StartingDate.AddHours(-WarmupCandlesCount), 10000);
         }
 
         // --- Benchmarks
@@ -43,7 +46,7 @@ namespace Backtest.Benchmarks.SymbolDataSplitterBenchmarks
         {
             ISymbolDataSplitter symbolDataSplitter = new SymbolDataSplitterV1(DaysPerSplit, WarmupCandlesCount, StartingDate, true);
 
-            var result = await symbolDataSplitter.SplitAsync(GeneratedSymbolsData);
+            var result = await symbolDataSplitter.SplitAsync(generatedSymbolsData!);
         }
 
         [Benchmark]
@@ -51,7 +54,7 @@ namespace Backtest.Benchmarks.SymbolDataSplitterBenchmarks
         {
             ISymbolDataSplitter symbolDataSplitter = new SymbolDataSplitterV1(DaysPerSplit, WarmupCandlesCount, StartingDate, false);
 
-            var result = await symbolDataSplitter.SplitAsync(GeneratedSymbolsData);
+            var result = await symbolDataSplitter.SplitAsync(generatedSymbolsData!);
         }
 
         // --- Methods

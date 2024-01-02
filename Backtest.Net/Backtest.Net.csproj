@@ -14,4 +14,8 @@
     <PackageReleaseNotes>Copied repositories from the project to a separate solution</PackageReleaseNotes>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Folder Include="Engines\" />
+  </ItemGroup>
+
 </Project>
