@@ -24,7 +24,8 @@ namespace Backtest.Tests.EngineTests
 
         public Task<ITradeResult> ExecuteSignal(ISignal signal)
         {
-            TradeSignalDelegate(signal);
+            if (TradeSignalDelegate != null)
+                TradeSignalDelegate(signal);
             return null;
         }
     }
@@ -38,7 +39,8 @@ namespace Backtest.Tests.EngineTests
 
         public async Task<IEnumerable<ISignal>> Execute(IEnumerable<ISymbolData> symbols)
         {
-            ExecuteStrategyDelegate(symbols);
+            if (ExecuteStrategyDelegate != null)
+                ExecuteStrategyDelegate(symbols);
             return Enumerable.Empty<ISignal>();
         }
     }

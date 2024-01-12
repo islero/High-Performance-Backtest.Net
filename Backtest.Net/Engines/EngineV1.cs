@@ -97,8 +97,8 @@ namespace Backtest.Net.Engines
                     }
 
                     // Handling higher timeframes
-                    DateTime openTime = timeframe.Candlesticks.ElementAt(timeframe.Index).OpenTime;
-                    if (openTime >= lowestTimeframeIndexTime && timeframe.Index >= timeframe.StartIndex && timeframe.Index < timeframe.EndIndex)
+                    DateTime closeTime = timeframe.Candlesticks.ElementAt(timeframe.Index).CloseTime;
+                    if (lowestTimeframeIndexTime < closeTime && timeframe.Index >= timeframe.StartIndex && timeframe.Index < timeframe.EndIndex)
                     {
                         timeframe.Index++;
                     }

@@ -13,7 +13,6 @@ namespace Backtest.Tests.EngineTests
         [Fact]
         public async Task TestRunningEngineWithoutExceptions()
         {
-
             int warmupCandlesCount = 2;
             var trade = new TestTrade();
 
@@ -138,6 +137,80 @@ namespace Backtest.Tests.EngineTests
 
             Assert.True(allWarmupCandlesResultsAreCorrect);
         }
+
+        [Fact]
+        public async Task TestFirstCandleEqualToStartBacktestingDate()
+        {
+            var tokenSource = new CancellationTokenSource();
+
+            int warmupCandlesCount = 2;
+            var trade = new TestTrade();
+
+            DateTime backtestingStartingDate = new DateTime(2023, 1, 1);
+            bool allStartingDatesAreCorrect = true;
+
+            var strategy = new TestStrategy();
+            strategy.ExecuteStrategyDelegate = (symbols) =>
+            {
+                // --- Checking candles order
+                if (symbols.Any())
+                {
+                    foreach (var symbol in symbols)
+                    {
+                        foreach (var timeframe in symbol.Timeframes)
+                        {
+                            var firstCandle = timeframe.Candlesticks.FirstOrDefault();
+                            if (firstCandle == null)
+                                Assert.Fail("Engine Returned candle equal to null");
+
+                            allStartingDatesAreCorrect = allStartingDatesAreCorrect && firstCandle.OpenTime == backtestingStartingDate;
+                        }
+                    }
+                }
+
+                tokenSource.Cancel();
+            };
+
+            var engine = new EngineV1(warmupCandlesCount, trade, strategy);
+
+            // --- Generate Dummy SymbolData splitter
+            var data = GenerateCandles(backtestingStartingDate, 500, 1, warmupCandlesCount);
+
+            await engine.RunAsync(data, tokenSource.Token);
+
+            Assert.True(allStartingDatesAreCorrect);
+        }
+
+        [Fact]
+        public async Task TestIfAllIndexesReachedTheEndIndex()
+        {
+            int warmupCandlesCount = 2;
+            var trade = new TestTrade();
+
+            var strategy = new TestStrategy();
+
+            var engine = new EngineV1(warmupCandlesCount, trade, strategy);
+
+            // --- Generate Dummy SymbolData splitter
+            var data = GenerateCandles(new DateTime(2023, 1, 1), 500, 1, warmupCandlesCount);
+
+            // --- Checking that before the EngineRun all the data are not reached the EndIndex
+            bool allNotReachedEndIndex = data.All(
+                x => x.All(
+                    y => y.Timeframes.All(
+                        k => k.Index < k.EndIndex && k.Index == k.StartIndex + warmupCandlesCount)));
+            Assert.True(allNotReachedEndIndex);
+
+            await engine.RunAsync(data);
+
+            // --- Checking that after teh EngineRun all the data are reached EndIndex
+            bool allReachedEndIndex = data.All(
+                 x => x.All(
+                     y => y.Timeframes.All(
+                         k => k.Index == k.EndIndex)));
+            Assert.True(allReachedEndIndex);
+        }
+
 
         /// <summary>
         /// Generates Dummy Data Splitter Result
