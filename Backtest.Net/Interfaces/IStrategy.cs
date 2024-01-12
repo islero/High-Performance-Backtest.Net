@@ -5,6 +5,6 @@
     /// </summary>
     public interface IStrategy
     {
-        public Task<List<ISignal>> Execute(IEnumerable<ISymbolData> symbols);
+        public Task<IEnumerable<ISignal>> Execute(IEnumerable<ISymbolData> symbols);
     }
 }

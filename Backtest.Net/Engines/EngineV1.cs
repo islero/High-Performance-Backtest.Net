@@ -10,18 +10,17 @@ namespace Backtest.Net.Engines
     /// </summary>
     public class EngineV1 : IEngine
     {
+        // --- Delegates
+        public Action? OnCancellationFinishedDelegate { get; set; }
+
         // --- Properties
         protected ITrade Trade { get; set; }
         protected IStrategy Strategy { get; set; }
-        private DateTime StartDateTime { get; } // Backtesting Start DateTime
-        private DateTime EndDateTime { get; } // Backtesting End DateTime
         private int WarmupCandlesCount { get; } // The amount of warmup candles count
 
         // --- Constructors
-        public EngineV1(DateTime startDateTime, DateTime endDateTime, int warmupCandlesCount, ITrade trade, IStrategy strategy)
+        public EngineV1(int warmupCandlesCount, ITrade trade, IStrategy strategy)
         {
-            StartDateTime = startDateTime;
-            EndDateTime = endDateTime;
             WarmupCandlesCount = warmupCandlesCount;
             Trade = trade;
             Strategy = strategy;
@@ -33,30 +32,43 @@ namespace Backtest.Net.Engines
         /// </summary>
         /// <param name="symbolDataParts"></param>
         /// <returns></returns>
-        public async Task RunAsync(IEnumerable<IEnumerable<ISymbolData>> symbolDataParts)
+        public async Task RunAsync(IEnumerable<IEnumerable<ISymbolData>> symbolDataParts, CancellationToken? token = null)
         {
-            // --- Run every symbolDataPart
-            foreach (var part in symbolDataParts)
+            try
             {
-                // --- Main cycle
-                while (part.All(x => x.Timeframes.First().Index == x.Timeframes.First().EndIndex))
+                // --- Run every symbolDataPart
+                foreach (var part in symbolDataParts)
                 {
-                    // --- Preparing feeding data
-                    var feedingData = CloneFeedingSymbolData(part);
-
-                    // --- Strategy part
-                    var signals = await Strategy.Execute(feedingData);
-                    if (signals != null)
+                    // --- Main cycle
+                    while (part.All(x => x.Timeframes.First().Index < x.Timeframes.First().EndIndex))
                     {
-                        foreach (var signal in signals)
-                        {
-                            var result = await Trade.ExecuteSignal(signal);
-                        }
-                    }
+                        // --- Checking for cancelation
+                        if (token != null && token.Value.IsCancellationRequested)
+                            throw new OperationCanceledException();
 
-                    // --- Incrementing indexes
-                    IncrementIndexes(part);
+                        // --- Preparing feeding data
+                        var feedingData = CloneFeedingSymbolData(part);
+
+                        // --- Strategy part
+                        var signals = await Strategy.Execute(feedingData);
+                        if (signals != null && signals.Any())
+                        {
+                            foreach (var signal in signals)
+                            {
+                                var result = await Trade.ExecuteSignal(signal);
+                            }
+                        }
+
+                        // --- Incrementing indexes
+                        IncrementIndexes(part);
+                    }
                 }
+            }
+            catch (OperationCanceledException)
+            {
+                // --- Cancellation been requested and executed
+                if (OnCancellationFinishedDelegate != null)
+                    OnCancellationFinishedDelegate();
             }
         }
 
@@ -104,7 +116,7 @@ namespace Backtest.Net.Engines
                 foreach (var timeframe in symbol.Timeframes)
                 {
                     int warmedUpIndex = timeframe.Index - WarmupCandlesCount > timeframe.StartIndex ? timeframe.Index - WarmupCandlesCount : timeframe.StartIndex;
-                    IEnumerable<ICandlestick> clonedCandlesticks = timeframe.Candlesticks.Take(warmedUpIndex..timeframe.Index).Select(candle => candle.Clone());
+                    IEnumerable<ICandlestick> clonedCandlesticks = timeframe.Candlesticks.Take(warmedUpIndex..(timeframe.Index + 1)).OrderByDescending(x => x.OpenTime).Select(candle => candle.Clone());
 
                     // --- No need to add nothing more except interval and candles themself
                     timeframes = timeframes.Append(new TimeframeV1()

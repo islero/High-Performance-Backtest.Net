@@ -5,12 +5,12 @@ using Backtest.Net.SymbolsData;
 using Backtest.Net.Timeframes;
 using System.Text;
 
-namespace Backtest.Tests.SymbolDataSplitterTests
+namespace Backtest.Tests
 {
     /// <summary>
-    /// Base class for SymbolDataSplitterTests
+    /// Base class for all tests
     /// </summary>
-    public abstract class SymbolDataSplitterTestsBase
+    public abstract class TestBase
     {
         /// <summary>
         /// Generates Fake Symbols Data for testing purposes

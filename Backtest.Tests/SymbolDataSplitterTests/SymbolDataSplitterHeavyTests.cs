@@ -7,7 +7,7 @@ namespace Backtest.Tests.SymbolDataSplitterTests
     /// <summary>
     /// Tests that require of generating separate specific candles data instead of using 1 data for all tests
     /// </summary>
-    public class SymbolDataSplitterHeavyTests : SymbolDataSplitterTestsBase
+    public class SymbolDataSplitterHeavyTests : TestBase
     {
         // --- Properties
         private ISymbolDataSplitter SymbolDataSplitter { get; set; }

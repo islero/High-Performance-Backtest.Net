@@ -1,6 +1,7 @@
 ﻿using Backtest.Net.Enums;
 using Backtest.Net.Interfaces;
 using Backtest.Net.SymbolDataSplitters;
+using Backtest.Tests;
 using Backtest.Tests.SymbolDataSplitterTests;
 
 namespace High_Performance_Backtest.Tests
@@ -8,7 +9,7 @@ namespace High_Performance_Backtest.Tests
     /// <summary>
     /// Testing Symbol Data Splitter
     /// </summary>
-    public class SymbolDataSplitterTests : SymbolDataSplitterTestsBase
+    public class SymbolDataSplitterTests : TestBase
     {
         // --- Properties
         private IEnumerable<IEnumerable<ISymbolData>> SplitResult { get; set; }
