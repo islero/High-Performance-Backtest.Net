@@ -211,6 +211,62 @@ namespace Backtest.Tests.EngineTests
             Assert.True(allReachedEndIndex);
         }
 
+        [Fact]
+        public async Task TestCurrentCandleOhlcAreEqual()
+        {
+            var tokenSource = new CancellationTokenSource();
+
+            int warmupCandlesCount = 3;
+            var trade = new TestTrade();
+
+            bool allCurrentCandleOhlcAreEqual = true;
+
+            var strategy = new TestStrategy();
+            strategy.ExecuteStrategyDelegate = (symbols) =>
+            {
+                // --- Checking candles order
+                if (symbols.Any())
+                {
+                    foreach (var symbol in symbols)
+                    {
+                        var firstTimeframe = symbol.Timeframes.FirstOrDefault();
+                        if (firstTimeframe != null)
+                        {
+                            var firstCandle = firstTimeframe.Candlesticks.FirstOrDefault();
+                            if (firstCandle != null)
+                            {
+                                decimal openPrice = firstCandle.Open;
+                                DateTime openTime = firstCandle.OpenTime;
+
+                                bool areOHLCEqual = symbol.Timeframes.All(
+                                    y => y.Candlesticks.First().Close == openPrice &&
+                                            y.Candlesticks.First().High == openPrice &&
+                                            y.Candlesticks.First().Low == openPrice &&
+                                            y.Candlesticks.First().Open == openPrice &&
+                                            y.Candlesticks.First().CloseTime == openTime);
+
+                                allCurrentCandleOhlcAreEqual = allCurrentCandleOhlcAreEqual && areOHLCEqual;
+
+                                if (!areOHLCEqual)
+                                    Assert.Fail($"First candle OHLC aren't equal");
+                            }
+                        }
+                    }
+                }
+
+                //tokenSource.Cancel();
+            };
+
+            var engine = new EngineV1(warmupCandlesCount, trade, strategy);
+
+            // --- Generate Dummy SymbolData splitter
+            var data = GenerateCandles(new DateTime(2023, 1, 1), 500, 1, warmupCandlesCount);
+
+            await engine.RunAsync(data, tokenSource.Token);
+
+            Assert.True(allCurrentCandleOhlcAreEqual);
+        }
+
 
         /// <summary>
         /// Generates Dummy Data Splitter Result

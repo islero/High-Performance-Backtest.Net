@@ -13,7 +13,6 @@ namespace Backtest.Net.Executors
         // --- Properties
         public bool IsRunning { get; private set; } // Checks whether or not backtesting is currently running
         private DateTime StartDateTime { get; } // Backtesting Start DateTime
-        private DateTime EndDateTime { get; } // Backtesting End DateTime
         private int WarmupCandlesCount { get; } // The amount of warmup candles count
         private ITrade Trade { get; } // Handles Virtual Trades
         private IStrategy Strategy { get; } // The Backtesting Strategy
@@ -27,11 +26,10 @@ namespace Backtest.Net.Executors
         public Action<BacktestingEventStatus>? OnBacktestingEvent; // Notifies subscribed objects about backtesting events
 
         // --- Constructors
-        public BacktestingExecutor(DateTime startDateTime, DateTime endDateTime, int daysPerSplit, int warmupCandlesCount, 
+        public BacktestingExecutor(DateTime startDateTime, int daysPerSplit, int warmupCandlesCount, 
             ITrade trade, IStrategy strategy, bool correctEndIndex = false, CandlestickInterval? warmupTimeframe = null)
         {
             StartDateTime = startDateTime;
-            EndDateTime = endDateTime;
             DaysPerSplit = daysPerSplit;
             WarmupCandlesCount = warmupCandlesCount;
             Trade = trade;

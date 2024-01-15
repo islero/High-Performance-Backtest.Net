@@ -49,6 +49,9 @@ namespace Backtest.Net.Engines
                         // --- Preparing feeding data
                         var feedingData = CloneFeedingSymbolData(part);
 
+                        // --- Apply Open Price to OHLC for all first candles
+                        HandleOHLC(feedingData);
+
                         // --- Strategy part
                         var signals = await Strategy.Execute(feedingData);
                         if (signals != null && signals.Any())
@@ -106,6 +109,11 @@ namespace Backtest.Net.Engines
             }
         }
 
+        /// <summary>
+        /// Cloning necessary symbol data range
+        /// </summary>
+        /// <param name="symbolData"></param>
+        /// <returns></returns>
         protected IEnumerable<ISymbolData> CloneFeedingSymbolData(IEnumerable<ISymbolData> symbolData)
         {
             IEnumerable<ISymbolData> clonedSymbolsData = new List<ISymbolData>();
@@ -136,6 +144,42 @@ namespace Backtest.Net.Engines
                 clonedSymbolsData = clonedSymbolsData.Append(cloned);
             }
             return clonedSymbolsData;
+        }
+
+        /// <summary>
+        /// Apply Open Price to OHLC for all first candles
+        /// </summary>
+        /// <param name="symbolData"></param>
+        /// <returns></returns>
+        protected void HandleOHLC(IEnumerable<ISymbolData> symbolData)
+        {
+            foreach (var symbol in symbolData)
+            {
+                var firstTimeframe = symbol.Timeframes.FirstOrDefault();
+                if (firstTimeframe != null)
+                {
+                    var firstTimeframeCandle = firstTimeframe.Candlesticks.FirstOrDefault();
+                    if (firstTimeframeCandle != null)
+                    {
+                        foreach (var timeframe in symbol.Timeframes)
+                        {
+                            var candleSticks = timeframe.Candlesticks.ToList();
+                            var firstCandle = candleSticks.FirstOrDefault();
+                            if (firstCandle != null)
+                            {
+                                firstCandle.Open = firstTimeframeCandle.Open;
+                                firstCandle.High = firstTimeframeCandle.Open;
+                                firstCandle.Low = firstTimeframeCandle.Open;
+                                firstCandle.Close = firstTimeframeCandle.Open;
+                                firstCandle.CloseTime = firstTimeframeCandle.OpenTime;
+                            }
+
+                            // Assign the modified list back to the enumerable
+                            timeframe.Candlesticks = candleSticks;
+                        }
+                    }
+                }
+            }
         }
     }
 }
