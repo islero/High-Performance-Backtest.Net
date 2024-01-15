@@ -212,7 +212,7 @@ namespace Backtest.Tests.EngineTests
         }
 
         [Fact]
-        public async Task TestCurrentCandleOhlcAreEqual()
+        public async Task TestCurrentCandleOHLCAreEqual()
         {
             var tokenSource = new CancellationTokenSource();
 
