@@ -5,6 +5,6 @@
     /// </summary>
     public interface IEngine
     {
-        public Task RunAsync(IEnumerable<IEnumerable<ISymbolData>> symbolDataParts, CancellationToken? token = null);
+        public Task RunAsync(IEnumerable<IEnumerable<ISymbolData>> symbolDataParts, CancellationToken? cancellationToken = default);
     }
 }

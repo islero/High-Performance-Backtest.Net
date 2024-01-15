@@ -32,7 +32,7 @@ namespace Backtest.Net.Engines
         /// </summary>
         /// <param name="symbolDataParts"></param>
         /// <returns></returns>
-        public async Task RunAsync(IEnumerable<IEnumerable<ISymbolData>> symbolDataParts, CancellationToken? token = null)
+        public async Task RunAsync(IEnumerable<IEnumerable<ISymbolData>> symbolDataParts, CancellationToken? cancellationToken = default)
         {
             try
             {
@@ -43,7 +43,7 @@ namespace Backtest.Net.Engines
                     while (part.All(x => x.Timeframes.First().Index < x.Timeframes.First().EndIndex))
                     {
                         // --- Checking for cancelation
-                        if (token != null && token.Value.IsCancellationRequested)
+                        if (cancellationToken != null && cancellationToken.Value.IsCancellationRequested)
                             throw new OperationCanceledException();
 
                         // --- Preparing feeding data
