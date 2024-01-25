@@ -31,6 +31,7 @@ namespace Backtest.Net.Engines
         /// Starts the engine and feeds the strategy with data
         /// </summary>
         /// <param name="symbolDataParts"></param>
+        /// <param name="cancellationToken"></param>
         /// <returns></returns>
         public async Task RunAsync(IEnumerable<IEnumerable<ISymbolData>> symbolDataParts, CancellationToken? cancellationToken = default)
         {

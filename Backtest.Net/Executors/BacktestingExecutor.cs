@@ -75,15 +75,9 @@ namespace Backtest.Net.Executors
         /// </summary>
         /// <param name="eventStatus"></param>
         /// <returns></returns>
-        private bool NotifyBacktestingEvent(BacktestingEventStatus eventStatus)
+        private void NotifyBacktestingEvent(BacktestingEventStatus eventStatus)
         {
-            if (OnBacktestingEvent != null)
-            {
-                OnBacktestingEvent(eventStatus);
-                return true;
-            }
-
-            return false;
+            OnBacktestingEvent?.Invoke(eventStatus);
         }
     }
 }
