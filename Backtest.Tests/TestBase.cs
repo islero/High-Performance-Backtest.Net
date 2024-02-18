@@ -3,7 +3,6 @@ using Backtest.Net.Enums;
 using Backtest.Net.Interfaces;
 using Backtest.Net.SymbolsData;
 using Backtest.Net.Timeframes;
-using System.Text;
 
 namespace Backtest.Tests
 {
@@ -16,13 +15,13 @@ namespace Backtest.Tests
         /// Generates Fake Symbols Data for testing purposes
         /// </summary>
         /// <param name="symbols"></param>
-        /// <param name="timeframes"></param>
+        /// <param name="intervals"></param>
         /// <param name="startDate"></param>
         /// <param name="candlesCount"></param>
         /// <returns></returns>
         protected List<ISymbolData> GenerateFakeSymbolsData(List<string> symbols, List<CandlestickInterval> intervals, DateTime startDate, int candlesCount)
         {
-            List<ISymbolData> result = new List<ISymbolData>();
+            var result = new List<ISymbolData>();
 
             // --- Create symbols
             foreach (var symbol in symbols)

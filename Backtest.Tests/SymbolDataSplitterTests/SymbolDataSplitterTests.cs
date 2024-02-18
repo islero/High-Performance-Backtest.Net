@@ -1,10 +1,8 @@
 ﻿using Backtest.Net.Enums;
 using Backtest.Net.Interfaces;
 using Backtest.Net.SymbolDataSplitters;
-using Backtest.Tests;
-using Backtest.Tests.SymbolDataSplitterTests;
 
-namespace High_Performance_Backtest.Tests
+namespace Backtest.Tests.SymbolDataSplitterTests
 {
     /// <summary>
     /// Testing Symbol Data Splitter
@@ -22,11 +20,11 @@ namespace High_Performance_Backtest.Tests
             StartingDate = new DateTime(2023, 1, 1, 3, 6, 50);
             DaysPerSplit = 1;
 
-            int warmupCandlesCount = 2;
-            ISymbolDataSplitter symbolDataSplitter = new SymbolDataSplitterV1(DaysPerSplit, warmupCandlesCount, StartingDate, true);
+            const int warmupCandlesCount = 2;
+            var symbolDataSplitter = new SymbolDataSplitterV1(DaysPerSplit, warmupCandlesCount, StartingDate, true);
 
-            var generatedSymbolsData = GenerateFakeSymbolsData(new List<string> { "BTCUSDT", "ETHUSDT", "SOLUSDT" },
-                new List<CandlestickInterval> { CandlestickInterval.M5, CandlestickInterval.M15, CandlestickInterval.M30, CandlestickInterval.H1 },
+            var generatedSymbolsData = GenerateFakeSymbolsData(["BTCUSDT", "ETHUSDT", "SOLUSDT"],
+                [CandlestickInterval.M5, CandlestickInterval.M15, CandlestickInterval.M30, CandlestickInterval.H1],
                 StartingDate.AddHours(-warmupCandlesCount), 672);
 
             SplitResult = symbolDataSplitter.SplitAsync(generatedSymbolsData).Result;
@@ -106,10 +104,10 @@ namespace High_Performance_Backtest.Tests
         [Fact]
         public void TestPartialSymbolDataSequentially()
         {
-            DateTime ongoingDate = StartingDate;
+            var ongoingDate = StartingDate;
             foreach (var result in SplitResult)
             {
-                if (result == SplitResult.Last())
+                if (Equals(result, SplitResult.Last()))
                     continue;
 
                 foreach (var symbol in result)

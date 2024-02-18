@@ -5,6 +5,6 @@
     /// </summary>
     public interface ITrade
     {
-        public Task<ITradeResult> ExecuteSignal(ISignal signal);
+        public Task<ITradeResult?> ExecuteSignal(ISignal signal);
     }
 }

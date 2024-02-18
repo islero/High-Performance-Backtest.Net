@@ -8,23 +8,15 @@ namespace Backtest.Net.Engines
     /// Engine V1
     /// Prepares parts before feeding them into strategy
     /// </summary>
-    public class EngineV1 : IEngine
+    public class EngineV1(int warmupCandlesCount, ITrade trade, IStrategy strategy) : IEngine
     {
         // --- Delegates
         public Action? OnCancellationFinishedDelegate { get; set; }
 
         // --- Properties
-        protected ITrade Trade { get; set; }
-        protected IStrategy Strategy { get; set; }
-        private int WarmupCandlesCount { get; } // The amount of warmup candles count
-
-        // --- Constructors
-        public EngineV1(int warmupCandlesCount, ITrade trade, IStrategy strategy)
-        {
-            WarmupCandlesCount = warmupCandlesCount;
-            Trade = trade;
-            Strategy = strategy;
-        }
+        private ITrade Trade { get; } = trade;
+        private IStrategy Strategy { get; } = strategy;
+        private int WarmupCandlesCount { get; } = warmupCandlesCount; // The amount of warmup candles count
 
         // --- Methods
         /// <summary>
@@ -40,31 +32,35 @@ namespace Backtest.Net.Engines
                 // --- Run every symbolDataPart
                 foreach (var part in symbolDataParts)
                 {
+                    // --- Enumerating Part
+                    var partList = part.ToList();
+                    
                     // --- Main cycle
-                    while (part.All(x => x.Timeframes.First().Index < x.Timeframes.First().EndIndex))
+                    while (partList.All(x => x.Timeframes.First().Index < x.Timeframes.First().EndIndex))
                     {
-                        // --- Checking for cancelation
-                        if (cancellationToken != null && cancellationToken.Value.IsCancellationRequested)
+                        // --- Checking for cancellation
+                        if (cancellationToken is { IsCancellationRequested: true })
                             throw new OperationCanceledException();
 
                         // --- Preparing feeding data
-                        var feedingData = CloneFeedingSymbolData(part);
+                        var feedingData = CloneFeedingSymbolData(partList).ToList();
 
                         // --- Apply Open Price to OHLC for all first candles
-                        HandleOHLC(feedingData);
+                        HandleOhlc(feedingData);
 
                         // --- Strategy part
                         var signals = await Strategy.Execute(feedingData);
-                        if (signals != null && signals.Any())
+                        var signalsList = signals.ToList();
+                        if (signalsList.Count != 0)
                         {
-                            foreach (var signal in signals)
+                            foreach (var signal in signalsList)
                             {
-                                var result = await Trade.ExecuteSignal(signal);
+                                _ = await Trade.ExecuteSignal(signal);
                             }
                         }
 
                         // --- Incrementing indexes
-                        IncrementIndexes(part);
+                        IncrementIndexes(partList);
                     }
                 }
             }
@@ -81,7 +77,7 @@ namespace Backtest.Net.Engines
         /// </summary>
         /// <param name="symbolData"></param>
         /// <returns></returns>
-        protected void IncrementIndexes(IEnumerable<ISymbolData> symbolData)
+        private void IncrementIndexes(IEnumerable<ISymbolData> symbolData)
         {
             foreach (var symbol in symbolData)
             {
@@ -115,7 +111,7 @@ namespace Backtest.Net.Engines
         /// </summary>
         /// <param name="symbolData"></param>
         /// <returns></returns>
-        protected IEnumerable<ISymbolData> CloneFeedingSymbolData(IEnumerable<ISymbolData> symbolData)
+        private IEnumerable<ISymbolData> CloneFeedingSymbolData(IEnumerable<ISymbolData> symbolData)
         {
             IEnumerable<ISymbolData> clonedSymbolsData = new List<ISymbolData>();
             foreach (var symbol in symbolData)
@@ -124,8 +120,12 @@ namespace Backtest.Net.Engines
 
                 foreach (var timeframe in symbol.Timeframes)
                 {
-                    int warmedUpIndex = timeframe.Index - WarmupCandlesCount > timeframe.StartIndex ? timeframe.Index - WarmupCandlesCount : timeframe.StartIndex;
-                    IEnumerable<ICandlestick> clonedCandlesticks = timeframe.Candlesticks.Take(warmedUpIndex..(timeframe.Index + 1)).OrderByDescending(x => x.OpenTime).Select(candle => candle.Clone());
+                    var warmedUpIndex = timeframe.Index - WarmupCandlesCount > timeframe.StartIndex
+                        ? timeframe.Index - WarmupCandlesCount
+                        : timeframe.StartIndex;
+                    var clonedCandlesticks = timeframe.Candlesticks
+                        .Take(warmedUpIndex..(timeframe.Index + 1)).OrderByDescending(x => x.OpenTime)
+                        .Select(candle => candle.Clone());
 
                     // --- No need to add nothing more except interval and candles themself
                     timeframes = timeframes.Append(new TimeframeV1()
@@ -144,6 +144,7 @@ namespace Backtest.Net.Engines
 
                 clonedSymbolsData = clonedSymbolsData.Append(cloned);
             }
+
             return clonedSymbolsData;
         }
 
@@ -152,33 +153,31 @@ namespace Backtest.Net.Engines
         /// </summary>
         /// <param name="symbolData"></param>
         /// <returns></returns>
-        protected void HandleOHLC(IEnumerable<ISymbolData> symbolData)
+        private static void HandleOhlc(IEnumerable<ISymbolData> symbolData)
         {
             foreach (var symbol in symbolData)
             {
                 var firstTimeframe = symbol.Timeframes.FirstOrDefault();
-                if (firstTimeframe != null)
-                {
-                    var firstTimeframeCandle = firstTimeframe.Candlesticks.FirstOrDefault();
-                    if (firstTimeframeCandle != null)
-                    {
-                        foreach (var timeframe in symbol.Timeframes)
-                        {
-                            var candleSticks = timeframe.Candlesticks.ToList();
-                            var firstCandle = candleSticks.FirstOrDefault();
-                            if (firstCandle != null)
-                            {
-                                firstCandle.Open = firstTimeframeCandle.Open;
-                                firstCandle.High = firstTimeframeCandle.Open;
-                                firstCandle.Low = firstTimeframeCandle.Open;
-                                firstCandle.Close = firstTimeframeCandle.Open;
-                                firstCandle.CloseTime = firstTimeframeCandle.OpenTime;
-                            }
 
-                            // Assign the modified list back to the enumerable
-                            timeframe.Candlesticks = candleSticks;
-                        }
+                // --- Using null propagation and getting first candle
+                var firstTimeframeCandle = firstTimeframe?.Candlesticks.FirstOrDefault();
+                if (firstTimeframeCandle == null) continue;
+                
+                foreach (var timeframe in symbol.Timeframes)
+                {
+                    var candleSticks = timeframe.Candlesticks.ToList();
+                    var firstCandle = candleSticks.FirstOrDefault();
+                    if (firstCandle != null)
+                    {
+                        firstCandle.Open = firstTimeframeCandle.Open;
+                        firstCandle.High = firstTimeframeCandle.Open;
+                        firstCandle.Low = firstTimeframeCandle.Open;
+                        firstCandle.Close = firstTimeframeCandle.Open;
+                        firstCandle.CloseTime = firstTimeframeCandle.OpenTime;
                     }
+
+                    // Assign the modified list back to the enumerable
+                    timeframe.Candlesticks = candleSticks;
                 }
             }
         }
