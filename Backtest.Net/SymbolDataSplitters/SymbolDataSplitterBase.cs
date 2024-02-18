@@ -1,29 +1,22 @@
 ﻿using Backtest.Net.Enums;
 using Backtest.Net.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Backtest.Net.SymbolDataSplitters
 {
-    public abstract class SymbolDataSplitterBase : ISymbolDataSplitter
+    public abstract class SymbolDataSplitterBase(
+        int daysPerSplit,
+        int warmupCandlesCount,
+        DateTime backtestingStartDateTime,
+        CandlestickInterval? warmupTimeframe = null)
+        : ISymbolDataSplitter
     {
         // --- Properties
-        public CandlestickInterval? WarmupTimeframe { get; protected set; } // The timeframe must be warmed up and all lower timeframes accordingly, if null - will be set automatically
-        protected int DaysPerSplit { get; } // How many days in one split range should exist
-        protected int WarmupCandlesCount { get; } // The amount of warmup candles count
-        protected DateTime BacktestingStartDateTime { get; } // Backtesting Start DateTime
+        protected CandlestickInterval? WarmupTimeframe { get; set; } = warmupTimeframe; // The timeframe must be warmed up and all lower timeframes accordingly, if null - will be set automatically
+        protected int DaysPerSplit { get; } = daysPerSplit; // How many days in one split range should exist
+        private int WarmupCandlesCount { get; } = warmupCandlesCount; // The amount of warmup candles count
+        protected DateTime BacktestingStartDateTime { get; } = backtestingStartDateTime; // Backtesting Start DateTime
         
         // --- Constructors
-        public SymbolDataSplitterBase(int daysPerSplit, int warmupCandlesCount, DateTime backtestingStartDateTime, CandlestickInterval? warmupTimeframe = null)
-        {
-            DaysPerSplit = daysPerSplit;
-            WarmupCandlesCount = warmupCandlesCount;
-            BacktestingStartDateTime = backtestingStartDateTime;
-            WarmupTimeframe = warmupTimeframe;
-        }
 
         // --- Methods
         public abstract Task<IEnumerable<IEnumerable<ISymbolData>>> SplitAsync(IEnumerable<ISymbolData> symbolsData);
@@ -31,7 +24,8 @@ namespace Backtest.Net.SymbolDataSplitters
         /// <summary>
         /// Returns the candlestick index of the targetDateTime by candle OpenTime, or -1 if the index wasn't found
         /// </summary>
-        /// <param name="timeframe"></param>
+        /// <param name="candlesticks"></param>
+        /// <param name="targetDateTime"></param>
         /// <returns></returns>
         protected int GetCandlesticksIndexByOpenTime(IEnumerable<ICandlestick> candlesticks, DateTime targetDateTime)
         {
@@ -42,7 +36,8 @@ namespace Backtest.Net.SymbolDataSplitters
         /// <summary>
         /// Returns the candlestick index of the targetDateTime by candle CloseTime, or -1 if the index wasn't found
         /// </summary>
-        /// <param name="timeframe"></param>
+        /// <param name="candlesticks"></param>
+        /// <param name="targetDateTime"></param>
         /// <returns></returns>
         protected int GetCandlesticksIndexByCloseTime(IEnumerable<ICandlestick> candlesticks, DateTime targetDateTime)
         {
@@ -80,9 +75,10 @@ namespace Backtest.Net.SymbolDataSplitters
                 return WarmupTimeframe.Value;
 
             // --- Setting the lowest symbolsData timeframe
-            CandlestickInterval potentialWarmupTimeframe = symbolsData.Min(x => x.Timeframes.Min(y => y.Timeframe));
+            var symbolDataList = symbolsData.ToList();
+            var potentialWarmupTimeframe = symbolDataList.Min(x => x.Timeframes.Min(y => y.Timeframe));
 
-            foreach (ISymbolData symbol in symbolsData)
+            foreach (var symbol in symbolDataList)
             {
                 foreach (var timeframe in symbol.Timeframes)
                 {
@@ -90,15 +86,15 @@ namespace Backtest.Net.SymbolDataSplitters
                     if (timeframe.Timeframe <= potentialWarmupTimeframe)
                         continue;
 
-                    if (timeframe.Candlesticks.Count() > WarmupCandlesCount)
-                    {
-                        DateTime warmupCandlesCountDate = timeframe.Candlesticks.ElementAt(WarmupCandlesCount).OpenTime;
+                    // --- Count Validation
+                    if (timeframe.Candlesticks.Count() <= WarmupCandlesCount) continue;
+                    
+                    var warmupCandlesCountDate = timeframe.Candlesticks.ElementAt(WarmupCandlesCount).OpenTime;
 
-                        // --- Checking if warming up by using this timeframe will not exceed backtesting start date time
-                        if (warmupCandlesCountDate < BacktestingStartDateTime && timeframe.Timeframe > potentialWarmupTimeframe)
-                        {
-                            potentialWarmupTimeframe = timeframe.Timeframe;
-                        }
+                    // --- Checking if warming up by using this timeframe will not exceed backtesting start date time
+                    if (warmupCandlesCountDate < BacktestingStartDateTime && timeframe.Timeframe > potentialWarmupTimeframe)
+                    {
+                        potentialWarmupTimeframe = timeframe.Timeframe;
                     }
                 }
             }
@@ -158,15 +154,17 @@ namespace Backtest.Net.SymbolDataSplitters
         /// <returns></returns>
         protected bool IsThereSymbolTimeframeDuplicates(IEnumerable<ISymbolData> symbolsData)
         {
-            bool symbolDuplicatesExist = symbolsData.GroupBy(x => x.Symbol).Any(symbol => symbol.Count() > 1);
+            var symbolDataList = symbolsData.ToList();
+            var symbolDuplicatesExist = symbolDataList.GroupBy(x => x.Symbol).Any(symbol => symbol.Count() > 1);
             var timeframeDuplicatesExist = false;
-            foreach (var symbol in symbolsData)
+            foreach (var symbol in symbolDataList)
             {
-                if (!timeframeDuplicatesExist)
-                {
-                    timeframeDuplicatesExist = symbol.Timeframes.GroupBy(timeframe => timeframe.Timeframe).Any(interval => interval.Count() > 1);
-                    break;
-                }
+                // Validating
+                if (timeframeDuplicatesExist) continue;
+
+                timeframeDuplicatesExist = symbol.Timeframes.GroupBy(timeframe => timeframe.Timeframe)
+                    .Any(interval => interval.Count() > 1);
+                break;
             }
 
             return symbolDuplicatesExist || timeframeDuplicatesExist;
