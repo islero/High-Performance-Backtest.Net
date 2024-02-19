@@ -1,4 +1,5 @@
-﻿using Backtest.Net.Interfaces;
+﻿using System.Collections.Concurrent;
+using Backtest.Net.Interfaces;
 using Backtest.Net.SymbolsData;
 using Backtest.Net.Timeframes;
 
@@ -43,13 +44,16 @@ namespace Backtest.Net.Engines
                             throw new OperationCanceledException();
 
                         // --- Preparing feeding data
-                        var feedingData = CloneFeedingSymbolData(partList).ToList();
+                        var feedingData = await CloneFeedingSymbolData(partList);
 
+                        // --- Enumerating Feeding Data
+                        var feedingDataList = feedingData.ToList();
+                        
                         // --- Apply Open Price to OHLC for all first candles
-                        HandleOhlc(feedingData);
+                        await HandleOhlc(feedingDataList);
 
                         // --- Strategy part
-                        var signals = await Strategy.Execute(feedingData);
+                        var signals = await Strategy.Execute(feedingDataList);
                         var signalsList = signals.ToList();
                         if (signalsList.Count != 0)
                         {
@@ -67,8 +71,7 @@ namespace Backtest.Net.Engines
             catch (OperationCanceledException)
             {
                 // --- Cancellation been requested and executed
-                if (OnCancellationFinishedDelegate != null)
-                    OnCancellationFinishedDelegate();
+                OnCancellationFinishedDelegate?.Invoke();
             }
         }
 
@@ -107,18 +110,24 @@ namespace Backtest.Net.Engines
         }
 
         /// <summary>
+        /// Field for allocated ISymbolData to clone it
+        /// </summary>
+        private readonly ConcurrentQueue<ISymbolData> _clonedSymbolsData = new();
+        
+        /// <summary>
         /// Cloning necessary symbol data range
         /// </summary>
         /// <param name="symbolData"></param>
         /// <returns></returns>
-        private IEnumerable<ISymbolData> CloneFeedingSymbolData(IEnumerable<ISymbolData> symbolData)
+        private async Task<IEnumerable<ISymbolData>> CloneFeedingSymbolData(IEnumerable<ISymbolData> symbolData)
         {
-            IEnumerable<ISymbolData> clonedSymbolsData = new List<ISymbolData>();
-            foreach (var symbol in symbolData)
+            _clonedSymbolsData.Clear();
+            
+            await Parallel.ForEachAsync(symbolData, new ParallelOptions(), async (symbol, _) =>
             {
-                IEnumerable<ITimeframe> timeframes = new List<TimeframeV1>();
+                var timeframes = new ConcurrentQueue<TimeframeV1>();
 
-                foreach (var timeframe in symbol.Timeframes)
+                await Parallel.ForEachAsync(symbol.Timeframes, new ParallelOptions(), (timeframe, _) =>
                 {
                     var warmedUpIndex = timeframe.Index - WarmupCandlesCount > timeframe.StartIndex
                         ? timeframe.Index - WarmupCandlesCount
@@ -128,13 +137,15 @@ namespace Backtest.Net.Engines
                         .Select(candle => candle.Clone());
 
                     // --- No need to add nothing more except interval and candles themself
-                    timeframes = timeframes.Append(new TimeframeV1()
+                    timeframes.Enqueue(new TimeframeV1()
                     {
                         Timeframe = timeframe.Timeframe,
                         Candlesticks = clonedCandlesticks
                     });
-                }
-
+                    
+                    return ValueTask.CompletedTask;
+                });
+                
                 // Create a new symbol data with cloned candlesticks
                 ISymbolData cloned = new SymbolDataV1()
                 {
@@ -142,10 +153,10 @@ namespace Backtest.Net.Engines
                     Timeframes = timeframes,
                 };
 
-                clonedSymbolsData = clonedSymbolsData.Append(cloned);
-            }
+                _clonedSymbolsData.Enqueue(cloned);
+            });
 
-            return clonedSymbolsData;
+            return _clonedSymbolsData;
         }
 
         /// <summary>
@@ -153,9 +164,36 @@ namespace Backtest.Net.Engines
         /// </summary>
         /// <param name="symbolData"></param>
         /// <returns></returns>
-        private static void HandleOhlc(IEnumerable<ISymbolData> symbolData)
+        private static async Task HandleOhlc(IEnumerable<ISymbolData> symbolData)
         {
-            foreach (var symbol in symbolData)
+            await Parallel.ForEachAsync(symbolData, new ParallelOptions(), (symbol, _) =>
+            {
+                var firstTimeframe = symbol.Timeframes.FirstOrDefault();
+
+                // --- Using null propagation and getting first candle
+                var firstTimeframeCandle = firstTimeframe?.Candlesticks.FirstOrDefault();
+                if (firstTimeframeCandle == null) return default;
+                
+                foreach (var timeframe in symbol.Timeframes)
+                {
+                    var candleSticks = timeframe.Candlesticks.ToList();
+                    var firstCandle = candleSticks.FirstOrDefault();
+                    if (firstCandle != null)
+                    {
+                        firstCandle.Open = firstTimeframeCandle.Open;
+                        firstCandle.High = firstTimeframeCandle.Open;
+                        firstCandle.Low = firstTimeframeCandle.Open;
+                        firstCandle.Close = firstTimeframeCandle.Open;
+                        firstCandle.CloseTime = firstTimeframeCandle.OpenTime;
+                    }
+
+                    // Assign the modified list back to the enumerable
+                    timeframe.Candlesticks = candleSticks;
+                }
+
+                return default;
+            });
+            /*foreach (var symbol in symbolData)
             {
                 var firstTimeframe = symbol.Timeframes.FirstOrDefault();
 
@@ -179,7 +217,7 @@ namespace Backtest.Net.Engines
                     // Assign the modified list back to the enumerable
                     timeframe.Candlesticks = candleSticks;
                 }
-            }
+            }*/
         }
     }
 }
