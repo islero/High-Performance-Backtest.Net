@@ -45,11 +45,25 @@ namespace Backtest.Net.SymbolDataSplitters
             
             // --- Checking if splitting is enabled
             if(DaysPerSplit <= 0)
+            {
+                foreach (var symbol in symbolsData)
+                {
+                    foreach (var timeframe in symbol.Timeframes)
+                    {
+                        // --- Setting indexes without adjusting
+                        timeframe.Index =
+                            GetCandlesticksIndexByOpenTime(timeframe.Candlesticks, BacktestingStartDateTime);
+                        timeframe.StartIndex = GetWarmupCandlestickIndex(timeframe.Index);
+
+                        // --- Calculating EndIndex
+                        timeframe.EndIndex = timeframe.Candlesticks.Count() - 1;
+                    }
+                }
                 return Task.FromResult(splitSymbolsData.Append(symbolsData));
+            }
 
             // --- Getting correct warmup timeframe
             WarmupTimeframe = GetWarmupTimeframe(symbolsDataList);
-
 
             var ongoingBacktestingTime = BacktestingStartDateTime;
             while (!AreAllSymbolDataReachedHistoryEnd(symbolsDataList))
