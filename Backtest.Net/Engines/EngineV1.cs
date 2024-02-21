@@ -64,7 +64,7 @@ namespace Backtest.Net.Engines
                         }
 
                         // --- Incrementing indexes
-                        IncrementIndexes(partList);
+                        await IncrementIndexes(partList);
                     }
                 }
             }
@@ -80,12 +80,12 @@ namespace Backtest.Net.Engines
         /// </summary>
         /// <param name="symbolData"></param>
         /// <returns></returns>
-        private void IncrementIndexes(IEnumerable<ISymbolData> symbolData)
+        private static async Task IncrementIndexes(IEnumerable<ISymbolData> symbolData)
         {
-            foreach (var symbol in symbolData)
+            await Parallel.ForEachAsync(symbolData, new ParallelOptions(), async (symbol, _) =>
             {
-                DateTime lowestTimeframeIndexTime = DateTime.MinValue;
-                foreach (var timeframe in symbol.Timeframes)
+                var lowestTimeframeIndexTime = DateTime.MinValue;
+                await Parallel.ForEachAsync(symbol.Timeframes, new ParallelOptions(), (timeframe, _) =>
                 {
                     // Handling the lowest timeframe
                     if (timeframe == symbol.Timeframes.First())
@@ -96,17 +96,20 @@ namespace Backtest.Net.Engines
                             lowestTimeframeIndexTime = timeframe.Candlesticks.ElementAt(timeframe.Index).OpenTime;
                         }
 
-                        continue;
+                        return default;
                     }
 
                     // Handling higher timeframes
-                    DateTime closeTime = timeframe.Candlesticks.ElementAt(timeframe.Index).CloseTime;
-                    if (lowestTimeframeIndexTime < closeTime && timeframe.Index >= timeframe.StartIndex && timeframe.Index < timeframe.EndIndex)
+                    var closeTime = timeframe.Candlesticks.ElementAt(timeframe.Index).CloseTime;
+                    if (lowestTimeframeIndexTime < closeTime && timeframe.Index >= timeframe.StartIndex &&
+                        timeframe.Index < timeframe.EndIndex)
                     {
                         timeframe.Index++;
                     }
-                }
-            }
+
+                    return default;
+                });
+            });
         }
 
         /// <summary>
@@ -193,31 +196,6 @@ namespace Backtest.Net.Engines
 
                 return default;
             });
-            /*foreach (var symbol in symbolData)
-            {
-                var firstTimeframe = symbol.Timeframes.FirstOrDefault();
-
-                // --- Using null propagation and getting first candle
-                var firstTimeframeCandle = firstTimeframe?.Candlesticks.FirstOrDefault();
-                if (firstTimeframeCandle == null) continue;
-                
-                foreach (var timeframe in symbol.Timeframes)
-                {
-                    var candleSticks = timeframe.Candlesticks.ToList();
-                    var firstCandle = candleSticks.FirstOrDefault();
-                    if (firstCandle != null)
-                    {
-                        firstCandle.Open = firstTimeframeCandle.Open;
-                        firstCandle.High = firstTimeframeCandle.Open;
-                        firstCandle.Low = firstTimeframeCandle.Open;
-                        firstCandle.Close = firstTimeframeCandle.Open;
-                        firstCandle.CloseTime = firstTimeframeCandle.OpenTime;
-                    }
-
-                    // Assign the modified list back to the enumerable
-                    timeframe.Candlesticks = candleSticks;
-                }
-            }*/
         }
     }
 }

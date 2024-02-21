@@ -67,7 +67,7 @@ namespace Backtest.Net.SymbolDataSplitters
                     }
 
                     // --- Creating new symbol data
-                    ISymbolData symbolDataPart = new SymbolDataV1()
+                    ISymbolData symbolDataPart = new SymbolDataV1
                     {
                         Symbol = symbol.Symbol
                     };
