@@ -8,9 +8,9 @@
     <Platforms>AnyCPU</Platforms>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <FileVersion>1.0.0.0</FileVersion>
-    <Version>0.0.8</Version>
+    <Version>0.0.9</Version>
     <RepositoryUrl>https://github.com/islero/High-Performance-Backtest.Net</RepositoryUrl>
-    <Description>Made HandleOhlc Parallel</Description>
+    <Description>Implemented DaysPerSplit &lt;= 0 means no splitting</Description>
     <PackageReleaseNotes>Implemented Backtesting Executor, release candidate</PackageReleaseNotes>
     <Configurations>Release;Debug</Configurations>
   </PropertyGroup>

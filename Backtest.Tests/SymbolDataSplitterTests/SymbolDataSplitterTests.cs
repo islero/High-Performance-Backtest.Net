@@ -127,5 +127,26 @@ namespace Backtest.Tests.SymbolDataSplitterTests
                 ongoingDate = ongoingDate.AddDays(DaysPerSplit);
             }
         }
+        
+        /// <summary>
+        /// Testing that DaysPerSplit <= 0 will not split the symbols data at all and return 1 element
+        /// </summary>
+        [Fact]
+        public void TestDaysPerSplitZeroOrLessMeansNoSplitting()
+        {
+            StartingDate = new DateTime(2023, 1, 1, 3, 6, 50);
+            DaysPerSplit = 0;
+
+            const int warmupCandlesCount = 2;
+            var symbolDataSplitter = new SymbolDataSplitterV1(DaysPerSplit, warmupCandlesCount, StartingDate, true);
+
+            var generatedSymbolsData = GenerateFakeSymbolsData(["BTCUSDT", "ETHUSDT", "SOLUSDT"],
+                [CandlestickInterval.M5, CandlestickInterval.M15, CandlestickInterval.M30, CandlestickInterval.H1],
+                StartingDate.AddHours(-warmupCandlesCount), 672);
+
+            SplitResult = symbolDataSplitter.SplitAsync(generatedSymbolsData).Result;
+            
+            Assert.Single(SplitResult);
+        }
     }
 }
