@@ -39,11 +39,17 @@ namespace Backtest.Net.SymbolDataSplitters
             // --- Symbol or timeframe duplicates validation
             if (IsThereSymbolTimeframeDuplicates(symbolsDataList))
                 throw new Exception("symbolsData contain duplicated symbols or timeframes");
+            
+            // --- Creating Result Split Symbols Data
+            IEnumerable<IEnumerable<ISymbolData>> splitSymbolsData = new List<IEnumerable<ISymbolData>>();
+            
+            // --- Checking if splitting is enabled
+            if(DaysPerSplit <= 0)
+                return Task.FromResult(splitSymbolsData.Append(symbolsData));
 
             // --- Getting correct warmup timeframe
             WarmupTimeframe = GetWarmupTimeframe(symbolsDataList);
 
-            IEnumerable<IEnumerable<ISymbolData>> splitSymbolsData = new List<IEnumerable<ISymbolData>>();
 
             var ongoingBacktestingTime = BacktestingStartDateTime;
             while (!AreAllSymbolDataReachedHistoryEnd(symbolsDataList))
@@ -142,7 +148,7 @@ namespace Backtest.Net.SymbolDataSplitters
                 }
 
                 // --- Append symbolsDataPart if it contain any record
-                if (symbolsDataPart.Any())
+                if (symbolsDataPart.Count != 0)
                     splitSymbolsData = splitSymbolsData.Append(symbolsDataPart);
             }
 
