@@ -171,24 +171,26 @@ namespace Backtest.Net.Engines
         {
             await Parallel.ForEachAsync(symbolData, new ParallelOptions(), (symbol, _) =>
             {
-                var firstTimeframe = symbol.Timeframes.FirstOrDefault();
+                // --- Enumerating symbol timeframes to list
+                var timeframesList = symbol.Timeframes.ToList();
+                
+                // --- Getting First Timeframe from the list
+                var firstTimeframe = timeframesList.First();
 
                 // --- Using null propagation and getting first candle
-                var firstTimeframeCandle = firstTimeframe?.Candlesticks.FirstOrDefault();
-                if (firstTimeframeCandle == null) return default;
+                var firstTimeframeCandle = firstTimeframe.Candlesticks.First();
                 
-                foreach (var timeframe in symbol.Timeframes)
+                foreach (var timeframe in timeframesList)
                 {
                     var candleSticks = timeframe.Candlesticks.ToList();
-                    var firstCandle = candleSticks.FirstOrDefault();
-                    if (firstCandle != null)
-                    {
-                        firstCandle.Open = firstTimeframeCandle.Open;
-                        firstCandle.High = firstTimeframeCandle.Open;
-                        firstCandle.Low = firstTimeframeCandle.Open;
-                        firstCandle.Close = firstTimeframeCandle.Open;
-                        firstCandle.CloseTime = firstTimeframeCandle.OpenTime;
-                    }
+                    var firstCandle = candleSticks.First();
+                    
+                    // Applying OHLC value as lowest timeframe open price and close time as open time
+                    firstCandle.Open = firstTimeframeCandle.Open;
+                    firstCandle.High = firstTimeframeCandle.Open;
+                    firstCandle.Low = firstTimeframeCandle.Open;
+                    firstCandle.Close = firstTimeframeCandle.Open;
+                    firstCandle.CloseTime = firstTimeframeCandle.OpenTime;
 
                     // Assign the modified list back to the enumerable
                     timeframe.Candlesticks = candleSticks;
