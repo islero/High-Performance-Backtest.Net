@@ -82,33 +82,38 @@ namespace Backtest.Net.Engines
             await Parallel.ForEachAsync(symbolData, new ParallelOptions(), async (symbol, _) =>
             {
                 var lowestTimeframeIndexTime = DateTime.MinValue;
-                await Parallel.ForEachAsync(symbol.Timeframes, new ParallelOptions(), (timeframe, _) =>
+
+                // Enumerating timeframes as array
+                var timeframesArray = symbol.Timeframes.ToArray();
+                
+                //await Parallel.ForEachAsync(symbol.Timeframes, new ParallelOptions(), (timeframe, _) =>
+                for(var i = 0; i < timeframesArray.Length; i++)
                 {
                     // Creating array of candlesticks
-                    var candlesticksArray = timeframe.Candlesticks.ToArray();
+                    var candlesticksArray = timeframesArray[i].Candlesticks.ToArray();
                     
                     // Handling the lowest timeframe
-                    if (timeframe == symbol.Timeframes.First())
+                    if (timeframesArray[i] == symbol.Timeframes.First())
                     {
-                        if (timeframe.Index >= timeframe.StartIndex && timeframe.Index < timeframe.EndIndex)
+                        if (timeframesArray[i].Index >= timeframesArray[i].StartIndex && timeframesArray[i].Index < timeframesArray[i].EndIndex)
                         {
-                            timeframe.Index++;
-                            lowestTimeframeIndexTime = candlesticksArray[timeframe.Index].OpenTime;
+                            timeframesArray[i].Index++;
+                            lowestTimeframeIndexTime = candlesticksArray[timeframesArray[i].Index].OpenTime;
                         }
 
-                        return default;
+                        break;
                     }
 
                     // Handling higher timeframes
-                    var closeTime = candlesticksArray[timeframe.Index].CloseTime;
-                    if (lowestTimeframeIndexTime < closeTime && timeframe.Index >= timeframe.StartIndex &&
-                        timeframe.Index < timeframe.EndIndex)
+                    var closeTime = candlesticksArray[timeframesArray[i].Index].CloseTime;
+                    if (lowestTimeframeIndexTime < closeTime && timeframesArray[i].Index >= timeframesArray[i].StartIndex &&
+                        timeframesArray[i].Index < timeframesArray[i].EndIndex)
                     {
-                        timeframe.Index++;
+                        timeframesArray[i].Index++;
                     }
 
-                    return default;
-                });
+                    break;
+                }
             });
         }
 

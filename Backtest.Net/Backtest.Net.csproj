@@ -8,9 +8,9 @@
     <Platforms>AnyCPU</Platforms>
     <AssemblyVersion>1.0.8.0</AssemblyVersion>
     <FileVersion>1.0.8.0</FileVersion>
-    <Version>1.0.8</Version>
+    <Version>1.0.9</Version>
     <RepositoryUrl>https://github.com/islero/High-Performance-Backtest.Net</RepositoryUrl>
-    <Description>Made Improvements to EngineV3</Description>
+    <Description>Seems like I fixed an issue</Description>
     <PackageReleaseNotes>Implemented Backtesting Executor, release candidate</PackageReleaseNotes>
     <Configurations>Release;Debug</Configurations>
   </PropertyGroup>
