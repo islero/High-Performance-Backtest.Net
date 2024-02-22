@@ -129,12 +129,13 @@ namespace Backtest.Net.Engines
         private async Task<IEnumerable<ISymbolData>> CloneFeedingSymbolData(IEnumerable<ISymbolData> symbolData)
         {
             _clonedSymbolsData.Clear();
-            
-            await Parallel.ForEachAsync(symbolData, new ParallelOptions(), async (symbol, _) =>
+
+            await Parallel.ForEachAsync(symbolData, new ParallelOptions(), (symbol, _) =>
             {
                 var timeframes = new ConcurrentQueue<TimeframeV1>();
 
-                await Parallel.ForEachAsync(symbol.Timeframes, new ParallelOptions(), (timeframe, _) =>
+                //await Parallel.ForEachAsync(symbol.Timeframes, new ParallelOptions(), (timeframe, _) =>
+                foreach (var timeframe in symbol.Timeframes)
                 {
                     var warmedUpIndex = timeframe.Index - WarmupCandlesCount > timeframe.StartIndex
                         ? timeframe.Index - WarmupCandlesCount
@@ -149,10 +150,8 @@ namespace Backtest.Net.Engines
                         Timeframe = timeframe.Timeframe,
                         Candlesticks = clonedCandlesticks
                     });
-                    
-                    return ValueTask.CompletedTask;
-                });
-                
+                }
+
                 // Create a new symbol data with cloned candlesticks
                 ISymbolData cloned = new SymbolDataV1()
                 {
@@ -161,6 +160,7 @@ namespace Backtest.Net.Engines
                 };
 
                 _clonedSymbolsData.Enqueue(cloned);
+                return ValueTask.CompletedTask;
             });
 
             return _clonedSymbolsData;
