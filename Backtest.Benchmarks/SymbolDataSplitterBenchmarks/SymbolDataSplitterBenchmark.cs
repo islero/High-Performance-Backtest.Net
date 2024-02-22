@@ -15,7 +15,7 @@ namespace Backtest.Benchmarks.SymbolDataSplitterBenchmarks
     public class SymbolDataSplitterBenchmark
     {
         // --- Fields
-        List<ISymbolData>? generatedSymbolsData;
+        private List<ISymbolData>? GeneratedSymbolsData { get; set; }
 
         // --- Properties
         private DateTime StartingDate { get; set; }
@@ -30,8 +30,8 @@ namespace Backtest.Benchmarks.SymbolDataSplitterBenchmarks
             DaysPerSplit = 1;
             WarmupCandlesCount = 2;
 
-            generatedSymbolsData = GenerateFakeSymbolsData(new List<string> { "BTCUSDT", "ETHUSDT" },
-                new List<CandlestickInterval> { CandlestickInterval.M5, CandlestickInterval.M15, CandlestickInterval.H1, CandlestickInterval.D1 },
+            GeneratedSymbolsData = GenerateFakeSymbolsData(["BTCUSDT"],
+                [CandlestickInterval.M5, CandlestickInterval.M15, CandlestickInterval.H1, CandlestickInterval.D1],
                 StartingDate.AddHours(-WarmupCandlesCount), 10000);
         }
 
@@ -41,7 +41,7 @@ namespace Backtest.Benchmarks.SymbolDataSplitterBenchmarks
         {
             ISymbolDataSplitter symbolDataSplitter = new SymbolDataSplitterV1(DaysPerSplit, WarmupCandlesCount, StartingDate, true);
 
-            var result = await symbolDataSplitter.SplitAsync(generatedSymbolsData!);
+            var result = await symbolDataSplitter.SplitAsync(GeneratedSymbolsData!);
         }
 
         [Benchmark]
@@ -49,7 +49,7 @@ namespace Backtest.Benchmarks.SymbolDataSplitterBenchmarks
         {
             ISymbolDataSplitter symbolDataSplitter = new SymbolDataSplitterV1_Experiment(DaysPerSplit, WarmupCandlesCount, StartingDate, true);
 
-            var result = await symbolDataSplitter.SplitAsync(generatedSymbolsData!);
+            var result = await symbolDataSplitter.SplitAsync(GeneratedSymbolsData!);
         }
 
         [Benchmark]
@@ -57,7 +57,7 @@ namespace Backtest.Benchmarks.SymbolDataSplitterBenchmarks
         {
             ISymbolDataSplitter symbolDataSplitter = new SymbolDataSplitterV1(DaysPerSplit, WarmupCandlesCount, StartingDate, false);
 
-            var result = await symbolDataSplitter.SplitAsync(generatedSymbolsData!);
+            var result = await symbolDataSplitter.SplitAsync(GeneratedSymbolsData!);
         }
 
         // --- Methods
@@ -65,11 +65,11 @@ namespace Backtest.Benchmarks.SymbolDataSplitterBenchmarks
         /// Generates Fake Symbols Data for testing purposes
         /// </summary>
         /// <param name="symbols"></param>
-        /// <param name="timeframes"></param>
+        /// <param name="intervals"></param>
         /// <param name="startDate"></param>
         /// <param name="candlesCount"></param>
         /// <returns></returns>
-        protected List<ISymbolData> GenerateFakeSymbolsData(List<string> symbols, List<CandlestickInterval> intervals, DateTime startDate, int candlesCount)
+        public static List<ISymbolData> GenerateFakeSymbolsData(List<string> symbols, List<CandlestickInterval> intervals, DateTime startDate, int candlesCount)
         {
             List<ISymbolData> result = new List<ISymbolData>();
 
