@@ -80,12 +80,18 @@ namespace Backtest.Net.Engines
         /// </summary>
         /// <param name="symbolData"></param>
         /// <returns></returns>
+        /// <summary>
+        /// Increment Symbol Data indexes
+        /// </summary>
+        /// <param name="symbolData"></param>
+        /// <returns></returns>
         private static async Task IncrementIndexes(IEnumerable<ISymbolData> symbolData)
         {
-            await Parallel.ForEachAsync(symbolData, new ParallelOptions(), async (symbol, _) =>
+            //foreach (var symbol in symbolData)
+            await Parallel.ForEachAsync(symbolData, new ParallelOptions(), (symbol, _) =>
             {
                 var lowestTimeframeIndexTime = DateTime.MinValue;
-                await Parallel.ForEachAsync(symbol.Timeframes, new ParallelOptions(), (timeframe, _) =>
+                foreach (var timeframe in symbol.Timeframes)
                 {
                     // Handling the lowest timeframe
                     if (timeframe == symbol.Timeframes.First())
@@ -96,7 +102,7 @@ namespace Backtest.Net.Engines
                             lowestTimeframeIndexTime = timeframe.Candlesticks.ElementAt(timeframe.Index).OpenTime;
                         }
 
-                        return default;
+                        continue;
                     }
 
                     // Handling higher timeframes
@@ -106,9 +112,9 @@ namespace Backtest.Net.Engines
                     {
                         timeframe.Index++;
                     }
+                }
 
-                    return default;
-                });
+                return ValueTask.CompletedTask;
             });
         }
 
