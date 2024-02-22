@@ -6,10 +6,10 @@ using Backtest.Net.Timeframes;
 namespace Backtest.Net.Engines
 {
     /// <summary>
-    /// Engine V2
+    /// Engine V3
     /// Prepares parts before feeding them into strategy
     /// </summary>
-    public class EngineV2(int warmupCandlesCount, ITrade trade, IStrategy strategy) : IEngine
+    public class EngineV3(int warmupCandlesCount, ITrade trade, IStrategy strategy) : IEngine
     {
         // --- Delegates
         public Action? OnCancellationFinishedDelegate { get; set; }
@@ -33,27 +33,21 @@ namespace Backtest.Net.Engines
                 // --- Run every symbolDataPart
                 foreach (var part in symbolDataParts)
                 {
-                    // --- Enumerating Part
-                    var partList = part;
-                    
                     // --- Main cycle
-                    while (partList.All(x => x.Timeframes.First().Index < x.Timeframes.First().EndIndex))
+                    while (part.All(x => x.Timeframes.First().Index < x.Timeframes.First().EndIndex))
                     {
                         // --- Checking for cancellation
                         if (cancellationToken is { IsCancellationRequested: true })
                             throw new OperationCanceledException();
 
                         // --- Preparing feeding data
-                        var feedingData = await CloneFeedingSymbolData(partList);
+                        var feedingData = await CloneFeedingSymbolData(part);
 
-                        // --- Enumerating Feeding Data
-                        var feedingDataList = feedingData;
-                        
                         // --- Apply Open Price to OHLC for all first candles
-                        await HandleOhlc(feedingDataList);
+                        await HandleOhlc(feedingData);
 
                         // --- Strategy part
-                        var signals = await Strategy.Execute(feedingDataList);
+                        var signals = await Strategy.Execute(feedingData);
                         var signalsList = signals;
                         if (signalsList.Any())
                         {
@@ -67,7 +61,7 @@ namespace Backtest.Net.Engines
                         _clonedSymbolsData.Clear();
                         
                         // --- Incrementing indexes
-                        await IncrementIndexes(partList);
+                        await IncrementIndexes(part);
                     }
                 }
             }
@@ -90,20 +84,23 @@ namespace Backtest.Net.Engines
                 var lowestTimeframeIndexTime = DateTime.MinValue;
                 await Parallel.ForEachAsync(symbol.Timeframes, new ParallelOptions(), (timeframe, _) =>
                 {
+                    // Creating array of candlesticks
+                    var candlesticksArray = timeframe.Candlesticks.ToArray();
+                    
                     // Handling the lowest timeframe
                     if (timeframe == symbol.Timeframes.First())
                     {
                         if (timeframe.Index >= timeframe.StartIndex && timeframe.Index < timeframe.EndIndex)
                         {
                             timeframe.Index++;
-                            lowestTimeframeIndexTime = timeframe.Candlesticks.ElementAt(timeframe.Index).OpenTime;
+                            lowestTimeframeIndexTime = candlesticksArray[timeframe.Index].OpenTime;
                         }
 
                         return default;
                     }
 
                     // Handling higher timeframes
-                    var closeTime = timeframe.Candlesticks.ElementAt(timeframe.Index).CloseTime;
+                    var closeTime = candlesticksArray[timeframe.Index].CloseTime;
                     if (lowestTimeframeIndexTime < closeTime && timeframe.Index >= timeframe.StartIndex &&
                         timeframe.Index < timeframe.EndIndex)
                     {
@@ -127,6 +124,7 @@ namespace Backtest.Net.Engines
         /// <returns></returns>
         private async Task<IEnumerable<ISymbolData>> CloneFeedingSymbolData(IEnumerable<ISymbolData> symbolData)
         {
+            // Clearing data before clone it
             _clonedSymbolsData.Clear();
             
             await Parallel.ForEachAsync(symbolData, new ParallelOptions(), async (symbol, _) =>
@@ -139,8 +137,12 @@ namespace Backtest.Net.Engines
                         ? timeframe.Index - WarmupCandlesCount
                         : timeframe.StartIndex;
                     var clonedCandlesticks = timeframe.Candlesticks
-                        .Take(warmedUpIndex..(timeframe.Index + 1)).OrderByDescending(x => x.OpenTime)
-                        .Select(candle => candle.Clone());
+                        .Take(warmedUpIndex..(timeframe.Index + 1))
+                        .Select(candle => candle.Clone())
+                        .ToArray();
+
+                    // --- Sorting in descending direction
+                    Array.Sort(clonedCandlesticks, (x, y) => y.OpenTime.CompareTo(x.OpenTime));
 
                     // --- No need to add nothing more except interval and candles themself
                     timeframes.Enqueue(new TimeframeV1()
@@ -174,19 +176,23 @@ namespace Backtest.Net.Engines
         {
             await Parallel.ForEachAsync(symbolData, new ParallelOptions(), (symbol, _) =>
             {
-                // --- Enumerating symbol timeframes to list
-                var timeframesList = symbol.Timeframes;
+                // --- Enumerating symbol timeframes to array
+                var timeframesArray = symbol.Timeframes.ToArray();
                 
                 // --- Getting First Timeframe from the list
-                var firstTimeframe = timeframesList.First();
+                var firstTimeframe = timeframesArray[0];
+
+                // --- Enumerating First Timeframe Candlesticks to Array
+                var firstTimeframeCandlesticksArray = firstTimeframe.Candlesticks.ToArray();
 
                 // --- Using null propagation and getting first candle
-                var firstTimeframeCandle = firstTimeframe.Candlesticks.First();
+                var firstTimeframeCandle = firstTimeframeCandlesticksArray[0];
                 
-                foreach (var timeframe in timeframesList)
+                //foreach (var timeframe in timeframesArray)
+                for (var i = 0; i < timeframesArray.Length; i++)
                 {
-                    var candleSticks = timeframe.Candlesticks.ToList();
-                    var firstCandle = candleSticks.First();
+                    var candleSticksArray = timeframesArray[i].Candlesticks.ToArray();
+                    var firstCandle = candleSticksArray[0];
                     
                     // Applying OHLC value as lowest timeframe open price and close time as open time
                     firstCandle.Open = firstTimeframeCandle.Open;
@@ -196,7 +202,7 @@ namespace Backtest.Net.Engines
                     firstCandle.CloseTime = firstTimeframeCandle.OpenTime;
 
                     // Assign the modified list back to the enumerable
-                    timeframe.Candlesticks = candleSticks;
+                    timeframesArray[i].Candlesticks = candleSticksArray;
                 }
 
                 return default;

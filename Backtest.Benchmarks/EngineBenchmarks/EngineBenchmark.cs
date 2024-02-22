@@ -54,4 +54,11 @@ public class EngineBenchmark
         var engine = new EngineV2(WarmupCandlesCount, new EmptyTrade(), new EmptyStrategy());
         await engine.RunAsync(SplittedData);
     }
+    
+    [Benchmark]
+    public async Task EngineV3_Run()
+    {
+        var engine = new EngineV3(WarmupCandlesCount, new EmptyTrade(), new EmptyStrategy());
+        await engine.RunAsync(SplittedData);
+    }
 }
