@@ -79,41 +79,35 @@ namespace Backtest.Net.Engines
         /// <returns></returns>
         private static async Task IncrementIndexes(IEnumerable<ISymbolData> symbolData)
         {
-            await Parallel.ForEachAsync(symbolData, new ParallelOptions(), async (symbol, _) =>
+            //foreach (var symbol in symbolData)
+            await Parallel.ForEachAsync(symbolData, new ParallelOptions(), (symbol, _) =>
             {
                 var lowestTimeframeIndexTime = DateTime.MinValue;
-
-                // Enumerating timeframes as array
-                var timeframesArray = symbol.Timeframes.ToArray();
                 
-                //await Parallel.ForEachAsync(symbol.Timeframes, new ParallelOptions(), (timeframe, _) =>
-                for(var i = 0; i < timeframesArray.Length; i++)
+                foreach (var timeframe in symbol.Timeframes)
                 {
-                    // Creating array of candlesticks
-                    var candlesticksArray = timeframesArray[i].Candlesticks.ToArray();
-                    
                     // Handling the lowest timeframe
-                    if (timeframesArray[i] == symbol.Timeframes.First())
+                    if (timeframe == symbol.Timeframes.First())
                     {
-                        if (timeframesArray[i].Index >= timeframesArray[i].StartIndex && timeframesArray[i].Index < timeframesArray[i].EndIndex)
+                        if (timeframe.Index >= timeframe.StartIndex && timeframe.Index < timeframe.EndIndex)
                         {
-                            timeframesArray[i].Index++;
-                            lowestTimeframeIndexTime = candlesticksArray[timeframesArray[i].Index].OpenTime;
+                            timeframe.Index++;
+                            lowestTimeframeIndexTime = timeframe.Candlesticks.ElementAt(timeframe.Index).OpenTime;
                         }
 
-                        break;
+                        continue;
                     }
 
                     // Handling higher timeframes
-                    var closeTime = candlesticksArray[timeframesArray[i].Index].CloseTime;
-                    if (lowestTimeframeIndexTime < closeTime && timeframesArray[i].Index >= timeframesArray[i].StartIndex &&
-                        timeframesArray[i].Index < timeframesArray[i].EndIndex)
+                    var closeTime = timeframe.Candlesticks.ElementAt(timeframe.Index).CloseTime;
+                    if (lowestTimeframeIndexTime < closeTime && timeframe.Index >= timeframe.StartIndex &&
+                        timeframe.Index < timeframe.EndIndex)
                     {
-                        timeframesArray[i].Index++;
+                        timeframe.Index++;
                     }
-
-                    break;
                 }
+
+                return ValueTask.CompletedTask;
             });
         }
 
