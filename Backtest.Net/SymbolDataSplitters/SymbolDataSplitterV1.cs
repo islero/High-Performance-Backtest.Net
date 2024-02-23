@@ -154,7 +154,7 @@ namespace Backtest.Net.SymbolDataSplitters
                     }
 
                     // --- Adding a new item into symbolsDataPart
-                    if (symbolDataPart.Timeframes.Any())
+                    if (symbolDataPart.Timeframes.Any(x => x.Index > -1))
                         symbolsDataPart.Add(symbolDataPart);
 
                     // --- Adding days per split to ongoing backtesting time
