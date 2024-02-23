@@ -53,7 +53,7 @@ namespace Backtest.Net.Executors
             Splitter = new SymbolDataSplitterV1(DaysPerSplit, WarmupCandlesCount, StartDateTime, CorrectEndIndex, WarmupTimeframe);
 
             // --- Create and Select Engine version
-            Engine = new EngineV2(WarmupCandlesCount, Trade, Strategy);
+            Engine = new EngineV3(WarmupCandlesCount, Trade, Strategy);
 
             // --- Split Symbols Data
             NotifyBacktestingEvent(BacktestingEventStatus.SplitStarted);
