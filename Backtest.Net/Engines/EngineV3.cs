@@ -12,6 +12,62 @@ namespace Backtest.Net.Engines;
 public class EngineV3(int warmupCandlesCount, ITrade trade, IStrategy strategy) : EngineV2(warmupCandlesCount, trade, strategy)
 {
     /// <summary>
+    /// Starts the engine and feeds the strategy with data
+    /// </summary>
+    /// <param name="symbolDataParts"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    public override async Task RunAsync(IEnumerable<IEnumerable<ISymbolData>> symbolDataParts, CancellationToken? cancellationToken = default)
+    {
+        try
+        {
+            // --- Run every symbolDataPart
+            foreach (var part in symbolDataParts)
+            {
+                // --- Main cycle
+                while (part.All(x => x.Timeframes.First().Index < x.Timeframes.First().EndIndex))
+                {
+                    // --- Checking for cancellation
+                    if (cancellationToken is { IsCancellationRequested: true })
+                        throw new OperationCanceledException();
+
+                    // --- Preparing feeding data
+                    var feedingData = await CloneFeedingSymbolData(part);
+
+                    // --- Apply Open Price to OHLC for all first candles
+                    await HandleOhlc(feedingData);
+
+                    // --- Strategy part
+                    var signals = await Strategy.Execute(feedingData);
+                        
+                    // --- Clearing unnecessary data right after strategy is executed
+                    ClonedSymbolsData.Clear();
+                    
+                    // --- Executing signals if exist
+                    if (signals.Any())
+                    {
+                        foreach (var signal in signals)
+                        {
+                            _ = await Trade.ExecuteSignal(signal);
+                        }
+                    }
+
+                    // --- Incrementing indexes
+                    await IncrementIndexes(part);
+                }
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // Freeing up resources
+            ClonedSymbolsData.Clear();
+                
+            // --- Cancellation been requested and executed
+            OnCancellationFinishedDelegate?.Invoke();
+        }
+    }
+    
+    /// <summary>
     /// Increment Symbol Data indexes
     /// </summary>
     /// <param name="symbolData"></param>
@@ -55,6 +111,7 @@ public class EngineV3(int warmupCandlesCount, ITrade trade, IStrategy strategy) 
     /// <returns></returns>
     protected override Task<IEnumerable<ISymbolData>> CloneFeedingSymbolData(IEnumerable<ISymbolData> symbolData)
     {
+        // Clearing temporary data
         ClonedSymbolsData.Clear();
 
         Parallel.ForEach(symbolData, symbol =>
