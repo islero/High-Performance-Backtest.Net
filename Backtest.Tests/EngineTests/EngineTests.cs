@@ -76,22 +76,20 @@ namespace Backtest.Tests.EngineTests
             {
                 // --- Checking candles order
                 var symbolsList = symbols.ToList();
-                
-                if (symbolsList.Count != 0)
+
+                if (symbolsList.Count == 0) Assert.Fail("There is no symbols exist in test data");
+
+                var firstSymbol = symbolsList.First();
+                if (firstSymbol.Timeframes.Any())
                 {
-                    var firstSymbol = symbolsList.First();
-                    if (firstSymbol.Timeframes.Any())
+                    var firstTimeframe = firstSymbol.Timeframes.First();
+
+                    if (firstTimeframe.Candlesticks.Count() >= 2)
                     {
-                        var firstTimeframe = firstSymbol.Timeframes.First();
+                        var firstCandles = firstTimeframe.Candlesticks.Take(2).ToList();
 
-                        if (firstTimeframe.Candlesticks.Count() >= 2)
-                        {
-                            var firstCandles = firstTimeframe.Candlesticks.Take(2).ToList();
-
-                            Assert.True(firstCandles.First().OpenTime > firstCandles.Last().OpenTime);
-                        }
+                        Assert.True(firstCandles.First().OpenTime > firstCandles.Last().OpenTime);
                     }
-
                 }
 
                 tokenSource.Cancel();
@@ -150,21 +148,21 @@ namespace Backtest.Tests.EngineTests
             {
                 // --- Checking candles order
                 var symbolsList = symbols.ToList();
-                if (symbolsList.Count != 0)
-                {
-                    foreach (var symbol in symbolsList)
-                    {
-                        foreach (var timeframe in symbol.Timeframes)
-                        {
-                            var firstCandle = timeframe.Candlesticks.FirstOrDefault();
-                            if (firstCandle == null)
-                                Assert.Fail("Engine Returned candle equal to null");
+                if (symbolsList.Count == 0) Assert.Fail("There is no symbols exist in test data");
 
-                            allStartingDatesAreCorrect = allStartingDatesAreCorrect && firstCandle.OpenTime == backtestingStartingDate;
-                        }
+                foreach (var symbol in symbolsList)
+                {
+                    foreach (var timeframe in symbol.Timeframes)
+                    {
+                        var firstCandle = timeframe.Candlesticks.FirstOrDefault();
+                        if (firstCandle == null)
+                            Assert.Fail("Engine Returned candle equal to null");
+
+                        allStartingDatesAreCorrect = allStartingDatesAreCorrect &&
+                                                     firstCandle.OpenTime == backtestingStartingDate;
                     }
                 }
-
+                
                 tokenSource.Cancel();
             };
 
@@ -213,7 +211,7 @@ namespace Backtest.Tests.EngineTests
                 // --- Checking candles order
                 var symbolsList = symbols.ToList();
                 
-                if (symbolsList.Count == 0) return;
+                if (symbolsList.Count == 0) Assert.Fail("There is no symbols exist in test data");
                 
                 foreach (var symbol in symbolsList)
                 {
@@ -234,7 +232,7 @@ namespace Backtest.Tests.EngineTests
                     allCurrentCandleOhlcAreEqual = allCurrentCandleOhlcAreEqual && areOhlcEqual;
 
                     if (!areOhlcEqual)
-                        Assert.Fail($"First candle OHLC aren't equal");
+                        Assert.Fail("First candle OHLC aren't equal");
                 }
 
                 //tokenSource.Cancel();
@@ -260,15 +258,60 @@ namespace Backtest.Tests.EngineTests
                 // --- Checking candles order
                 var symbolsList = symbols.ToList();
                 
-                if (symbolsList.Count == 0) return;
+                if (symbolsList.Count == 0) Assert.Fail("There is no symbols exist in test data");
                 
                 foreach (var symbol in symbolsList)
                 {
                     var isSorted = symbol.Timeframes.SequenceEqual(symbol.Timeframes.OrderBy(t => t.Timeframe));
                     if (!isSorted)
                     {
-                        Assert.Fail($"Timeframes aren't sorted in ascending order");
+                        Assert.Fail("Timeframes aren't sorted in ascending order");
                     }
+                }
+            };
+
+            // --- Generate Dummy SymbolData splitter
+            var data = GenerateCandles(new DateTime(2023, 1, 1), 500, 1, WarmupCandlesCount);
+
+            await Engine.RunAsync(data);
+
+            Assert.True(true);
+        }
+        
+        /// <summary>
+        /// Testing that each next TF open and close contains prior timeframe open close inside its range
+        /// For example if 5m tf openTime = 1/1/23 12:00:00 and closeTime 1/1/23 12:05:00
+        /// 1d tf can't have openTime 1/2/23 12:00:00 and closeTime 1/2/23 23:59:59
+        /// </summary>
+        [Fact]
+        public async Task TestPriorTfOpenCloseInsideNewTfOpenClose()
+        {
+            // --- Strategy logic simulation
+            Strategy.ExecuteStrategyDelegate = symbols =>
+            {
+                // --- Checking candles order
+                var symbolsList = symbols.ToList();
+                
+                if (symbolsList.Count == 0) Assert.Fail("There is no symbols exist in test data");
+                
+                foreach (var symbol in symbolsList)
+                {
+                    // Validation Timeframes count
+                    if(symbol.Timeframes.Count() < 2) Assert.Fail("There must be at least 2 timeframes to continue test");
+
+                    var priorTf = symbol.Timeframes.First();
+                    foreach (var timeframe in symbol.Timeframes.Skip(1))
+                    {
+                        var lowerTfCandle = priorTf.Candlesticks.ElementAt(priorTf.Index);
+                        var higherTfCandle = timeframe.Candlesticks.ElementAt(timeframe.Index);
+                        
+                        // Checking fail conditions
+                        if (higherTfCandle.OpenTime > lowerTfCandle.OpenTime
+                            ||
+                            higherTfCandle.CloseTime < lowerTfCandle.CloseTime)
+                            Assert.Fail($"Lower TF {priorTf.Timeframe} is out of range in Higher TF {timeframe.Timeframe}");
+                    }
+                    
                 }
             };
 
