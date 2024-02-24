@@ -14,7 +14,7 @@ namespace Backtest.Net.Engines;
 /// <param name="warmupCandlesCount"></param>
 /// <param name="trade"></param>
 /// <param name="strategy"></param>
-public sealed class EngineV4(int warmupCandlesCount, ITrade trade, IStrategy strategy) : EngineV2(warmupCandlesCount, trade, strategy)
+public sealed class EngineV4(int warmupCandlesCount, ITrade trade, IStrategy strategy) : EngineV3(warmupCandlesCount, trade, strategy)
 {
     /// <summary>
     /// Starts the engine and feeds the strategy with data
