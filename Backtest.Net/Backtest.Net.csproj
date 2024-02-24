@@ -6,11 +6,11 @@
     <Nullable>enable</Nullable>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <Platforms>AnyCPU</Platforms>
-    <AssemblyVersion>1.0.20.0</AssemblyVersion>
-    <FileVersion>1.0.20.0</FileVersion>
-    <Version>1.0.20</Version>
+    <AssemblyVersion>1.0.28.0</AssemblyVersion>
+    <FileVersion>1.0.28.0</FileVersion>
+    <Version>1.0.28</Version>
     <RepositoryUrl>https://github.com/islero/High-Performance-Backtest.Net</RepositoryUrl>
-    <Description>Implemented EngineV4 and made it sealed</Description>
+    <Description>Improving EngineV4</Description>
     <PackageReleaseNotes>Implemented Backtesting Executor, release candidate</PackageReleaseNotes>
     <Configurations>Release;Debug</Configurations>
   </PropertyGroup>
