@@ -44,28 +44,40 @@ public class EngineBenchmark
     [Benchmark(Baseline = true)]
     public async Task EngineV1_Run()
     {
-        var engine = new EngineV1(WarmupCandlesCount, new EmptyTrade(), new EmptyStrategy());
+        var engine = new EngineV1(WarmupCandlesCount)
+        {
+            OnTick = _ => Task.CompletedTask
+        };
         await engine.RunAsync(SplittedData);
     }
     
     [Benchmark]
     public async Task EngineV2_Run()
     {
-        var engine = new EngineV2(WarmupCandlesCount, new EmptyTrade(), new EmptyStrategy());
+        var engine = new EngineV2(WarmupCandlesCount)
+        {
+            OnTick = _ => Task.CompletedTask
+        };
         await engine.RunAsync(SplittedData);
     }
     
     [Benchmark]
     public async Task EngineV3_Run()
     {
-        var engine = new EngineV3(WarmupCandlesCount, new EmptyTrade(), new EmptyStrategy());
+        var engine = new EngineV3(WarmupCandlesCount)
+        {
+            OnTick = _ => Task.CompletedTask
+        };
         await engine.RunAsync(SplittedData);
     }
     
     [Benchmark]
     public async Task EngineV4_Run()
     {
-        var engine = new EngineV4(WarmupCandlesCount, new EmptyTrade(), new EmptyStrategy());
+        var engine = new EngineV4(WarmupCandlesCount)
+        {
+            OnTick = _ => Task.CompletedTask
+        };
         await engine.RunAsync(SplittedData);
     }
 }

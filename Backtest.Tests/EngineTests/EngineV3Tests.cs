@@ -16,7 +16,20 @@ namespace Backtest.Tests.EngineTests
             Trade = new TestTrade();
             Strategy = new TestStrategy();
 
-            Engine = new EngineV3(WarmupCandlesCount, Trade, Strategy);
+            Engine = new EngineV3(WarmupCandlesCount)
+            {
+                OnTick = async symbolData =>
+                {
+                    var signals = await Strategy.Execute(symbolData);
+                    if (signals.Any())
+                    {
+                        foreach (var signal in signals)
+                        {
+                            _ = await Trade.ExecuteSignal(signal);
+                        }
+                    }
+                }
+            };
         }
     }
 }

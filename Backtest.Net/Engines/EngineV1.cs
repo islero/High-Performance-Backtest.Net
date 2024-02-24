@@ -9,14 +9,20 @@ namespace Backtest.Net.Engines;
 /// Engine V1
 /// Prepares parts before feeding them into strategy
 /// </summary>
-public class EngineV1(int warmupCandlesCount, ITrade trade, IStrategy strategy) : IEngine
+public class EngineV1(int warmupCandlesCount) : IEngine
 {
     // --- Delegates
+    /// <summary>
+    /// Main Action of the Engine, it passes data to OnTick function
+    /// </summary>
+    public required Func<IEnumerable<ISymbolData>, Task> OnTick { get; set; }
+    
+    /// <summary>
+    /// Notifies about backtesting cancellation
+    /// </summary>
     public Action? OnCancellationFinishedDelegate { get; set; }
-
+    
     // --- Properties
-    protected ITrade Trade { get; } = trade;
-    protected IStrategy Strategy { get; } = strategy;
     protected int WarmupCandlesCount { get; } = warmupCandlesCount; // The amount of warmup candles count
 
     // --- Methods
@@ -52,16 +58,8 @@ public class EngineV1(int warmupCandlesCount, ITrade trade, IStrategy strategy) 
                     // --- Apply Open Price to OHLC for all first candles
                     await HandleOhlc(feedingDataList);
 
-                    // --- Strategy part
-                    var signals = await Strategy.Execute(feedingDataList);
-                    var signalsList = signals.ToList();
-                    if (signalsList.Count != 0)
-                    {
-                        foreach (var signal in signalsList)
-                        {
-                            _ = await Trade.ExecuteSignal(signal);
-                        }
-                    }
+                    // --- Sending OnTick Action
+                    await OnTick(feedingDataList);
 
                     // --- Incrementing indexes
                     await IncrementIndexes(partList);

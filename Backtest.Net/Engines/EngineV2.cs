@@ -6,7 +6,7 @@ namespace Backtest.Net.Engines;
 /// Engine V2
 /// Prepares parts before feeding them into strategy
 /// </summary>
-public class EngineV2(int warmupCandlesCount, ITrade trade, IStrategy strategy) : EngineV1(warmupCandlesCount, trade, strategy)
+public class EngineV2(int warmupCandlesCount) : EngineV1(warmupCandlesCount)
 {
     // --- Methods
     /// <summary>
@@ -38,20 +38,11 @@ public class EngineV2(int warmupCandlesCount, ITrade trade, IStrategy strategy) 
                     // --- Apply Open Price to OHLC for all first candles
                     await HandleOhlc(feedingDataList);
 
-                    // --- Strategy part
-                    var signals = await Strategy.Execute(feedingDataList);
+                    // --- Sending OnTick Action
+                    await OnTick(feedingDataList);
                         
                     // --- Clearing unnecessary data right after strategy is executed
                     ClonedSymbolsData.Clear();
-                        
-                    var signalsList = signals;
-                    if (signalsList.Any())
-                    {
-                        foreach (var signal in signalsList)
-                        {
-                            _ = await Trade.ExecuteSignal(signal);
-                        }
-                    }
 
                     // --- Incrementing indexes
                     await IncrementIndexes(part);

@@ -12,9 +12,7 @@ namespace Backtest.Net.Engines;
 /// benchmark shows better results
 /// </summary>
 /// <param name="warmupCandlesCount"></param>
-/// <param name="trade"></param>
-/// <param name="strategy"></param>
-public sealed class EngineV4(int warmupCandlesCount, ITrade trade, IStrategy strategy) : EngineV3(warmupCandlesCount, trade, strategy)
+public sealed class EngineV4(int warmupCandlesCount) : EngineV3(warmupCandlesCount)
 {
     /// <summary>
     /// Starts the engine and feeds the strategy with data
@@ -42,21 +40,12 @@ public sealed class EngineV4(int warmupCandlesCount, ITrade trade, IStrategy str
                     // --- Apply Open Price to OHLC for all first candles
                     await HandleOhlc(feedingData);
 
-                    // --- Strategy part
-                    var signals = await Strategy.Execute(feedingData);
+                    // --- Sending OnTick Action
+                    await OnTick(feedingData);
                         
                     // --- Clearing unnecessary data right after strategy is executed
                     ClonedSymbolsData.Clear();
                     
-                    // --- Executing signals if exist
-                    if (signals.Any())
-                    {
-                        foreach (var signal in signals)
-                        {
-                            _ = await Trade.ExecuteSignal(signal);
-                        }
-                    }
-
                     // --- Incrementing indexes
                     await IncrementIndexes(part);
                 }

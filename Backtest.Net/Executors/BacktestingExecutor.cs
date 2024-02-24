@@ -53,7 +53,10 @@ namespace Backtest.Net.Executors
             Splitter = new SymbolDataSplitterV1(DaysPerSplit, WarmupCandlesCount, StartDateTime, CorrectEndIndex, WarmupTimeframe);
 
             // --- Create and Select Engine version
-            Engine = new EngineV4(WarmupCandlesCount, Trade, Strategy);
+            Engine = new EngineV4(WarmupCandlesCount)
+            {
+                OnTick = OnTick
+            };
 
             // --- Split Symbols Data
             NotifyBacktestingEvent(BacktestingEventStatus.SplitStarted);
@@ -68,6 +71,20 @@ namespace Backtest.Net.Executors
             IsRunning = false;
             // --- Triggering On Finished Backtesting Status
             NotifyBacktestingEvent(BacktestingEventStatus.Finished);
+        }
+
+        /// <summary>
+        /// On Tick Action that passes data into strategy
+        /// </summary>
+        /// <param name="symbolData"></param>
+        /// <returns></returns>
+        private async Task OnTick(IEnumerable<ISymbolData> symbolData)
+        {
+            var signals = await Strategy.Execute(symbolData);
+            foreach (var signal in signals)
+            {
+                _ = await Trade.ExecuteSignal(signal);
+            }
         }
 
         /// <summary>

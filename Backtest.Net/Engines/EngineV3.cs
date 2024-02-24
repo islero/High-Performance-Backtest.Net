@@ -9,7 +9,7 @@ namespace Backtest.Net.Engines;
 /// Engine V3
 /// Prepares parts before feeding them into strategy
 /// </summary>
-public class EngineV3(int warmupCandlesCount, ITrade trade, IStrategy strategy) : EngineV2(warmupCandlesCount, trade, strategy)
+public class EngineV3(int warmupCandlesCount) : EngineV2(warmupCandlesCount)
 {
     /// <summary>
     /// Increment Symbol Data indexes
