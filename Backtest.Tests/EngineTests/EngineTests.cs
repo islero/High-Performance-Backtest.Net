@@ -33,7 +33,7 @@ namespace Backtest.Tests.EngineTests
         [Fact]
         public async Task TestRunningEngineWithoutExceptions()
         {
-            Strategy.ExecuteStrategyDelegate = (symbols) =>
+            Strategy.ExecuteStrategyDelegate = symbols =>
             {
                 _ = symbols;
             };
@@ -51,7 +51,7 @@ namespace Backtest.Tests.EngineTests
         {
             var tokenSource = new CancellationTokenSource();
 
-            Strategy.ExecuteStrategyDelegate = (_) =>
+            Strategy.ExecuteStrategyDelegate = _ =>
             {
                 tokenSource.Cancel();
             };
@@ -72,7 +72,7 @@ namespace Backtest.Tests.EngineTests
         {
             var tokenSource = new CancellationTokenSource();
 
-            Strategy.ExecuteStrategyDelegate = (symbols) =>
+            Strategy.ExecuteStrategyDelegate = symbols =>
             {
                 // --- Checking candles order
                 var symbolsList = symbols.ToList();
@@ -110,7 +110,7 @@ namespace Backtest.Tests.EngineTests
 
             var allWarmupCandlesResultsAreCorrect = true;
 
-            Strategy.ExecuteStrategyDelegate = (symbols) =>
+            Strategy.ExecuteStrategyDelegate = symbols =>
             {
                 // --- Checking candles order
                 var symbolsList = symbols.ToList();
@@ -146,7 +146,7 @@ namespace Backtest.Tests.EngineTests
             var backtestingStartingDate = new DateTime(2023, 1, 1);
             var allStartingDatesAreCorrect = true;
 
-            Strategy.ExecuteStrategyDelegate = (symbols) =>
+            Strategy.ExecuteStrategyDelegate = symbols =>
             {
                 // --- Checking candles order
                 var symbolsList = symbols.ToList();
@@ -208,7 +208,7 @@ namespace Backtest.Tests.EngineTests
 
             var allCurrentCandleOhlcAreEqual = true;
 
-            Strategy.ExecuteStrategyDelegate = (symbols) =>
+            Strategy.ExecuteStrategyDelegate = symbols =>
             {
                 // --- Checking candles order
                 var symbolsList = symbols.ToList();
@@ -246,6 +246,38 @@ namespace Backtest.Tests.EngineTests
             await Engine.RunAsync(data, tokenSource.Token);
 
             Assert.True(allCurrentCandleOhlcAreEqual);
+        }
+        
+        /// <summary>
+        /// Checking if strategy gets all TFs sorted in Ascending order
+        /// </summary>
+        [Fact]
+        public async Task TimeframesAreSorted()
+        {
+            // --- Strategy logic simulation
+            Strategy.ExecuteStrategyDelegate = symbols =>
+            {
+                // --- Checking candles order
+                var symbolsList = symbols.ToList();
+                
+                if (symbolsList.Count == 0) return;
+                
+                foreach (var symbol in symbolsList)
+                {
+                    var isSorted = symbol.Timeframes.SequenceEqual(symbol.Timeframes.OrderBy(t => t.Timeframe));
+                    if (!isSorted)
+                    {
+                        Assert.Fail($"Timeframes aren't sorted in ascending order");
+                    }
+                }
+            };
+
+            // --- Generate Dummy SymbolData splitter
+            var data = GenerateCandles(new DateTime(2023, 1, 1), 500, 1, WarmupCandlesCount);
+
+            await Engine.RunAsync(data);
+
+            Assert.True(true);
         }
         
         /// <summary>
