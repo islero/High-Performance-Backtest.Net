@@ -9,82 +9,14 @@ namespace Backtest.Net.Engines;
 /// Engine V3
 /// Prepares parts before feeding them into strategy
 /// </summary>
-public class EngineV3(int warmupCandlesCount, ITrade trade, IStrategy strategy) : IEngine
+public class EngineV3(int warmupCandlesCount, ITrade trade, IStrategy strategy) : EngineV2(warmupCandlesCount, trade, strategy)
 {
-    // --- Delegates
-    public Action? OnCancellationFinishedDelegate { get; set; }
-
-    // --- Properties
-    private ITrade Trade { get; } = trade;
-    private IStrategy Strategy { get; } = strategy;
-    private int WarmupCandlesCount { get; } = warmupCandlesCount; // The amount of warmup candles count
-
-    // --- Methods
-    /// <summary>
-    /// Starts the engine and feeds the strategy with data
-    /// </summary>
-    /// <param name="symbolDataParts"></param>
-    /// <param name="cancellationToken"></param>
-    /// <returns></returns>
-    public async Task RunAsync(IEnumerable<IEnumerable<ISymbolData>> symbolDataParts,
-        CancellationToken? cancellationToken = default)
-    {
-        try
-        {
-            // --- Run every symbolDataPart
-            foreach (var part in symbolDataParts)
-            {
-                // --- Enumerating Part
-                var partList = part;
-
-                // --- Main cycle
-                while (partList.All(x => x.Timeframes.First().Index < x.Timeframes.First().EndIndex))
-                {
-                    // --- Checking for cancellation
-                    if (cancellationToken is { IsCancellationRequested: true })
-                        throw new OperationCanceledException();
-
-                    // --- Preparing feeding data
-                    var feedingData = await CloneFeedingSymbolData(partList);
-
-                    // --- Enumerating Feeding Data
-                    var feedingDataList = feedingData;
-
-                    // --- Apply Open Price to OHLC for all first candles
-                    await HandleOhlc(feedingDataList);
-
-                    // --- Strategy part
-                    var signals = await Strategy.Execute(feedingDataList);
-                    var signalsList = signals;
-                    if (signalsList.Any())
-                    {
-                        foreach (var signal in signalsList)
-                        {
-                            _ = await Trade.ExecuteSignal(signal);
-                        }
-                    }
-
-                    // --- Clearing unnecessary data
-                    _clonedSymbolsData.Clear();
-
-                    // --- Incrementing indexes
-                    await IncrementIndexes(partList);
-                }
-            }
-        }
-        catch (OperationCanceledException)
-        {
-            // --- Cancellation been requested and executed
-            OnCancellationFinishedDelegate?.Invoke();
-        }
-    }
-
     /// <summary>
     /// Increment Symbol Data indexes
     /// </summary>
     /// <param name="symbolData"></param>
     /// <returns></returns>
-    private static Task IncrementIndexes(IEnumerable<ISymbolData> symbolData)
+    protected override Task IncrementIndexes(IEnumerable<ISymbolData> symbolData)
     {
         Parallel.ForEach(symbolData, symbol =>
         {
@@ -115,21 +47,15 @@ public class EngineV3(int warmupCandlesCount, ITrade trade, IStrategy strategy) 
 
         return Task.CompletedTask;
     }
-
-
-    /// <summary>
-    /// Field for allocated ISymbolData to clone it
-    /// </summary>
-    private readonly ConcurrentQueue<ISymbolData> _clonedSymbolsData = new();
-
+    
     /// <summary>
     /// Cloning necessary symbol data range
     /// </summary>
     /// <param name="symbolData"></param>
     /// <returns></returns>
-    private Task<IEnumerable<ISymbolData>> CloneFeedingSymbolData(IEnumerable<ISymbolData> symbolData)
+    protected override Task<IEnumerable<ISymbolData>> CloneFeedingSymbolData(IEnumerable<ISymbolData> symbolData)
     {
-        _clonedSymbolsData.Clear();
+        ClonedSymbolsData.Clear();
 
         Parallel.ForEach(symbolData, symbol =>
         {
@@ -159,10 +85,10 @@ public class EngineV3(int warmupCandlesCount, ITrade trade, IStrategy strategy) 
                 Timeframes = timeframes.OrderBy(x => x.Timeframe),
             };
 
-            _clonedSymbolsData.Enqueue(cloned);
+            ClonedSymbolsData.Enqueue(cloned);
         });
 
-        return Task.FromResult(_clonedSymbolsData.AsEnumerable());
+        return Task.FromResult(ClonedSymbolsData.AsEnumerable());
     }
 
     /// <summary>
@@ -170,7 +96,7 @@ public class EngineV3(int warmupCandlesCount, ITrade trade, IStrategy strategy) 
     /// </summary>
     /// <param name="symbolData"></param>
     /// <returns></returns>
-    private static Task HandleOhlc(IEnumerable<ISymbolData> symbolData)
+    protected override Task HandleOhlc(IEnumerable<ISymbolData> symbolData)
     {
         Parallel.ForEach(symbolData, symbol =>
         {
