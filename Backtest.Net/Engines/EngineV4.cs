@@ -14,7 +14,7 @@ namespace Backtest.Net.Engines;
 /// <param name="warmupCandlesCount"></param>
 /// <param name="trade"></param>
 /// <param name="strategy"></param>
-public class EngineV4(int warmupCandlesCount, ITrade trade, IStrategy strategy) : EngineV3(warmupCandlesCount, trade, strategy)
+public sealed class EngineV4(int warmupCandlesCount, ITrade trade, IStrategy strategy) : EngineV3(warmupCandlesCount, trade, strategy)
 {
     /// <summary>
     /// Cloning necessary symbol data range
