@@ -8,9 +8,9 @@
     <Platforms>AnyCPU</Platforms>
     <AssemblyVersion>1.0.16.0</AssemblyVersion>
     <FileVersion>1.0.16.0</FileVersion>
-    <Version>1.0.17</Version>
+    <Version>1.0.18</Version>
     <RepositoryUrl>https://github.com/islero/High-Performance-Backtest.Net</RepositoryUrl>
-    <Description>Test version</Description>
+    <Description>The quickest version so far</Description>
     <PackageReleaseNotes>Implemented Backtesting Executor, release candidate</PackageReleaseNotes>
     <Configurations>Release;Debug</Configurations>
   </PropertyGroup>

@@ -10,24 +10,38 @@ namespace Backtest.Tests.EngineTests
     /// </summary>
     public class EngineTests : EngineTestsBase
     {
+        /// <summary>
+        /// Engine for tests
+        /// </summary>
+        protected IEngine Engine { get; init; }
+        protected ITrade Trade { get; init; }
+        protected TestStrategy Strategy { get; init; }
+        protected int WarmupCandlesCount { get; init; }
+
+        /// <summary>
+        /// Constructor to initialize Engine Mandatory Properties
+        /// </summary>
+        public EngineTests()
+        {
+            WarmupCandlesCount = 2;
+            Trade = new TestTrade();
+            Strategy = new TestStrategy();
+
+            Engine = new EngineV1(WarmupCandlesCount, Trade, Strategy);
+        }
+
         [Fact]
         public async Task TestRunningEngineWithoutExceptions()
         {
-            int warmupCandlesCount = 2;
-            var trade = new TestTrade();
-
-            var strategy = new TestStrategy();
-            strategy.ExecuteStrategyDelegate = (symbols) =>
+            Strategy.ExecuteStrategyDelegate = (symbols) =>
             {
                 var copy = symbols;
             };
 
-            var engine = new EngineV1(warmupCandlesCount, trade, strategy);
-
             // --- Generate Dummy SymbolData splitter
-            var data = GenerateCandles(new DateTime(2023, 1, 1), 500, 1, warmupCandlesCount);
+            var data = GenerateCandles(new DateTime(2023, 1, 1), 500, 1, WarmupCandlesCount);
 
-            await engine.RunAsync(data);
+            await Engine.RunAsync(data);
 
             Assert.True(true);
         }
@@ -37,25 +51,20 @@ namespace Backtest.Tests.EngineTests
         {
             var tokenSource = new CancellationTokenSource();
 
-            int warmupCandlesCount = 2;
-            var trade = new TestTrade();
-
-            var strategy = new TestStrategy();
-            strategy.ExecuteStrategyDelegate = (symbols) =>
+            Strategy.ExecuteStrategyDelegate = (symbols) =>
             {
                 tokenSource.Cancel();
             };
 
-            var engine = new EngineV1(warmupCandlesCount, trade, strategy);
-            engine.OnCancellationFinishedDelegate = () =>
+            Engine.OnCancellationFinishedDelegate = () =>
             {
                 Assert.True(true);
             };
 
             // --- Generate Dummy SymbolData splitter
-            var data = GenerateCandles(new DateTime(2023, 1, 1), 500, 1, warmupCandlesCount);
+            var data = GenerateCandles(new DateTime(2023, 1, 1), 500, 1, WarmupCandlesCount);
 
-            await engine.RunAsync(data, tokenSource.Token);
+            await Engine.RunAsync(data, tokenSource.Token);
         }
 
         [Fact]
@@ -63,11 +72,7 @@ namespace Backtest.Tests.EngineTests
         {
             var tokenSource = new CancellationTokenSource();
 
-            int warmupCandlesCount = 2;
-            var trade = new TestTrade();
-
-            var strategy = new TestStrategy();
-            strategy.ExecuteStrategyDelegate = (symbols) =>
+            Strategy.ExecuteStrategyDelegate = (symbols) =>
             {
                 // --- Checking candles order
                 if (symbols.Any())
@@ -90,12 +95,10 @@ namespace Backtest.Tests.EngineTests
                 tokenSource.Cancel();
             };
 
-            var engine = new EngineV1(warmupCandlesCount, trade, strategy);
-
             // --- Generate Dummy SymbolData splitter
-            var data = GenerateCandles(new DateTime(2023, 1, 1), 500, 1, warmupCandlesCount);
+            var data = GenerateCandles(new DateTime(2023, 1, 1), 500, 1, WarmupCandlesCount);
 
-            await engine.RunAsync(data, tokenSource.Token);
+            await Engine.RunAsync(data, tokenSource.Token);
         }
 
         [Fact]
@@ -103,13 +106,9 @@ namespace Backtest.Tests.EngineTests
         {
             var tokenSource = new CancellationTokenSource();
 
-            int warmupCandlesCount = 3;
-            var trade = new TestTrade();
-
             bool allWarmupCandlesResultsAreCorrect = true;
 
-            var strategy = new TestStrategy();
-            strategy.ExecuteStrategyDelegate = (symbols) =>
+            Strategy.ExecuteStrategyDelegate = (symbols) =>
             {
                 // --- Checking candles order
                 if (symbols.Any())
@@ -120,7 +119,7 @@ namespace Backtest.Tests.EngineTests
                         {
                             int candlesCount = timeframe.Candlesticks.Count();
 
-                            allWarmupCandlesResultsAreCorrect = allWarmupCandlesResultsAreCorrect && candlesCount == warmupCandlesCount + 1;
+                            allWarmupCandlesResultsAreCorrect = allWarmupCandlesResultsAreCorrect && candlesCount == WarmupCandlesCount + 1;
                         }
                     }
                 }
@@ -128,12 +127,10 @@ namespace Backtest.Tests.EngineTests
                 tokenSource.Cancel();
             };
 
-            var engine = new EngineV1(warmupCandlesCount, trade, strategy);
-
             // --- Generate Dummy SymbolData splitter
-            var data = GenerateCandles(new DateTime(2023, 1, 1), 500, 1, warmupCandlesCount);
+            var data = GenerateCandles(new DateTime(2023, 1, 1), 500, 1, WarmupCandlesCount);
 
-            await engine.RunAsync(data, tokenSource.Token);
+            await Engine.RunAsync(data, tokenSource.Token);
 
             Assert.True(allWarmupCandlesResultsAreCorrect);
         }
@@ -143,14 +140,10 @@ namespace Backtest.Tests.EngineTests
         {
             var tokenSource = new CancellationTokenSource();
 
-            int warmupCandlesCount = 2;
-            var trade = new TestTrade();
-
             DateTime backtestingStartingDate = new DateTime(2023, 1, 1);
             bool allStartingDatesAreCorrect = true;
 
-            var strategy = new TestStrategy();
-            strategy.ExecuteStrategyDelegate = (symbols) =>
+            Strategy.ExecuteStrategyDelegate = (symbols) =>
             {
                 // --- Checking candles order
                 if (symbols.Any())
@@ -171,12 +164,10 @@ namespace Backtest.Tests.EngineTests
                 tokenSource.Cancel();
             };
 
-            var engine = new EngineV1(warmupCandlesCount, trade, strategy);
-
             // --- Generate Dummy SymbolData splitter
-            var data = GenerateCandles(backtestingStartingDate, 500, 1, warmupCandlesCount);
+            var data = GenerateCandles(backtestingStartingDate, 500, 1, WarmupCandlesCount);
 
-            await engine.RunAsync(data, tokenSource.Token);
+            await Engine.RunAsync(data, tokenSource.Token);
 
             Assert.True(allStartingDatesAreCorrect);
         }
@@ -184,24 +175,17 @@ namespace Backtest.Tests.EngineTests
         [Fact]
         public async Task TestIfAllIndexesReachedTheEndIndex()
         {
-            int warmupCandlesCount = 2;
-            var trade = new TestTrade();
-
-            var strategy = new TestStrategy();
-
-            var engine = new EngineV1(warmupCandlesCount, trade, strategy);
-
             // --- Generate Dummy SymbolData splitter
-            var data = GenerateCandles(new DateTime(2023, 1, 1), 500, 1, warmupCandlesCount);
+            var data = GenerateCandles(new DateTime(2023, 1, 1), 500, 1, WarmupCandlesCount);
 
             // --- Checking that before the EngineRun all the data are not reached the EndIndex
             bool allNotReachedEndIndex = data.All(
                 x => x.All(
                     y => y.Timeframes.All(
-                        k => k.Index < k.EndIndex && k.Index == k.StartIndex + warmupCandlesCount)));
+                        k => k.Index < k.EndIndex && k.Index == k.StartIndex + WarmupCandlesCount)));
             Assert.True(allNotReachedEndIndex);
 
-            await engine.RunAsync(data);
+            await Engine.RunAsync(data);
 
             // --- Checking that after teh EngineRun all the data are reached EndIndex
             bool allReachedEndIndex = data.All(
@@ -216,68 +200,58 @@ namespace Backtest.Tests.EngineTests
         {
             var tokenSource = new CancellationTokenSource();
 
-            int warmupCandlesCount = 3;
-            var trade = new TestTrade();
+            var allCurrentCandleOhlcAreEqual = true;
 
-            bool allCurrentCandleOhlcAreEqual = true;
-
-            var strategy = new TestStrategy();
-            strategy.ExecuteStrategyDelegate = (symbols) =>
+            Strategy.ExecuteStrategyDelegate = (symbols) =>
             {
                 // --- Checking candles order
-                if (symbols.Any())
+                var symbolsList = symbols.ToList();
+                
+                if (symbolsList.Count == 0) return;
+                
+                foreach (var symbol in symbolsList)
                 {
-                    foreach (var symbol in symbols)
-                    {
-                        var firstTimeframe = symbol.Timeframes.FirstOrDefault();
-                        if (firstTimeframe != null)
-                        {
-                            var firstCandle = firstTimeframe.Candlesticks.FirstOrDefault();
-                            if (firstCandle != null)
-                            {
-                                decimal openPrice = firstCandle.Open;
-                                DateTime openTime = firstCandle.OpenTime;
+                    var firstTimeframe = symbol.Timeframes.FirstOrDefault();
+                    var firstCandle = firstTimeframe?.Candlesticks.FirstOrDefault();
+                    if (firstCandle == null) continue;
+                    
+                    var openPrice = firstCandle.Open;
+                    var openTime = firstCandle.OpenTime;
 
-                                bool areOHLCEqual = symbol.Timeframes.All(
-                                    y => y.Candlesticks.First().Close == openPrice &&
-                                            y.Candlesticks.First().High == openPrice &&
-                                            y.Candlesticks.First().Low == openPrice &&
-                                            y.Candlesticks.First().Open == openPrice &&
-                                            y.Candlesticks.First().CloseTime == openTime);
+                    var areOhlcEqual = symbol.Timeframes.All(
+                        y => y.Candlesticks.First().Close == openPrice &&
+                             y.Candlesticks.First().High == openPrice &&
+                             y.Candlesticks.First().Low == openPrice &&
+                             y.Candlesticks.First().Open == openPrice &&
+                             y.Candlesticks.First().CloseTime == openTime);
 
-                                allCurrentCandleOhlcAreEqual = allCurrentCandleOhlcAreEqual && areOHLCEqual;
+                    allCurrentCandleOhlcAreEqual = allCurrentCandleOhlcAreEqual && areOhlcEqual;
 
-                                if (!areOHLCEqual)
-                                    Assert.Fail($"First candle OHLC aren't equal");
-                            }
-                        }
-                    }
+                    if (!areOhlcEqual)
+                        Assert.Fail($"First candle OHLC aren't equal");
                 }
 
                 //tokenSource.Cancel();
             };
 
-            var engine = new EngineV1(warmupCandlesCount, trade, strategy);
-
             // --- Generate Dummy SymbolData splitter
-            var data = GenerateCandles(new DateTime(2023, 1, 1), 500, 1, warmupCandlesCount);
+            var data = GenerateCandles(new DateTime(2023, 1, 1), 500, 1, WarmupCandlesCount);
 
-            await engine.RunAsync(data, tokenSource.Token);
+            await Engine.RunAsync(data, tokenSource.Token);
 
             Assert.True(allCurrentCandleOhlcAreEqual);
         }
-
-
+        
         /// <summary>
         /// Generates Dummy Data Splitter Result
         /// </summary>
         /// <returns></returns>
-        private IEnumerable<IEnumerable<ISymbolData>> GenerateCandles(DateTime startingDate, int totalCandlesCount, int daysPerSplit, int warmupCandlesCount)
+        protected IEnumerable<IEnumerable<ISymbolData>> GenerateCandles(DateTime startingDate, int totalCandlesCount, int daysPerSplit, int warmupCandlesCount)
         {
             ISymbolDataSplitter symbolDataSplitter = new SymbolDataSplitterV1(daysPerSplit, warmupCandlesCount, startingDate, true);
 
-            var generatedSymbolsData = GenerateFakeSymbolsData(new List<string> { "BTCUSDT", "ETHUSDT", "SOLUSDT" },
-                new List<CandlestickInterval> { CandlestickInterval.M5, CandlestickInterval.M15, CandlestickInterval.M30, CandlestickInterval.H1 },
+            var generatedSymbolsData = GenerateFakeSymbolsData(["BTCUSDT", "ETHUSDT", "SOLUSDT"],
+                [CandlestickInterval.M5, CandlestickInterval.M15, CandlestickInterval.M30, CandlestickInterval.H1],
                 startingDate.AddHours(-warmupCandlesCount), totalCandlesCount);
 
             return symbolDataSplitter.SplitAsync(generatedSymbolsData).Result;

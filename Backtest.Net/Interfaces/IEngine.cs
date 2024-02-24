@@ -5,6 +5,9 @@
     /// </summary>
     public interface IEngine
     {
+        // --- Delegates
+        public Action? OnCancellationFinishedDelegate { get; set; }
+        
         public Task RunAsync(IEnumerable<IEnumerable<ISymbolData>> symbolDataParts, CancellationToken? cancellationToken = default);
     }
 }
