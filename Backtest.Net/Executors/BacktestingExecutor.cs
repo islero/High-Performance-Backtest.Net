@@ -11,7 +11,7 @@ namespace Backtest.Net.Executors
     public sealed class BacktestingExecutor
     {
         // --- Properties
-        public bool IsRunning { get; private set; } // Checks whether or not backtesting is currently running
+        public static bool IsRunning { get; private set; } // Checks whether or not backtesting is currently running
         private DateTime StartDateTime { get; } // Backtesting Start DateTime
         private int WarmupCandlesCount { get; } // The amount of warmup candles count
         private bool CorrectEndIndex { get; } // Makes sure the end index are the same for all symbols and timeframes
