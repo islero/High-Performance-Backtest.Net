@@ -24,6 +24,7 @@ namespace Backtest.Net.Executors
 
         // --- Delegates
         public Action<BacktestingEventStatus>? OnBacktestingEvent; // Notifies subscribed objects about backtesting events
+        public required Func<IEnumerable<ISymbolData>, Task> OnTick { get; set; }
 
         // --- Constructors
         public BacktestingExecutor(DateTime startDateTime, int daysPerSplit, int warmupCandlesCount, 
@@ -73,6 +74,7 @@ namespace Backtest.Net.Executors
             NotifyBacktestingEvent(BacktestingEventStatus.Finished);
         }
 
+        /*
         /// <summary>
         /// On Tick Action that passes data into strategy
         /// </summary>
@@ -86,6 +88,7 @@ namespace Backtest.Net.Executors
                 _ = await Trade.ExecuteSignal(signal);
             }
         }
+        */
 
         /// <summary>
         /// Notifies Subscribed Objects about backtesting status
