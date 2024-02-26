@@ -14,8 +14,6 @@ namespace Backtest.Net.Executors
         public static bool IsRunning { get; private set; } // Checks whether or not backtesting is currently running
         private DateTime StartDateTime { get; } // Backtesting Start DateTime
         private int WarmupCandlesCount { get; } // The amount of warmup candles count
-        private ITrade Trade { get; } // Handles Virtual Trades
-        private IStrategy Strategy { get; } // The Backtesting Strategy
         private bool CorrectEndIndex { get; } // Makes sure the end index are the same for all symbols and timeframes
         private CandlestickInterval? WarmupTimeframe { get; } // The timeframe must be warmed up and all lower timeframes accordingly, if null - will be set automatically
         private int DaysPerSplit { get; } // How many days in one split range should exist
@@ -24,17 +22,15 @@ namespace Backtest.Net.Executors
 
         // --- Delegates
         public Action<BacktestingEventStatus>? OnBacktestingEvent; // Notifies subscribed objects about backtesting events
-        //public required Func<IEnumerable<ISymbolData>, Task> OnTick { get; set; }
+        public required Func<IEnumerable<ISymbolData>, Task> OnTick { get; set; }
 
         // --- Constructors
         public BacktestingExecutor(DateTime startDateTime, int daysPerSplit, int warmupCandlesCount, 
-            ITrade trade, IStrategy strategy, bool correctEndIndex = false, CandlestickInterval? warmupTimeframe = null)
+            bool correctEndIndex = false, CandlestickInterval? warmupTimeframe = null)
         {
             StartDateTime = startDateTime;
             DaysPerSplit = daysPerSplit;
             WarmupCandlesCount = warmupCandlesCount;
-            Trade = trade;
-            Strategy = strategy;
             CorrectEndIndex = correctEndIndex;
             WarmupTimeframe = warmupTimeframe;
         }
@@ -73,8 +69,8 @@ namespace Backtest.Net.Executors
             // --- Triggering On Finished Backtesting Status
             NotifyBacktestingEvent(BacktestingEventStatus.Finished);
         }
-
         
+        /*
         /// <summary>
         /// On Tick Action that passes data into strategy
         /// </summary>
@@ -87,9 +83,8 @@ namespace Backtest.Net.Executors
             {
                 _ = await Trade.ExecuteSignal(signal);
             }
-        }
+        }*/
         
-
         /// <summary>
         /// Notifies Subscribed Objects about backtesting status
         /// </summary>
