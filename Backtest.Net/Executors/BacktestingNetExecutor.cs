@@ -8,7 +8,7 @@ namespace Backtest.Net.Executors
     /// <summary>
     /// High-Performance Backtesting Executor
     /// </summary>
-    public sealed class BacktestingExecutor
+    public sealed class BacktestingNetExecutor
     {
         // --- Properties
         public static bool IsRunning { get; private set; } // Checks whether or not backtesting is currently running
@@ -25,7 +25,7 @@ namespace Backtest.Net.Executors
         public required Func<IEnumerable<ISymbolData>, Task> OnTick { get; set; }
 
         // --- Constructors
-        public BacktestingExecutor(DateTime startDateTime, int daysPerSplit, int warmupCandlesCount, 
+        public BacktestingNetExecutor(DateTime startDateTime, int daysPerSplit, int warmupCandlesCount, 
             bool correctEndIndex = false, CandlestickInterval? warmupTimeframe = null)
         {
             StartDateTime = startDateTime;
