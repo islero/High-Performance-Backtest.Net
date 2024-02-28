@@ -1,4 +1,5 @@
-﻿using Backtest.Net.Engines;
+﻿using System.Reflection;
+using Backtest.Net.Engines;
 using Backtest.Net.Enums;
 using Backtest.Net.Interfaces;
 using Backtest.Net.SymbolDataSplitters;
@@ -44,10 +45,12 @@ namespace Backtest.Net.Executors
         {
             IsRunning = true;
             // --- Triggering On Started Backtesting Status
-            NotifyBacktestingEvent(BacktestingEventStatus.Started);
+            NotifyBacktestingEvent(BacktestingEventStatus.Started,
+                Assembly.GetExecutingAssembly().GetName().Version?.ToString());
 
             // --- Create and Select DataSplitter version
-            Splitter = new SymbolDataSplitterV1(DaysPerSplit, WarmupCandlesCount, StartDateTime, CorrectEndIndex, WarmupTimeframe);
+            Splitter = new SymbolDataSplitterV1(DaysPerSplit, WarmupCandlesCount, StartDateTime, CorrectEndIndex,
+                WarmupTimeframe);
 
             // --- Create and Select Engine version
             Engine = new EngineV4(WarmupCandlesCount)
@@ -67,7 +70,8 @@ namespace Backtest.Net.Executors
 
             IsRunning = false;
             // --- Triggering On Finished Backtesting Status
-            NotifyBacktestingEvent(BacktestingEventStatus.Finished);
+            NotifyBacktestingEvent(BacktestingEventStatus.Finished,
+                Assembly.GetExecutingAssembly().GetName().Version?.ToString());
         }
         
         /*
