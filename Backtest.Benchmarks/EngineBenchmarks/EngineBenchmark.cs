@@ -80,4 +80,14 @@ public class EngineBenchmark
         };
         await engine.RunAsync(SplittedData);
     }
+    
+    [Benchmark]
+    public async Task EngineV5_Run()
+    {
+        var engine = new EngineV5(WarmupCandlesCount)
+        {
+            OnTick = _ => Task.CompletedTask
+        };
+        await engine.RunAsync(SplittedData);
+    }
 }

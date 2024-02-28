@@ -29,20 +29,26 @@ namespace Backtest.Tests.EngineTests
 
             Engine = new EngineV1(WarmupCandlesCount)
             {
-                OnTick = async symbolData =>
-                {
-                    var signals = await Strategy.Execute(symbolData);
-                    if (signals.Any())
-                    {
-                        foreach (var signal in signals)
-                        {
-                            _ = await Trade.ExecuteSignal(signal);
-                        }
-                    }
-                }
+                OnTick = OnTickMethod
             };
         }
 
+        /// <summary>
+        /// On Tick Method Implementation
+        /// </summary>
+        /// <param name="symbolData"></param>
+        protected async Task OnTickMethod(IEnumerable<ISymbolData> symbolData)
+        {
+            var signals = await Strategy.Execute(symbolData);
+            if (signals.Any())
+            {
+                foreach (var signal in signals)
+                {
+                    _ = await Trade.ExecuteSignal(signal);
+                }
+            }
+        }
+        
         [Fact]
         public async Task TestRunningEngineWithoutExceptions()
         {

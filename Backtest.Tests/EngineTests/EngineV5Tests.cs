@@ -3,20 +3,20 @@
 namespace Backtest.Tests.EngineTests
 {
     /// <summary>
-    /// Testing backtesting Engine V3
+    /// Testing backtesting Engine V5
     /// </summary>
-    public class EngineV3Tests : EngineTests
+    public class EngineV5Tests : EngineTests
     {
         /// <summary>
-        /// Initializing Engine V3
+        /// Initializing Engine V5
         /// </summary>
-        public EngineV3Tests()
+        public EngineV5Tests()
         {
             WarmupCandlesCount = 2;
             Trade = new TestTrade();
             Strategy = new TestStrategy();
 
-            Engine = new EngineV3(WarmupCandlesCount)
+            Engine = new EngineV5(WarmupCandlesCount)
             {
                 OnTick = OnTickMethod
             };

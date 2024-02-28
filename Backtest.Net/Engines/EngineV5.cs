@@ -6,76 +6,31 @@ using Backtest.Net.Timeframes;
 namespace Backtest.Net.Engines;
 
 /// <summary>
-/// Engine V4
-/// The whole point of this version is optimizing all we have in V3
-/// Getting rid of all ToList, ToArray conversions, in practise it increases real backtesting time despite
-/// benchmark shows better results
+/// Engine V5
+/// The Engine V5 is going to use fully async/await functionality without returning Task.FromResult
+/// Which may be more efficient if real world use rather than on benchmarks, since Engine V2 maybe still
+/// the best performer despite it still not fully optimized as V4 for example
 /// </summary>
 /// <param name="warmupCandlesCount"></param>
-public class EngineV4(int warmupCandlesCount) : EngineV3(warmupCandlesCount)
+public sealed class EngineV5(int warmupCandlesCount) : EngineV4(warmupCandlesCount)
 {
-    /// <summary>
-    /// Starts the engine and feeds the strategy with data
-    /// </summary>
-    /// <param name="symbolDataParts"></param>
-    /// <param name="cancellationToken"></param>
-    /// <returns></returns>
-    public override async Task RunAsync(IEnumerable<IEnumerable<ISymbolData>> symbolDataParts, CancellationToken? cancellationToken = default)
-    {
-        try
-        {
-            // --- Run every symbolDataPart
-            foreach (var part in symbolDataParts)
-            {
-                // --- Main cycle
-                while (part.All(x => x.Timeframes.First().Index < x.Timeframes.First().EndIndex))
-                {
-                    // --- Checking for cancellation
-                    if (cancellationToken is { IsCancellationRequested: true })
-                        throw new OperationCanceledException();
-
-                    // --- Preparing feeding data
-                    var feedingData = await CloneFeedingSymbolData(part);
-
-                    // --- Apply Open Price to OHLC for all first candles
-                    await HandleOhlc(feedingData);
-
-                    // --- Sending OnTick Action
-                    await OnTick(feedingData);
-                        
-                    // --- Clearing unnecessary data right after strategy is executed
-                    ClonedSymbolsData.Clear();
-                    
-                    // --- Incrementing indexes
-                    await IncrementIndexes(part);
-                }
-            }
-        }
-        catch (OperationCanceledException)
-        {
-            // Freeing up resources
-            ClonedSymbolsData.Clear();
-                
-            // --- Cancellation been requested and executed
-            OnCancellationFinishedDelegate?.Invoke();
-        }
-    }
-    
     /// <summary>
     /// Cloning necessary symbol data range
     /// </summary>
     /// <param name="symbolData"></param>
     /// <returns></returns>
-    protected override Task<IEnumerable<ISymbolData>> CloneFeedingSymbolData(IEnumerable<ISymbolData> symbolData)
+    protected override async Task<IEnumerable<ISymbolData>> CloneFeedingSymbolData(IEnumerable<ISymbolData> symbolData)
     {
         // Clearing temporary data
         ClonedSymbolsData.Clear();
 
-        Parallel.ForEach(symbolData, symbol =>
+        // Parallel Loop, performs the better, the more symbols are in symbolData enumerable
+        await Parallel.ForEachAsync(symbolData, new ParallelOptions(), (symbol, _) =>
         {
             var timeframes = new ConcurrentQueue<TimeframeV1>();
 
-            //Parallel.ForEach(symbol.Timeframes, timeframe =>
+            // Making timeframes as regular foreach loop, because after parallel loop it will be necessary to sort 
+            // timeframes in ascending order, which may take more resources than benefits from using parallel execution
             foreach (var timeframe in symbol.Timeframes)
             {
                 var warmedUpIndex = timeframe.Index - WarmupCandlesCount > timeframe.StartIndex
@@ -101,9 +56,11 @@ public class EngineV4(int warmupCandlesCount) : EngineV3(warmupCandlesCount)
             };
 
             ClonedSymbolsData.Enqueue(cloned);
+            
+            return default;
         });
 
-        return Task.FromResult(ClonedSymbolsData.AsEnumerable());
+        return ClonedSymbolsData;
     }
     
     /// <summary>
@@ -111,10 +68,9 @@ public class EngineV4(int warmupCandlesCount) : EngineV3(warmupCandlesCount)
     /// </summary>
     /// <param name="symbolData"></param>
     /// <returns></returns>
-    protected override Task HandleOhlc(IEnumerable<ISymbolData> symbolData)
+    protected override async Task HandleOhlc(IEnumerable<ISymbolData> symbolData)
     {
-        //await Parallel.ForEachAsync(symbolData, (symbol, _) =>
-        Parallel.ForEach(symbolData, symbol =>
+        await Parallel.ForEachAsync(symbolData, (symbol, _) =>
         {
             // --- Getting First Timeframe from the list
             var firstTimeframe = symbol.Timeframes.First();
@@ -137,8 +93,45 @@ public class EngineV4(int warmupCandlesCount) : EngineV3(warmupCandlesCount)
                 // Assign the modified list back to the enumerable
                 timeframe.Candlesticks = candleSticks;
             }
+
+            return default;
         });
-        
-        return Task.CompletedTask;
+    }
+    
+    /// <summary>
+    /// Increment Symbol Data indexes
+    /// </summary>
+    /// <param name="symbolData"></param>
+    /// <returns></returns>
+    protected override async Task IncrementIndexes(IEnumerable<ISymbolData> symbolData)
+    {
+        await Parallel.ForEachAsync(symbolData, new ParallelOptions(), (symbol, _) =>
+        {
+            var lowestTimeframeIndexTime = DateTime.MinValue;
+            foreach (var timeframe in symbol.Timeframes)
+            {
+                // Handling the lowest timeframe
+                if (timeframe == symbol.Timeframes.First())
+                {
+                    if (timeframe.Index >= timeframe.StartIndex && timeframe.Index < timeframe.EndIndex)
+                    {
+                        timeframe.Index++;
+                        lowestTimeframeIndexTime = timeframe.Candlesticks.ElementAt(timeframe.Index).OpenTime;
+                    }
+
+                    continue;
+                }
+
+                // Handling higher timeframes
+                var closeTime = timeframe.Candlesticks.ElementAt(timeframe.Index).CloseTime;
+                if (closeTime < lowestTimeframeIndexTime && timeframe.Index >= timeframe.StartIndex &&
+                    timeframe.Index < timeframe.EndIndex)
+                {
+                    timeframe.Index++;
+                }
+            }
+
+            return default;
+        });
     }
 }

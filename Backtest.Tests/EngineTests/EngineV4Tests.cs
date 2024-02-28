@@ -8,7 +8,7 @@ namespace Backtest.Tests.EngineTests
     public class EngineV4Tests : EngineTests
     {
         /// <summary>
-        /// Initializing Engine V3
+        /// Initializing Engine V4
         /// </summary>
         public EngineV4Tests()
         {
@@ -18,17 +18,7 @@ namespace Backtest.Tests.EngineTests
 
             Engine = new EngineV4(WarmupCandlesCount)
             {
-                OnTick = async symbolData =>
-                {
-                    var signals = await Strategy.Execute(symbolData);
-                    if (signals.Any())
-                    {
-                        foreach (var signal in signals)
-                        {
-                            _ = await Trade.ExecuteSignal(signal);
-                        }
-                    }
-                }
+                OnTick = OnTickMethod
             };
         }
     }

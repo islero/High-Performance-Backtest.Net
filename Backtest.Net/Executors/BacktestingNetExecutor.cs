@@ -53,7 +53,7 @@ namespace Backtest.Net.Executors
                 WarmupTimeframe);
 
             // --- Create and Select Engine version
-            Engine = new EngineV4(WarmupCandlesCount)
+            Engine = new EngineV5(WarmupCandlesCount)
             {
                 OnTick = OnTick
             };
@@ -74,21 +74,6 @@ namespace Backtest.Net.Executors
                 Assembly.GetExecutingAssembly().GetName().Version?.ToString());
         }
         
-        /*
-        /// <summary>
-        /// On Tick Action that passes data into strategy
-        /// </summary>
-        /// <param name="symbolData"></param>
-        /// <returns></returns>
-        private async Task OnTick(IEnumerable<ISymbolData> symbolData)
-        {
-            var signals = await Strategy.Execute(symbolData);
-            foreach (var signal in signals)
-            {
-                _ = await Trade.ExecuteSignal(signal);
-            }
-        }*/
-
         /// <summary>
         /// Notifies Subscribed Objects about backtesting status
         /// </summary>
