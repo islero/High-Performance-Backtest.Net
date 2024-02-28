@@ -21,7 +21,7 @@ namespace Backtest.Net.Executors
         private IEngine? Engine { get; set;  } // The backtesting engine itself, performs backtesting, passes prepared history into strategy
 
         // --- Delegates
-        public Action<BacktestingEventStatus>? OnBacktestingEvent; // Notifies subscribed objects about backtesting events
+        public Action<BacktestingEventStatus, string?>? OnBacktestingEvent; // Notifies subscribed objects about backtesting events
         public required Func<IEnumerable<ISymbolData>, Task> OnTick { get; set; }
 
         // --- Constructors
@@ -56,14 +56,14 @@ namespace Backtest.Net.Executors
             };
 
             // --- Split Symbols Data
-            NotifyBacktestingEvent(BacktestingEventStatus.SplitStarted);
+            NotifyBacktestingEvent(BacktestingEventStatus.SplitStarted, Splitter.GetType().Name);
             var symbolDataParts = await Splitter.SplitAsync(symbolsData);
-            NotifyBacktestingEvent(BacktestingEventStatus.SplitFinished);
+            NotifyBacktestingEvent(BacktestingEventStatus.SplitFinished, Splitter.GetType().Name);
 
             // --- Run Engine
-            NotifyBacktestingEvent(BacktestingEventStatus.EngineStarted);
+            NotifyBacktestingEvent(BacktestingEventStatus.EngineStarted, Engine.GetType().Name);
             await Engine.RunAsync(symbolDataParts, cancellationToken);
-            NotifyBacktestingEvent(BacktestingEventStatus.EngineFinished);
+            NotifyBacktestingEvent(BacktestingEventStatus.EngineFinished, Engine.GetType().Name);
 
             IsRunning = false;
             // --- Triggering On Finished Backtesting Status
@@ -84,15 +84,16 @@ namespace Backtest.Net.Executors
                 _ = await Trade.ExecuteSignal(signal);
             }
         }*/
-        
+
         /// <summary>
         /// Notifies Subscribed Objects about backtesting status
         /// </summary>
         /// <param name="eventStatus"></param>
+        /// <param name="additionalDetails"></param>
         /// <returns></returns>
-        private void NotifyBacktestingEvent(BacktestingEventStatus eventStatus)
+        private void NotifyBacktestingEvent(BacktestingEventStatus eventStatus, string? additionalDetails = default)
         {
-            OnBacktestingEvent?.Invoke(eventStatus);
+            OnBacktestingEvent?.Invoke(eventStatus, additionalDetails);
         }
     }
 }

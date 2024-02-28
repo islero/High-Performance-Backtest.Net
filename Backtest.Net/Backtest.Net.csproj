@@ -8,9 +8,9 @@
     <Platforms>AnyCPU</Platforms>
     <AssemblyVersion>2.0.0.0</AssemblyVersion>
     <FileVersion>2.0.0.0</FileVersion>
-    <Version>2.0.0</Version>
+    <Version>2.0.1</Version>
     <RepositoryUrl>https://github.com/islero/High-Performance-Backtest.Net</RepositoryUrl>
-    <Description>Made OnTick async</Description>
+    <Description>Added objects names that contain version numbers to backtesting event function</Description>
     <PackageReleaseNotes>Implemented Backtesting Executor, release candidate</PackageReleaseNotes>
     <Configurations>Release;Debug</Configurations>
   </PropertyGroup>
