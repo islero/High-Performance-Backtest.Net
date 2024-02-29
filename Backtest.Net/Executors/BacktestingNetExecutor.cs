@@ -53,7 +53,7 @@ namespace Backtest.Net.Executors
                 WarmupTimeframe);
 
             // --- Create and Select Engine version
-            Engine = new EngineV5(WarmupCandlesCount)
+            Engine = new EngineV6(WarmupCandlesCount)
             {
                 OnTick = OnTick
             };
