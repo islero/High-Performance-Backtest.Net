@@ -72,6 +72,19 @@ public class EngineV1(int warmupCandlesCount) : IEngine
             OnCancellationFinishedDelegate?.Invoke();
         }
     }
+    
+    /// <summary>
+    /// Gets Current Progress From 0.0 to 100.0
+    /// </summary>
+    /// <returns></returns>
+    public decimal GetProgress()
+    {
+        // --- Validating dividing by 0
+        if (_maxIndex == 0) return 0;
+        
+        // --- Returning current accurate progress
+        return _index / _maxIndex * 100;
+    }
 
     /// <summary>
     /// Increment Symbol Data indexes
@@ -93,6 +106,9 @@ public class EngineV1(int warmupCandlesCount) : IEngine
                     {
                         timeframe.Index++;
                         lowestTimeframeIndexTime = timeframe.Candlesticks.ElementAt(timeframe.Index).OpenTime;
+                        
+                        // --- Managing bot progress
+                        ManageProgress(timeframe.Index, timeframe.EndIndex);
                     }
 
                     continue;
@@ -197,5 +213,24 @@ public class EngineV1(int warmupCandlesCount) : IEngine
 
             return default;
         });
+    }
+
+    /// <summary>
+    /// Index and Max Index fields are using for tracking progress
+    /// </summary>
+    private decimal _index, _maxIndex;
+    
+    /// <summary>
+    /// Rewrites index and max index if new max index is bigger than previous max index
+    /// </summary>
+    /// <param name="index"></param>
+    /// <param name="maxIndex"></param>
+    protected void ManageProgress(int index, int maxIndex)
+    {
+        // --- Validation of max index
+        if(maxIndex < _maxIndex) return;
+
+        _index = index;
+        _maxIndex = maxIndex;
     }
 }

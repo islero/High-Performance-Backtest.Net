@@ -73,6 +73,15 @@ namespace Backtest.Net.Executors
             NotifyBacktestingEvent(BacktestingEventStatus.Finished,
                 Assembly.GetExecutingAssembly().GetName().Version?.ToString());
         }
+
+        /// <summary>
+        /// Returning Current backtesting progress
+        /// </summary>
+        /// <returns></returns>
+        public decimal BacktestingProgress()
+        {
+            return Engine?.GetProgress() ?? 0;
+        }
         
         /// <summary>
         /// Notifies Subscribed Objects about backtesting status

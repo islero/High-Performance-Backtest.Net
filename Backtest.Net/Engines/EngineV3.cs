@@ -30,6 +30,9 @@ public class EngineV3(int warmupCandlesCount) : EngineV2(warmupCandlesCount)
                     {
                         timeframe.Index++;
                         lowestTimeframeIndexTime = timeframe.Candlesticks.ElementAt(timeframe.Index).OpenTime;
+                        
+                        // --- Managing bot progress
+                        ManageProgress(timeframe.Index, timeframe.EndIndex);
                     }
 
                     continue;
