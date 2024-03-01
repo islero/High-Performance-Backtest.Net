@@ -18,8 +18,8 @@ namespace Backtest.Benchmarks.EngineBenchmarks;
 public class EngineBenchmark
 {
     // --- Properties
-    private IEnumerable<ISymbolData>? GeneratedSymbolsData { get; set; }
-    private IEnumerable<IEnumerable<ISymbolData>> SplittedData;
+    private List<ISymbolData>? GeneratedSymbolsData { get; set; }
+    private List<List<ISymbolData>> SplittedData;
     private DateTime StartingDate { get; set; }
     private int DaysPerSplit { get; set; }
     private int WarmupCandlesCount { get; set; }

@@ -27,7 +27,7 @@ namespace Backtest.Net.SymbolDataSplitters
         /// </summary>
         /// <param name="symbolsData"></param>
         /// <returns></returns>
-        public override Task<IEnumerable<IEnumerable<ISymbolData>>> SplitAsync(IEnumerable<ISymbolData> symbolsData)
+        public override Task<List<List<ISymbolData>>> SplitAsync(List<ISymbolData> symbolsData)
         {
             // --- Enumerating Symbols Data
             var symbolsDataList = symbolsData.ToList();
@@ -41,7 +41,7 @@ namespace Backtest.Net.SymbolDataSplitters
                 throw new Exception("symbolsData contain duplicated symbols or timeframes");
             
             // --- Creating Result Split Symbols Data
-            IEnumerable<IEnumerable<ISymbolData>> splitSymbolsData = new List<IEnumerable<ISymbolData>>();
+            List<List<ISymbolData>> splitSymbolsData = [];
             
             // --- Checking if splitting is enabled
             if(DaysPerSplit <= 0)
@@ -59,7 +59,9 @@ namespace Backtest.Net.SymbolDataSplitters
                         timeframe.EndIndex = timeframe.Candlesticks.Count() - 1;
                     }
                 }
-                return Task.FromResult(splitSymbolsData.Append(symbolsData));
+
+                splitSymbolsData.Add(symbolsData);
+                return Task.FromResult(splitSymbolsData);
             }
 
             // --- Getting correct warmup timeframe
@@ -127,7 +129,7 @@ namespace Backtest.Net.SymbolDataSplitters
                         {
                             // --- Please, note that candles readjusting is corrupting source candles
                             // --- Perform readjusting
-                            timeframe.Candlesticks = timeframe.Candlesticks.Skip(timeframe.StartIndex);
+                            timeframe.Candlesticks = timeframe.Candlesticks.Skip(timeframe.StartIndex).ToList();
 
                             // --- Perform reindexing
                             timeframe.Index -= timeframe.StartIndex;
@@ -137,7 +139,7 @@ namespace Backtest.Net.SymbolDataSplitters
 
                         // --- Filling the candlesticks with data
                         var candlesticks = timeframe.Candlesticks.Take(timeframe.EndIndex + 1)
-                            .Select(candle => candle.Clone());
+                            .Select(candle => candle.Clone()).ToList();
 
                         // --- Creating timeframe
                         ITimeframe timeframePart = new TimeframeV1()
@@ -150,7 +152,7 @@ namespace Backtest.Net.SymbolDataSplitters
                         };
 
                         // --- Appending a timeframe to the timeframes list
-                        symbolDataPart.Timeframes = symbolDataPart.Timeframes.Append(timeframePart);
+                        symbolDataPart.Timeframes.Add(timeframePart);
                     }
 
                     // --- Adding a new item into symbolsDataPart
@@ -163,7 +165,7 @@ namespace Backtest.Net.SymbolDataSplitters
 
                 // --- Append symbolsDataPart if it contain any record
                 if (symbolsDataPart.Count != 0)
-                    splitSymbolsData = splitSymbolsData.Append(symbolsDataPart);
+                    splitSymbolsData.Add(symbolsDataPart);
             }
 
             return Task.FromResult(splitSymbolsData);

@@ -13,6 +13,6 @@ namespace Backtest.Net.Timeframes
         public int Index { get; set; }
         public int EndIndex { get; set; }
         public bool NoMoreHistory { get; set; } = false;
-        public IEnumerable<ICandlestick> Candlesticks { get; set; } = new List<ICandlestick>();
+        public List<ICandlestick> Candlesticks { get; set; } = [];
     }
 }

@@ -18,7 +18,7 @@ public sealed class EngineV6(int warmupCandlesCount) : EngineV5(warmupCandlesCou
     /// </summary>
     /// <param name="symbolData"></param>
     /// <returns></returns>
-    protected override async Task<IEnumerable<ISymbolData>> CloneFeedingSymbolData(IEnumerable<ISymbolData> symbolData)
+    protected override async Task<List<ISymbolData>> CloneFeedingSymbolData(List<ISymbolData> symbolData)
     {
         // Clearing temporary data
         ClonedSymbolsData.Clear();
@@ -26,7 +26,7 @@ public sealed class EngineV6(int warmupCandlesCount) : EngineV5(warmupCandlesCou
         // Parallel Loop, performs the better, the more symbols are in symbolData enumerable
         await Parallel.ForEachAsync(symbolData, new ParallelOptions(), (symbol, _) =>
         {
-            var timeframes = new ConcurrentQueue<TimeframeV1>();
+            var timeframes = new List<ITimeframe>();
 
             // Making timeframes as regular foreach loop, because after parallel loop it will be necessary to sort 
             // timeframes in ascending order, which may take more resources than benefits from using parallel execution
@@ -39,10 +39,10 @@ public sealed class EngineV6(int warmupCandlesCount) : EngineV5(warmupCandlesCou
                     .Take(warmedUpIndex..(timeframe.Index + 1));
 
                 // --- No need to add nothing more except interval and candles themself
-                timeframes.Enqueue(new TimeframeV1
+                timeframes.Add(new TimeframeV1
                 {
                     Timeframe = timeframe.Timeframe,
-                    Candlesticks = clonedCandlesticks
+                    Candlesticks = clonedCandlesticks.ToList()
                 });
             }
 
@@ -58,7 +58,7 @@ public sealed class EngineV6(int warmupCandlesCount) : EngineV5(warmupCandlesCou
             return default;
         });
 
-        return ClonedSymbolsData;
+        return ClonedSymbolsData.ToList();
     }
     
     /// <summary>
@@ -66,15 +66,15 @@ public sealed class EngineV6(int warmupCandlesCount) : EngineV5(warmupCandlesCou
     /// </summary>
     /// <param name="symbolData"></param>
     /// <returns></returns>
-    protected override async Task HandleOhlc(IEnumerable<ISymbolData> symbolData)
+    protected override async Task HandleOhlc(List<ISymbolData> symbolData)
     {
         await Parallel.ForEachAsync(symbolData, (symbol, _) =>
         {
             // --- Getting First Timeframe from the list
-            var firstTimeframe = symbol.Timeframes.First();
+            var firstTimeframe = symbol.Timeframes[0];
 
             // --- Getting last candle and cloning it
-            var firstTimeframeCandle = firstTimeframe.Candlesticks.Last().Clone();
+            var firstTimeframeCandle = firstTimeframe.Candlesticks[^1].Clone();
             firstTimeframeCandle.Open = firstTimeframeCandle.Open;
             firstTimeframeCandle.High = firstTimeframeCandle.Open;
             firstTimeframeCandle.Low = firstTimeframeCandle.Open;
@@ -83,17 +83,11 @@ public sealed class EngineV6(int warmupCandlesCount) : EngineV5(warmupCandlesCou
 
             foreach (var timeframe in symbol.Timeframes)
             {
-                // Converting to list in order to improve performance
-                var candleSticks = timeframe.Candlesticks.ToList();
-                
                 // Replacing last element with cloned candle
-                candleSticks[^1] = firstTimeframeCandle;
+                timeframe.Candlesticks[^1] = firstTimeframeCandle;
                 
                 // Reversing list to make first candle the most recent one
-                candleSticks.Reverse();
-                
-                // Assign the modified list back to the enumerable
-                timeframe.Candlesticks = candleSticks;
+                timeframe.Candlesticks.Reverse();
             }
 
             return default;

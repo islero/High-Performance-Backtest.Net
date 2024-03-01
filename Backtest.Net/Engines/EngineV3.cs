@@ -16,7 +16,7 @@ public class EngineV3(int warmupCandlesCount) : EngineV2(warmupCandlesCount)
     /// </summary>
     /// <param name="symbolData"></param>
     /// <returns></returns>
-    protected override Task IncrementIndexes(IEnumerable<ISymbolData> symbolData)
+    protected override Task IncrementIndexes(List<ISymbolData> symbolData)
     {
         Parallel.ForEach(symbolData, symbol =>
         {
@@ -56,14 +56,14 @@ public class EngineV3(int warmupCandlesCount) : EngineV2(warmupCandlesCount)
     /// </summary>
     /// <param name="symbolData"></param>
     /// <returns></returns>
-    protected override Task<IEnumerable<ISymbolData>> CloneFeedingSymbolData(IEnumerable<ISymbolData> symbolData)
+    protected override Task<List<ISymbolData>> CloneFeedingSymbolData(List<ISymbolData> symbolData)
     {
         // Clearing temporary data
         ClonedSymbolsData.Clear();
 
         Parallel.ForEach(symbolData, symbol =>
         {
-            var timeframes = new ConcurrentBag<TimeframeV1>();
+            var timeframes = new ConcurrentBag<ITimeframe>();
 
             Parallel.ForEach(symbol.Timeframes, timeframe =>
             {
@@ -72,13 +72,15 @@ public class EngineV3(int warmupCandlesCount) : EngineV2(warmupCandlesCount)
                     : timeframe.StartIndex;
                 var clonedCandlesticks = timeframe.Candlesticks
                     .Take(warmedUpIndex..(timeframe.Index + 1))
-                    .Select(candle => candle.Clone());
+                    .Select(candle => candle.Clone()).ToList();
+
+                clonedCandlesticks.Reverse();
 
                 // --- No need to add nothing more except interval and candles themself
-                timeframes.Add(new TimeframeV1()
+                timeframes.Add(new TimeframeV1
                 {
                     Timeframe = timeframe.Timeframe,
-                    Candlesticks = clonedCandlesticks.Reverse()
+                    Candlesticks = clonedCandlesticks
                 });
             });
 
@@ -86,13 +88,13 @@ public class EngineV3(int warmupCandlesCount) : EngineV2(warmupCandlesCount)
             ISymbolData cloned = new SymbolDataV1()
             {
                 Symbol = symbol.Symbol,
-                Timeframes = timeframes.OrderBy(x => x.Timeframe),
+                Timeframes = timeframes.OrderBy(x => x.Timeframe).ToList()
             };
 
             ClonedSymbolsData.Enqueue(cloned);
         });
 
-        return Task.FromResult(ClonedSymbolsData.AsEnumerable());
+        return Task.FromResult(ClonedSymbolsData.ToList());
     }
 
     /// <summary>
@@ -100,7 +102,7 @@ public class EngineV3(int warmupCandlesCount) : EngineV2(warmupCandlesCount)
     /// </summary>
     /// <param name="symbolData"></param>
     /// <returns></returns>
-    protected override Task HandleOhlc(IEnumerable<ISymbolData> symbolData)
+    protected override Task HandleOhlc(List<ISymbolData> symbolData)
     {
         Parallel.ForEach(symbolData, symbol =>
         {

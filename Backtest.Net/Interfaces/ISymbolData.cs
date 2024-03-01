@@ -6,6 +6,6 @@
     public interface ISymbolData
     {
         public string Symbol { get; set; }
-        public IEnumerable<ITimeframe> Timeframes { get; set; }
+        public List<ITimeframe> Timeframes { get; set; }
     }
 }

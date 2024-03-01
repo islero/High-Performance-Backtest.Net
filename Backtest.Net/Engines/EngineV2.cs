@@ -15,12 +15,12 @@ public class EngineV2(int warmupCandlesCount) : EngineV1(warmupCandlesCount)
     /// <param name="symbolDataParts"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    public override async Task RunAsync(IEnumerable<IEnumerable<ISymbolData>> symbolDataParts, CancellationToken? cancellationToken = default)
+    public override async Task RunAsync(List<List<ISymbolData>> symbolDataParts, CancellationToken? cancellationToken = default)
     {
         try
         {
             // --- Saving Parts Count for accurate progress calculation
-            PartsCount = symbolDataParts.Count();
+            PartsCount = symbolDataParts.Count;
             
             // --- Run every symbolDataPart
             foreach (var part in symbolDataParts)
@@ -67,7 +67,7 @@ public class EngineV2(int warmupCandlesCount) : EngineV1(warmupCandlesCount)
     /// </summary>
     /// <param name="symbolData"></param>
     /// <returns></returns>
-    protected override async Task HandleOhlc(IEnumerable<ISymbolData> symbolData)
+    protected override async Task HandleOhlc(List<ISymbolData> symbolData)
     {
         await Parallel.ForEachAsync(symbolData, new ParallelOptions(), (symbol, _) =>
         {

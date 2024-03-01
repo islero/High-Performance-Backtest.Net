@@ -32,7 +32,7 @@ public class EngineV1(int warmupCandlesCount) : IEngine
     /// <param name="symbolDataParts"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    public virtual async Task RunAsync(IEnumerable<IEnumerable<ISymbolData>> symbolDataParts, CancellationToken? cancellationToken = default)
+    public virtual async Task RunAsync(List<List<ISymbolData>> symbolDataParts, CancellationToken? cancellationToken = default)
     {
         try
         {
@@ -94,7 +94,7 @@ public class EngineV1(int warmupCandlesCount) : IEngine
     /// </summary>
     /// <param name="symbolData"></param>
     /// <returns></returns>
-    protected virtual async Task IncrementIndexes(IEnumerable<ISymbolData> symbolData)
+    protected virtual async Task IncrementIndexes(List<ISymbolData> symbolData)
     {
         //foreach (var symbol in symbolData)
         await Parallel.ForEachAsync(symbolData, new ParallelOptions(), (symbol, _) =>
@@ -140,13 +140,13 @@ public class EngineV1(int warmupCandlesCount) : IEngine
     /// </summary>
     /// <param name="symbolData"></param>
     /// <returns></returns>
-    protected virtual async Task<IEnumerable<ISymbolData>> CloneFeedingSymbolData(IEnumerable<ISymbolData> symbolData)
+    protected virtual async Task<List<ISymbolData>> CloneFeedingSymbolData(List<ISymbolData> symbolData)
     {
         ClonedSymbolsData.Clear();
 
         await Parallel.ForEachAsync(symbolData, new ParallelOptions(), (symbol, _) =>
         {
-            var timeframes = new ConcurrentQueue<TimeframeV1>();
+            var timeframes = new List<ITimeframe>();
 
             //await Parallel.ForEachAsync(symbol.Timeframes, new ParallelOptions(), (timeframe, _) =>
             foreach (var timeframe in symbol.Timeframes)
@@ -159,10 +159,10 @@ public class EngineV1(int warmupCandlesCount) : IEngine
                     .Select(candle => candle.Clone());
 
                 // --- No need to add nothing more except interval and candles themself
-                timeframes.Enqueue(new TimeframeV1()
+                timeframes.Add(new TimeframeV1()
                 {
                     Timeframe = timeframe.Timeframe,
-                    Candlesticks = clonedCandlesticks
+                    Candlesticks = clonedCandlesticks.ToList()
                 });
             }
 
@@ -177,7 +177,7 @@ public class EngineV1(int warmupCandlesCount) : IEngine
             return ValueTask.CompletedTask;
         });
 
-        return ClonedSymbolsData;
+        return ClonedSymbolsData.ToList();
     }
 
     /// <summary>
@@ -185,7 +185,7 @@ public class EngineV1(int warmupCandlesCount) : IEngine
     /// </summary>
     /// <param name="symbolData"></param>
     /// <returns></returns>
-    protected virtual async Task HandleOhlc(IEnumerable<ISymbolData> symbolData)
+    protected virtual async Task HandleOhlc(List<ISymbolData> symbolData)
     {
         await Parallel.ForEachAsync(symbolData, new ParallelOptions(), (symbol, _) =>
         {

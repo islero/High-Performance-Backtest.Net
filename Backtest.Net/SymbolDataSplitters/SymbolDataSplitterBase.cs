@@ -19,7 +19,7 @@ namespace Backtest.Net.SymbolDataSplitters
         // --- Constructors
 
         // --- Methods
-        public abstract Task<IEnumerable<IEnumerable<ISymbolData>>> SplitAsync(IEnumerable<ISymbolData> symbolsData);
+        public abstract Task<List<List<ISymbolData>>> SplitAsync(List<ISymbolData> symbolsData);
 
         /// <summary>
         /// Returns the candlestick index of the targetDateTime by candle OpenTime, or -1 if the index wasn't found

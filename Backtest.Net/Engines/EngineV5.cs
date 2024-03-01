@@ -19,7 +19,7 @@ public class EngineV5(int warmupCandlesCount) : EngineV4(warmupCandlesCount)
     /// </summary>
     /// <param name="symbolData"></param>
     /// <returns></returns>
-    protected override async Task<IEnumerable<ISymbolData>> CloneFeedingSymbolData(IEnumerable<ISymbolData> symbolData)
+    protected override async Task<List<ISymbolData>> CloneFeedingSymbolData(List<ISymbolData> symbolData)
     {
         // Clearing temporary data
         ClonedSymbolsData.Clear();
@@ -27,7 +27,7 @@ public class EngineV5(int warmupCandlesCount) : EngineV4(warmupCandlesCount)
         // Parallel Loop, performs the better, the more symbols are in symbolData enumerable
         await Parallel.ForEachAsync(symbolData, new ParallelOptions(), (symbol, _) =>
         {
-            var timeframes = new ConcurrentQueue<TimeframeV1>();
+            var timeframes = new List<ITimeframe>();
 
             // Making timeframes as regular foreach loop, because after parallel loop it will be necessary to sort 
             // timeframes in ascending order, which may take more resources than benefits from using parallel execution
@@ -38,13 +38,15 @@ public class EngineV5(int warmupCandlesCount) : EngineV4(warmupCandlesCount)
                     : timeframe.StartIndex;
                 var clonedCandlesticks = timeframe.Candlesticks
                     .Take(warmedUpIndex..(timeframe.Index + 1))
-                    .Select(candle => candle.Clone());
+                    .Select(candle => candle.Clone()).ToList();
 
+                clonedCandlesticks.Reverse();
+                    
                 // --- No need to add nothing more except interval and candles themself
-                timeframes.Enqueue(new TimeframeV1
+                timeframes.Add(new TimeframeV1
                 {
                     Timeframe = timeframe.Timeframe,
-                    Candlesticks = clonedCandlesticks.Reverse()
+                    Candlesticks = clonedCandlesticks
                 });
             }
 
@@ -60,7 +62,7 @@ public class EngineV5(int warmupCandlesCount) : EngineV4(warmupCandlesCount)
             return default;
         });
 
-        return ClonedSymbolsData;
+        return ClonedSymbolsData.ToList();
     }
     
     /// <summary>
@@ -68,7 +70,7 @@ public class EngineV5(int warmupCandlesCount) : EngineV4(warmupCandlesCount)
     /// </summary>
     /// <param name="symbolData"></param>
     /// <returns></returns>
-    protected override async Task HandleOhlc(IEnumerable<ISymbolData> symbolData)
+    protected override async Task HandleOhlc(List<ISymbolData> symbolData)
     {
         await Parallel.ForEachAsync(symbolData, (symbol, _) =>
         {
@@ -103,7 +105,7 @@ public class EngineV5(int warmupCandlesCount) : EngineV4(warmupCandlesCount)
     /// </summary>
     /// <param name="symbolData"></param>
     /// <returns></returns>
-    protected override async Task IncrementIndexes(IEnumerable<ISymbolData> symbolData)
+    protected override async Task IncrementIndexes(List<ISymbolData> symbolData)
     {
         await Parallel.ForEachAsync(symbolData, new ParallelOptions(), (symbol, _) =>
         {
@@ -111,12 +113,12 @@ public class EngineV5(int warmupCandlesCount) : EngineV4(warmupCandlesCount)
             foreach (var timeframe in symbol.Timeframes)
             {
                 // Handling the lowest timeframe
-                if (timeframe == symbol.Timeframes.First())
+                if (timeframe == symbol.Timeframes[0])
                 {
                     if (timeframe.Index >= timeframe.StartIndex && timeframe.Index < timeframe.EndIndex)
                     {
                         timeframe.Index++;
-                        lowestTimeframeIndexTime = timeframe.Candlesticks.ElementAt(timeframe.Index).OpenTime;
+                        lowestTimeframeIndexTime = timeframe.Candlesticks[timeframe.Index].OpenTime;
                         
                         // --- Managing bot progress
                         ManageProgress(timeframe.Index, timeframe.EndIndex);
@@ -126,7 +128,7 @@ public class EngineV5(int warmupCandlesCount) : EngineV4(warmupCandlesCount)
                 }
 
                 // Handling higher timeframes
-                var closeTime = timeframe.Candlesticks.ElementAt(timeframe.Index).CloseTime;
+                var closeTime = timeframe.Candlesticks[timeframe.Index].CloseTime;
                 if (closeTime < lowestTimeframeIndexTime && timeframe.Index >= timeframe.StartIndex &&
                     timeframe.Index < timeframe.EndIndex)
                 {

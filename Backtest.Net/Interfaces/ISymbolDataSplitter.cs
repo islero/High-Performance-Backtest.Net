@@ -5,6 +5,6 @@
     /// </summary>
     public interface ISymbolDataSplitter
     {
-        public Task<IEnumerable<IEnumerable<ISymbolData>>> SplitAsync(IEnumerable<ISymbolData> symbolsData);
+        public Task<List<List<ISymbolData>>> SplitAsync(List<ISymbolData> symbolsData);
     }
 }

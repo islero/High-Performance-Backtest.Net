@@ -41,7 +41,7 @@ namespace Backtest.Net.Executors
         /// Performing the actual backtesting process
         /// </summary>
         /// <returns></returns>
-        public async Task PerformAsync(IEnumerable<ISymbolData> symbolsData, CancellationToken cancellationToken = default)
+        public async Task PerformAsync(List<ISymbolData> symbolsData, CancellationToken cancellationToken = default)
         {
             IsRunning = true;
             // --- Triggering On Started Backtesting Status

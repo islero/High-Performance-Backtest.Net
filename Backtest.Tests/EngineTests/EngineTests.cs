@@ -346,7 +346,7 @@ namespace Backtest.Tests.EngineTests
         /// Generates Dummy Data Splitter Result
         /// </summary>
         /// <returns></returns>
-        private IEnumerable<IEnumerable<ISymbolData>> GenerateCandles(DateTime startingDate, int totalCandlesCount, int daysPerSplit, int warmupCandlesCount)
+        private List<List<ISymbolData>> GenerateCandles(DateTime startingDate, int totalCandlesCount, int daysPerSplit, int warmupCandlesCount)
         {
             var symbolDataSplitter = new SymbolDataSplitterV1(daysPerSplit, warmupCandlesCount, startingDate, true);
 

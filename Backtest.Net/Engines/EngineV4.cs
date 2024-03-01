@@ -20,12 +20,12 @@ public class EngineV4(int warmupCandlesCount) : EngineV3(warmupCandlesCount)
     /// <param name="symbolDataParts"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    public override async Task RunAsync(IEnumerable<IEnumerable<ISymbolData>> symbolDataParts, CancellationToken? cancellationToken = default)
+    public override async Task RunAsync(List<List<ISymbolData>> symbolDataParts, CancellationToken? cancellationToken = default)
     {
         try
         {
             // --- Saving Parts Count for accurate progress calculation
-            PartsCount = symbolDataParts.Count();
+            PartsCount = symbolDataParts.Count;
             
             // --- Run every symbolDataPart
             foreach (var part in symbolDataParts)
@@ -69,14 +69,14 @@ public class EngineV4(int warmupCandlesCount) : EngineV3(warmupCandlesCount)
     /// </summary>
     /// <param name="symbolData"></param>
     /// <returns></returns>
-    protected override Task<IEnumerable<ISymbolData>> CloneFeedingSymbolData(IEnumerable<ISymbolData> symbolData)
+    protected override Task<List<ISymbolData>> CloneFeedingSymbolData(List<ISymbolData> symbolData)
     {
         // Clearing temporary data
         ClonedSymbolsData.Clear();
 
         Parallel.ForEach(symbolData, symbol =>
         {
-            var timeframes = new ConcurrentQueue<TimeframeV1>();
+            var timeframes = new ConcurrentQueue<ITimeframe>();
 
             //Parallel.ForEach(symbol.Timeframes, timeframe =>
             foreach (var timeframe in symbol.Timeframes)
@@ -86,13 +86,15 @@ public class EngineV4(int warmupCandlesCount) : EngineV3(warmupCandlesCount)
                     : timeframe.StartIndex;
                 var clonedCandlesticks = timeframe.Candlesticks
                     .Take(warmedUpIndex..(timeframe.Index + 1))
-                    .Select(candle => candle.Clone());
+                    .Select(candle => candle.Clone()).ToList();
+
+                clonedCandlesticks.Reverse();
 
                 // --- No need to add nothing more except interval and candles themself
                 timeframes.Enqueue(new TimeframeV1
                 {
                     Timeframe = timeframe.Timeframe,
-                    Candlesticks = clonedCandlesticks.Reverse()
+                    Candlesticks = clonedCandlesticks
                 });
             }
 
@@ -100,13 +102,13 @@ public class EngineV4(int warmupCandlesCount) : EngineV3(warmupCandlesCount)
             ISymbolData cloned = new SymbolDataV1
             {
                 Symbol = symbol.Symbol,
-                Timeframes = timeframes
+                Timeframes = timeframes.ToList()
             };
 
             ClonedSymbolsData.Enqueue(cloned);
         });
 
-        return Task.FromResult(ClonedSymbolsData.AsEnumerable());
+        return Task.FromResult(ClonedSymbolsData.ToList());
     }
     
     /// <summary>
@@ -114,7 +116,7 @@ public class EngineV4(int warmupCandlesCount) : EngineV3(warmupCandlesCount)
     /// </summary>
     /// <param name="symbolData"></param>
     /// <returns></returns>
-    protected override Task HandleOhlc(IEnumerable<ISymbolData> symbolData)
+    protected override Task HandleOhlc(List<ISymbolData> symbolData)
     {
         //await Parallel.ForEachAsync(symbolData, (symbol, _) =>
         Parallel.ForEach(symbolData, symbol =>

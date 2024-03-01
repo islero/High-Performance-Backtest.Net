@@ -12,6 +12,6 @@ namespace Backtest.Net.Interfaces
         public int Index { get; set; }
         public int EndIndex { get; set; }
         public bool NoMoreHistory { get; set; }
-        public IEnumerable<ICandlestick> Candlesticks { get; set; }
+        public List<ICandlestick> Candlesticks { get; set; }
     }
 }

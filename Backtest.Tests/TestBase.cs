@@ -47,7 +47,7 @@ namespace Backtest.Tests
                             CloseTime = startDate.AddSeconds(i * (int)currentTimeframe.Timeframe).AddSeconds((int)currentTimeframe.Timeframe).AddSeconds(-1)
 
                         };
-                        currentTimeframe.Candlesticks = currentTimeframe.Candlesticks.Append(candlestick);
+                        currentTimeframe.Candlesticks.Add(candlestick);
                     }
                     filledTimeframes.Add(currentTimeframe);
                 }
