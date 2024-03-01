@@ -73,7 +73,7 @@ public sealed class EngineV6(int warmupCandlesCount) : EngineV5(warmupCandlesCou
             // --- Getting First Timeframe from the list
             var firstTimeframe = symbol.Timeframes.First();
 
-            // --- Using null propagation and getting first candle
+            // --- Getting last candle and cloning it
             var firstTimeframeCandle = firstTimeframe.Candlesticks.Last().Clone();
             firstTimeframeCandle.Open = firstTimeframeCandle.Open;
             firstTimeframeCandle.High = firstTimeframeCandle.Open;
@@ -83,6 +83,7 @@ public sealed class EngineV6(int warmupCandlesCount) : EngineV5(warmupCandlesCou
 
             foreach (var timeframe in symbol.Timeframes)
             {
+                // Converting to list in order to improve performance
                 var candleSticks = timeframe.Candlesticks.ToList();
                 
                 // Replacing last element with cloned candle
