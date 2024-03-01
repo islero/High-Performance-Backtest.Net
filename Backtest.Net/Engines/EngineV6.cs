@@ -83,10 +83,10 @@ public sealed class EngineV6(int warmupCandlesCount) : EngineV5(warmupCandlesCou
 
             foreach (var timeframe in symbol.Timeframes)
             {
-                var candleSticks = timeframe.Candlesticks.SkipLast(1).ToList();
-
+                var candleSticks = timeframe.Candlesticks.ToList();
+                
                 // Replacing last element with cloned candle
-                candleSticks.Add(firstTimeframeCandle);
+                candleSticks[^1] = firstTimeframeCandle;
                 
                 // Reversing list to make first candle the most recent one
                 candleSticks.Reverse();

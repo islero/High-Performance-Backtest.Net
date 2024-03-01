@@ -19,6 +19,9 @@ public class EngineV2(int warmupCandlesCount) : EngineV1(warmupCandlesCount)
     {
         try
         {
+            // --- Saving Parts Count for accurate progress calculation
+            PartsCount = symbolDataParts.Count();
+            
             // --- Run every symbolDataPart
             foreach (var part in symbolDataParts)
             {

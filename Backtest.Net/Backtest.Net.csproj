@@ -6,11 +6,11 @@
     <Nullable>enable</Nullable>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <Platforms>AnyCPU</Platforms>
-    <AssemblyVersion>2.0.19.0</AssemblyVersion>
-    <FileVersion>2.0.19.0</FileVersion>
-    <Version>2.0.19</Version>
+    <AssemblyVersion>2.0.26.0</AssemblyVersion>
+    <FileVersion>2.0.26.0</FileVersion>
+    <Version>2.0.26</Version>
     <RepositoryUrl>https://github.com/islero/High-Performance-Backtest.Net</RepositoryUrl>
-    <Description>Implemented accurate backtesting progress</Description>
+    <Description>Reverting concurrent queue</Description>
     <PackageReleaseNotes>Implemented Backtesting Executor, release candidate</PackageReleaseNotes>
     <Configurations>Release;Debug</Configurations>
     <Authors>Yurii Dumanskyi</Authors>

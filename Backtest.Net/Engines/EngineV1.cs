@@ -36,6 +36,9 @@ public class EngineV1(int warmupCandlesCount) : IEngine
     {
         try
         {
+            // --- Saving Parts Count for accurate progress calculation
+            PartsCount = symbolDataParts.Count();
+            
             // --- Run every symbolDataPart
             foreach (var part in symbolDataParts)
             {
@@ -216,7 +219,12 @@ public class EngineV1(int warmupCandlesCount) : IEngine
     }
 
     /// <summary>
-    /// Index and Max Index fields are using for tracking progress
+    /// Parts Count
+    /// </summary>
+    protected decimal PartsCount { get; set; }
+
+    /// <summary>
+    /// Index and Max Index and parts count fields are using for tracking progress
     /// </summary>
     private decimal _index, _maxIndex;
     
@@ -227,10 +235,24 @@ public class EngineV1(int warmupCandlesCount) : IEngine
     /// <param name="maxIndex"></param>
     protected void ManageProgress(int index, int maxIndex)
     {
+        // --- Check if there are more than 1 part
+        if(PartsCount > 1)
+        {
+            _index++;
+            
+            // --- Validation of max index
+            if(maxIndex * PartsCount < _maxIndex) return;
+            
+            _maxIndex = maxIndex * PartsCount;
+            return;
+        }
+        
+        // --- Rewrite Index Value
+        _index = index;
+        
         // --- Validation of max index
         if(maxIndex < _maxIndex) return;
 
-        _index = index;
         _maxIndex = maxIndex;
     }
 }
