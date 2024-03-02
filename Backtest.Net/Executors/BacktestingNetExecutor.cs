@@ -40,9 +40,15 @@ namespace Backtest.Net.Executors
         /// <summary>
         /// Performing the actual backtesting process
         /// </summary>
-        /// <returns></returns>
-        public async Task PerformAsync(List<ISymbolData> symbolsData, CancellationToken cancellationToken = default)
+        /// <param name="symbolsData"></param>
+        /// <param name="cancellationToken"></param>
+        /// <exception cref="ArgumentException"></exception>
+        public async Task PerformAsync(List<ISymbolData>? symbolsData, CancellationToken cancellationToken = default)
         {
+            // --- Validating Symbols Data
+            if(symbolsData == null || symbolsData.Count == 0)
+                throw new ArgumentException("Symbols Data argument is null or has no elements");
+            
             IsRunning = true;
             // --- Triggering On Started Backtesting Status
             NotifyBacktestingEvent(BacktestingEventStatus.Started,

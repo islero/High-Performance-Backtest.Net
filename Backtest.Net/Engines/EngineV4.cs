@@ -24,8 +24,8 @@ public class EngineV4(int warmupCandlesCount) : EngineV3(warmupCandlesCount)
     {
         try
         {
-            // --- Saving Parts Count for accurate progress calculation
-            PartsCount = symbolDataParts.Count;
+            // --- Applying Sum of the all parts End Indexes to MaxIndex
+            ApplySumOfEndIndexes(symbolDataParts);
             
             // --- Run every symbolDataPart
             foreach (var part in symbolDataParts)

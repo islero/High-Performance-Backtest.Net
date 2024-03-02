@@ -2,6 +2,7 @@
 using Backtest.Net.Interfaces;
 using Backtest.Net.SymbolsData;
 using Backtest.Net.Timeframes;
+using SimdLinq;
 
 namespace Backtest.Net.Engines;
 
@@ -36,8 +37,8 @@ public class EngineV1(int warmupCandlesCount) : IEngine
     {
         try
         {
-            // --- Saving Parts Count for accurate progress calculation
-            PartsCount = symbolDataParts.Count();
+            // --- Applying Sum of the all parts End Indexes to MaxIndex
+            ApplySumOfEndIndexes(symbolDataParts);
             
             // --- Run every symbolDataPart
             foreach (var part in symbolDataParts)
@@ -83,10 +84,10 @@ public class EngineV1(int warmupCandlesCount) : IEngine
     public decimal GetProgress()
     {
         // --- Validating dividing by 0
-        if (_maxIndex == 0) return 0;
+        if (MaxIndex == 0) return 0;
         
         // --- Returning current accurate progress
-        return _index / _maxIndex * 100;
+        return Index / MaxIndex * 100;
     }
 
     /// <summary>
@@ -111,7 +112,7 @@ public class EngineV1(int warmupCandlesCount) : IEngine
                         lowestTimeframeIndexTime = timeframe.Candlesticks.ElementAt(timeframe.Index).OpenTime;
                         
                         // --- Managing bot progress
-                        ManageProgress(timeframe.Index, timeframe.EndIndex);
+                        Index++;
                     }
 
                     continue;
@@ -218,41 +219,38 @@ public class EngineV1(int warmupCandlesCount) : IEngine
         });
     }
 
-    /// <summary>
-    /// Parts Count
-    /// </summary>
-    protected decimal PartsCount { get; set; }
+    
 
     /// <summary>
-    /// Index and Max Index and parts count fields are using for tracking progress
+    /// Index iterator to manage backtesting progress
     /// </summary>
-    private decimal _index, _maxIndex;
+    protected decimal Index { get; set; }
     
     /// <summary>
-    /// Rewrites index and max index if new max index is bigger than previous max index
+    /// Applies Sum of all EndIndexes to MaxIndex
     /// </summary>
-    /// <param name="index"></param>
-    /// <param name="maxIndex"></param>
-    protected void ManageProgress(int index, int maxIndex)
+    /// <param name="symbolDataParts"></param>
+    protected void ApplySumOfEndIndexes(List<List<ISymbolData>> symbolDataParts)
     {
-        // --- Check if there are more than 1 part
-        if(PartsCount > 1)
-        {
-            _index++;
-            
-            // --- Validation of max index
-            if(maxIndex * PartsCount < _maxIndex) return;
-            
-            _maxIndex = maxIndex * PartsCount;
-            return;
-        }
-        
-        // --- Rewrite Index Value
-        _index = index;
-        
-        // --- Validation of max index
-        if(maxIndex < _maxIndex) return;
+        // --- Getting Symbols Data that have highest EndIndexes
+        var maxSymbol = symbolDataParts.Select(x => x.MaxBy(
+            y => y.Timeframes.First().EndIndex));
 
-        _maxIndex = maxIndex;
+        // --- Selecting EndIndexes and forming array from them
+        var endIndexesArray = maxSymbol.Select(x => x!.Timeframes.First().EndIndex).ToArray();
+        
+        // --- Calculating Sum of the all parts max indexes
+        MaxIndex = endIndexesArray.Sum();
+        
+        // --- Taking into account warmup candles for each part
+        MaxIndex -= (endIndexesArray.Length - 1) * (WarmupCandlesCount - 1);
+
+        // --- All indexes must start from warmup candles count value
+        Index = WarmupCandlesCount;
     }
+
+    /// <summary>
+    /// Max Index property in order to calculate the total index increments during the backtesting
+    /// </summary>
+    private decimal MaxIndex { get; set; }
 }

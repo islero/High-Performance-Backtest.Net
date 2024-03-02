@@ -56,7 +56,7 @@ namespace Backtest.Net.SymbolDataSplitters
                         timeframe.StartIndex = GetWarmupCandlestickIndex(timeframe.Index);
 
                         // --- Calculating EndIndex
-                        timeframe.EndIndex = timeframe.Candlesticks.Count() - 1;
+                        timeframe.EndIndex = timeframe.Candlesticks.Count - 1;
                     }
                 }
 
