@@ -1,5 +1,5 @@
-﻿using Backtest.Net.Enums;
-using Backtest.Net.Interfaces;
+﻿using Models.Net.Enums;
+using Models.Net.Interfaces;
 
 namespace Backtest.Net.Timeframes;
 

@@ -5,6 +5,8 @@ using Backtest.Net.SymbolDataSplitters;
 using Backtest.Net.SymbolsData;
 using Backtest.Net.Timeframes;
 using BenchmarkDotNet.Attributes;
+using Models.Net.Enums;
+using Models.Net.Interfaces;
 
 namespace Backtest.Benchmarks.SymbolDataSplitterBenchmarks
 {

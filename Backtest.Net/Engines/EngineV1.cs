@@ -2,6 +2,7 @@
 using Backtest.Net.Interfaces;
 using Backtest.Net.SymbolsData;
 using Backtest.Net.Timeframes;
+using Models.Net.Interfaces;
 using SimdLinq;
 
 namespace Backtest.Net.Engines;

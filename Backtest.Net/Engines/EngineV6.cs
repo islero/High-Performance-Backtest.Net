@@ -3,6 +3,7 @@ using Backtest.Net.Candlesticks;
 using Backtest.Net.Interfaces;
 using Backtest.Net.SymbolsData;
 using Backtest.Net.Timeframes;
+using Models.Net.Interfaces;
 
 namespace Backtest.Net.Engines;
 

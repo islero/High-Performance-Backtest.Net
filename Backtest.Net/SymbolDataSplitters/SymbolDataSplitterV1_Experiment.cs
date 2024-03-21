@@ -1,7 +1,8 @@
 ﻿using Backtest.Net.Enums;
-using Backtest.Net.Interfaces;
 using Backtest.Net.SymbolsData;
 using Backtest.Net.Timeframes;
+using Models.Net.Enums;
+using Models.Net.Interfaces;
 
 namespace Backtest.Net.SymbolDataSplitters;
 

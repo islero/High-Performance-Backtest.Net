@@ -1,4 +1,6 @@
-﻿namespace Backtest.Net.Interfaces;
+﻿using Models.Net.Interfaces;
+
+namespace Backtest.Net.Interfaces;
 
 /// <summary>
 /// Run the backtesting, prepare symbol data parts before feeding them into strategy

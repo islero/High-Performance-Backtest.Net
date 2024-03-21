@@ -1,4 +1,5 @@
 ﻿using Backtest.Net.Interfaces;
+using Models.Net.Interfaces;
 
 namespace Backtest.Net.SymbolsData;
 

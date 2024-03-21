@@ -1,6 +1,8 @@
 ﻿using Backtest.Net.Enums;
 using Backtest.Net.Interfaces;
 using Backtest.Net.SymbolDataSplitters;
+using Models.Net.Enums;
+using Models.Net.Interfaces;
 
 namespace Backtest.Tests.SymbolDataSplitterTests
 {
