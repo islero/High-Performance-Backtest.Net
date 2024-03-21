@@ -4,16 +4,15 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Backtest.Net.Enums
+namespace Backtest.Net.Enums;
+
+public enum BacktestingEventStatus
 {
-    public enum BacktestingEventStatus
-    {
-        Started,
-        Finished,
-        SplitStarted,
-        SplitFinished,
-        EngineStarted,
-        EngineFinished,
-        Error
-    }
+    Started,
+    Finished,
+    SplitStarted,
+    SplitFinished,
+    EngineStarted,
+    EngineFinished,
+    Error
 }

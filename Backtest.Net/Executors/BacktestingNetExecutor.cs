@@ -4,100 +4,99 @@ using Backtest.Net.Enums;
 using Backtest.Net.Interfaces;
 using Backtest.Net.SymbolDataSplitters;
 
-namespace Backtest.Net.Executors
+namespace Backtest.Net.Executors;
+
+/// <summary>
+/// High-Performance Backtesting Executor
+/// </summary>
+public sealed class BacktestingNetExecutor
 {
-    /// <summary>
-    /// High-Performance Backtesting Executor
-    /// </summary>
-    public sealed class BacktestingNetExecutor
+    // --- Properties
+    public static bool IsRunning { get; private set; } // Checks whether or not backtesting is currently running
+    private DateTime StartDateTime { get; } // Backtesting Start DateTime
+    private int WarmupCandlesCount { get; } // The amount of warmup candles count
+    private bool CorrectEndIndex { get; } // Makes sure the end index are the same for all symbols and timeframes
+    private CandlestickInterval? WarmupTimeframe { get; } // The timeframe must be warmed up and all lower timeframes accordingly, if null - will be set automatically
+    private int DaysPerSplit { get; } // How many days in one split range should exist
+    private ISymbolDataSplitter? Splitter { get; set;  } // Splits entire history on smaller pieces
+    private IEngine? Engine { get; set;  } // The backtesting engine itself, performs backtesting, passes prepared history into strategy
+
+    // --- Delegates
+    public Action<BacktestingEventStatus, string?>? OnBacktestingEvent; // Notifies subscribed objects about backtesting events
+    public required Func<IEnumerable<ISymbolData>, Task> OnTick { get; set; }
+
+    // --- Constructors
+    public BacktestingNetExecutor(DateTime startDateTime, int daysPerSplit, int warmupCandlesCount, 
+        bool correctEndIndex = false, CandlestickInterval? warmupTimeframe = null)
     {
-        // --- Properties
-        public static bool IsRunning { get; private set; } // Checks whether or not backtesting is currently running
-        private DateTime StartDateTime { get; } // Backtesting Start DateTime
-        private int WarmupCandlesCount { get; } // The amount of warmup candles count
-        private bool CorrectEndIndex { get; } // Makes sure the end index are the same for all symbols and timeframes
-        private CandlestickInterval? WarmupTimeframe { get; } // The timeframe must be warmed up and all lower timeframes accordingly, if null - will be set automatically
-        private int DaysPerSplit { get; } // How many days in one split range should exist
-        private ISymbolDataSplitter? Splitter { get; set;  } // Splits entire history on smaller pieces
-        private IEngine? Engine { get; set;  } // The backtesting engine itself, performs backtesting, passes prepared history into strategy
+        StartDateTime = startDateTime;
+        DaysPerSplit = daysPerSplit;
+        WarmupCandlesCount = warmupCandlesCount;
+        CorrectEndIndex = correctEndIndex;
+        WarmupTimeframe = warmupTimeframe;
+    }
 
-        // --- Delegates
-        public Action<BacktestingEventStatus, string?>? OnBacktestingEvent; // Notifies subscribed objects about backtesting events
-        public required Func<IEnumerable<ISymbolData>, Task> OnTick { get; set; }
-
-        // --- Constructors
-        public BacktestingNetExecutor(DateTime startDateTime, int daysPerSplit, int warmupCandlesCount, 
-            bool correctEndIndex = false, CandlestickInterval? warmupTimeframe = null)
-        {
-            StartDateTime = startDateTime;
-            DaysPerSplit = daysPerSplit;
-            WarmupCandlesCount = warmupCandlesCount;
-            CorrectEndIndex = correctEndIndex;
-            WarmupTimeframe = warmupTimeframe;
-        }
-
-        // --- Methods
-        /// <summary>
-        /// Performing the actual backtesting process
-        /// </summary>
-        /// <param name="symbolsData"></param>
-        /// <param name="cancellationToken"></param>
-        /// <exception cref="ArgumentException"></exception>
-        public async Task PerformAsync(List<ISymbolData>? symbolsData, CancellationToken cancellationToken = default)
-        {
-            // --- Validating Symbols Data
-            if(symbolsData == null || symbolsData.Count == 0)
-                throw new ArgumentException("Symbols Data argument is null or has no elements");
+    // --- Methods
+    /// <summary>
+    /// Performing the actual backtesting process
+    /// </summary>
+    /// <param name="symbolsData"></param>
+    /// <param name="cancellationToken"></param>
+    /// <exception cref="ArgumentException"></exception>
+    public async Task PerformAsync(List<ISymbolData>? symbolsData, CancellationToken cancellationToken = default)
+    {
+        // --- Validating Symbols Data
+        if(symbolsData == null || symbolsData.Count == 0)
+            throw new ArgumentException("Symbols Data argument is null or has no elements");
             
-            IsRunning = true;
-            // --- Triggering On Started Backtesting Status
-            NotifyBacktestingEvent(BacktestingEventStatus.Started,
-                Assembly.GetExecutingAssembly().GetName().Version?.ToString());
+        IsRunning = true;
+        // --- Triggering On Started Backtesting Status
+        NotifyBacktestingEvent(BacktestingEventStatus.Started,
+            Assembly.GetExecutingAssembly().GetName().Version?.ToString());
 
-            // --- Create and Select DataSplitter version
-            Splitter = new SymbolDataSplitterV1(DaysPerSplit, WarmupCandlesCount, StartDateTime, CorrectEndIndex,
-                WarmupTimeframe);
+        // --- Create and Select DataSplitter version
+        Splitter = new SymbolDataSplitterV1(DaysPerSplit, WarmupCandlesCount, StartDateTime, CorrectEndIndex,
+            WarmupTimeframe);
 
-            // --- Create and Select Engine version
-            Engine = new EngineV6(WarmupCandlesCount)
-            {
-                OnTick = OnTick
-            };
-
-            // --- Split Symbols Data
-            NotifyBacktestingEvent(BacktestingEventStatus.SplitStarted, Splitter.GetType().Name);
-            var symbolDataParts = await Splitter.SplitAsync(symbolsData);
-            NotifyBacktestingEvent(BacktestingEventStatus.SplitFinished, Splitter.GetType().Name);
-
-            // --- Run Engine
-            NotifyBacktestingEvent(BacktestingEventStatus.EngineStarted, Engine.GetType().Name);
-            await Engine.RunAsync(symbolDataParts, cancellationToken);
-            NotifyBacktestingEvent(BacktestingEventStatus.EngineFinished, Engine.GetType().Name);
-
-            IsRunning = false;
-            // --- Triggering On Finished Backtesting Status
-            NotifyBacktestingEvent(BacktestingEventStatus.Finished,
-                Assembly.GetExecutingAssembly().GetName().Version?.ToString());
-        }
-
-        /// <summary>
-        /// Returning Current backtesting progress
-        /// </summary>
-        /// <returns></returns>
-        public decimal BacktestingProgress()
+        // --- Create and Select Engine version
+        Engine = new EngineV6(WarmupCandlesCount)
         {
-            return Engine?.GetProgress() ?? 0;
-        }
+            OnTick = OnTick
+        };
+
+        // --- Split Symbols Data
+        NotifyBacktestingEvent(BacktestingEventStatus.SplitStarted, Splitter.GetType().Name);
+        var symbolDataParts = await Splitter.SplitAsync(symbolsData);
+        NotifyBacktestingEvent(BacktestingEventStatus.SplitFinished, Splitter.GetType().Name);
+
+        // --- Run Engine
+        NotifyBacktestingEvent(BacktestingEventStatus.EngineStarted, Engine.GetType().Name);
+        await Engine.RunAsync(symbolDataParts, cancellationToken);
+        NotifyBacktestingEvent(BacktestingEventStatus.EngineFinished, Engine.GetType().Name);
+
+        IsRunning = false;
+        // --- Triggering On Finished Backtesting Status
+        NotifyBacktestingEvent(BacktestingEventStatus.Finished,
+            Assembly.GetExecutingAssembly().GetName().Version?.ToString());
+    }
+
+    /// <summary>
+    /// Returning Current backtesting progress
+    /// </summary>
+    /// <returns></returns>
+    public decimal BacktestingProgress()
+    {
+        return Engine?.GetProgress() ?? 0;
+    }
         
-        /// <summary>
-        /// Notifies Subscribed Objects about backtesting status
-        /// </summary>
-        /// <param name="eventStatus"></param>
-        /// <param name="additionalDetails"></param>
-        /// <returns></returns>
-        private void NotifyBacktestingEvent(BacktestingEventStatus eventStatus, string? additionalDetails = default)
-        {
-            OnBacktestingEvent?.Invoke(eventStatus, additionalDetails);
-        }
+    /// <summary>
+    /// Notifies Subscribed Objects about backtesting status
+    /// </summary>
+    /// <param name="eventStatus"></param>
+    /// <param name="additionalDetails"></param>
+    /// <returns></returns>
+    private void NotifyBacktestingEvent(BacktestingEventStatus eventStatus, string? additionalDetails = default)
+    {
+        OnBacktestingEvent?.Invoke(eventStatus, additionalDetails);
     }
 }

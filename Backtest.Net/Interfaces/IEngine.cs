@@ -1,26 +1,25 @@
-﻿namespace Backtest.Net.Interfaces
+﻿namespace Backtest.Net.Interfaces;
+
+/// <summary>
+/// Run the backtesting, prepare symbol data parts before feeding them into strategy
+/// </summary>
+public interface IEngine
 {
+    // --- Delegates
+    public Action? OnCancellationFinishedDelegate { get; set; }
+    public Func<IEnumerable<ISymbolData>, Task> OnTick { get; set; }
+
     /// <summary>
-    /// Run the backtesting, prepare symbol data parts before feeding them into strategy
+    /// Main Method that starts the engine
     /// </summary>
-    public interface IEngine
-    {
-        // --- Delegates
-        public Action? OnCancellationFinishedDelegate { get; set; }
-        public Func<IEnumerable<ISymbolData>, Task> OnTick { get; set; }
+    /// <param name="symbolDataParts"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    public Task RunAsync(List<List<ISymbolData>> symbolDataParts, CancellationToken? cancellationToken = default);
 
-        /// <summary>
-        /// Main Method that starts the engine
-        /// </summary>
-        /// <param name="symbolDataParts"></param>
-        /// <param name="cancellationToken"></param>
-        /// <returns></returns>
-        public Task RunAsync(List<List<ISymbolData>> symbolDataParts, CancellationToken? cancellationToken = default);
-
-        /// <summary>
-        /// Gets Current Progress From 0.0 to 100.0
-        /// </summary>
-        /// <returns></returns>
-        public decimal GetProgress();
-    }
+    /// <summary>
+    /// Gets Current Progress From 0.0 to 100.0
+    /// </summary>
+    /// <returns></returns>
+    public decimal GetProgress();
 }
