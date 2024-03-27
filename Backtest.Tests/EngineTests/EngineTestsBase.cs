@@ -1,4 +1,5 @@
 ﻿using Backtest.Net.Interfaces;
+using Models.Net.ConditionParameters;
 using Models.Net.Interfaces;
 
 namespace Backtest.Tests.EngineTests
@@ -35,10 +36,10 @@ namespace Backtest.Tests.EngineTests
     {
         public Action<IEnumerable<ISymbolData>>? ExecuteStrategyDelegate { get; set; }
 
-        public Task<IEnumerable<ISignal>> Execute(IEnumerable<ISymbolData> symbols, 
-            IConditionParameter close, 
-            IConditionParameter modify,
-            IConditionParameter open)
+        public Task<IEnumerable<ISignal>> Execute(IEnumerable<ISymbolData> symbols,
+            CloseConditionParameter close,
+            ModifyConditionParameter modify,
+            OpenConditionParameter open)
         {
             ExecuteStrategyDelegate?.Invoke(symbols);
             
