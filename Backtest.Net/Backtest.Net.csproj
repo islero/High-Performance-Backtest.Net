@@ -8,13 +8,13 @@
     <Platforms>AnyCPU</Platforms>
     <AssemblyVersion>3.0.7.0</AssemblyVersion>
     <FileVersion>3.0.7.0</FileVersion>
-    <Version>3.0.7</Version>
+    <Version>3.0.8</Version>
     <RepositoryUrl>https://github.com/islero/High-Performance-Backtest.Net</RepositoryUrl>
     <Description></Description>
-    <PackageReleaseNotes>Moved all shared interfaces, enums, shared classes to separate models library</PackageReleaseNotes>
+    <PackageReleaseNotes>Updated Models to V1.0.2</PackageReleaseNotes>
     <Configurations>Release;Debug</Configurations>
     <Authors>Yurii Dumanskyi</Authors>
-    <Title>Backtest.Net</Title>
+    <Title>High-Performance Backtest.Net library</Title>
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
@@ -26,7 +26,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="models.net" Version="1.0.1" />
+    <PackageReference Include="models.net" Version="1.0.2" />
     <PackageReference Include="SimdLinq" Version="1.3.2" />
   </ItemGroup>
 
