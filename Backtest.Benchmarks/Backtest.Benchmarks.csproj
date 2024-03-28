@@ -19,7 +19,7 @@
 
   <ItemGroup>
     <PackageReference Include="BenchmarkDotNet" Version="0.13.11" />
-    <PackageReference Include="models.net" Version="1.0.3" />
+    <PackageReference Include="models.net" Version="1.0.4" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
   </ItemGroup>
 

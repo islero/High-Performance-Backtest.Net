@@ -40,7 +40,7 @@ public class EngineTests : EngineTestsBase
     /// <param name="symbolData"></param>
     protected async Task OnTickMethod(IEnumerable<ISymbolData> symbolData)
     {
-        var signals = await Strategy.Execute(symbolData, null, null, null);
+        var signals = await Strategy.Execute(symbolData.ToList());
         if (signals.Any())
         {
             foreach (var signal in signals)
