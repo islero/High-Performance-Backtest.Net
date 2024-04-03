@@ -41,12 +41,9 @@ public class EngineTests : EngineTestsBase
     protected async Task OnTickMethod(IEnumerable<ISymbolData> symbolData)
     {
         var signals = await Strategy.Execute(symbolData.ToList());
-        if (signals.Any())
+        if (signals.Count != 0)
         {
-            foreach (var signal in signals)
-            {
-                _ = await Trade.ExecuteSignal(signal);
-            }
+            _ = await Trade.Execute(signals);
         }
     }
         
