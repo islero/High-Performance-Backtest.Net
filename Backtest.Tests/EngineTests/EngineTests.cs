@@ -377,6 +377,25 @@ public class EngineTests : EngineTestsBase
     [InlineData(2)]
     [InlineData(3)]
     [InlineData(30)]
+    public async Task TestBacktestingProgress_Single_Symbol_Days_Per_Split_0(int warmupCandlesCount)
+    {
+        // --- Generate fake SymbolData splitter
+        var data = GenerateSingleSymbolDataList(new DateTime(2023, 1, 1), 1500, daysPerSplit: 0, warmupCandlesCount);
+
+        await Engine.RunAsync(data);
+
+        Assert.Equal(100, Engine.GetProgress());
+    }
+    
+    /// <summary>
+    /// Testing backtesting progress is 100 at the end of the backtesting for multiple symbols with days per split = 0
+    /// </summary>
+    [Theory]
+    [InlineData(0)]
+    [InlineData(1)]
+    [InlineData(2)]
+    [InlineData(3)]
+    [InlineData(30)]
     public async Task TestBacktestingProgress_Multiple_Symbols_Days_Per_Split_0(int warmupCandlesCount)
     {
         // --- Generate fake SymbolData splitter
