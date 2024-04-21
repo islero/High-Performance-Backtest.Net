@@ -1,6 +1,3 @@
-using System.Collections.Concurrent;
-using Backtest.Net.Candlesticks;
-using Backtest.Net.Interfaces;
 using Backtest.Net.SymbolsData;
 using Backtest.Net.Timeframes;
 using Models.Net.Interfaces;
@@ -39,7 +36,7 @@ public sealed class EngineV6(int warmupCandlesCount) : EngineV5(warmupCandlesCou
                 var clonedCandlesticks = timeframe.Candlesticks
                     .Take(warmedUpIndex..(timeframe.Index + 1));
 
-                // --- No need to add nothing more except interval and candles themself
+                // --- No need to add nothing more except interval and candles themselves
                 timeframes.Add(new TimeframeV1
                 {
                     Timeframe = timeframe.Timeframe,
@@ -47,7 +44,7 @@ public sealed class EngineV6(int warmupCandlesCount) : EngineV5(warmupCandlesCou
                 });
             }
 
-            // Create a new symbol data with cloned candlesticks
+            // Create a new symbol date with cloned candlesticks
             ISymbolData cloned = new SymbolDataV1
             {
                 Symbol = symbol.Symbol,
@@ -74,7 +71,7 @@ public sealed class EngineV6(int warmupCandlesCount) : EngineV5(warmupCandlesCou
             // --- Getting First Timeframe from the list
             var firstTimeframe = symbol.Timeframes[0];
 
-            // --- Getting last candle and cloning it
+            // --- Getting the last candle and cloning it
             var firstTimeframeCandle = firstTimeframe.Candlesticks[^1].Clone();
             firstTimeframeCandle.Open = firstTimeframeCandle.Open;
             firstTimeframeCandle.High = firstTimeframeCandle.Open;

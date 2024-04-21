@@ -25,7 +25,7 @@ public class EngineV1(int warmupCandlesCount) : IEngine
     public Action? OnCancellationFinishedDelegate { get; set; }
     
     // --- Properties
-    protected int WarmupCandlesCount { get; } = warmupCandlesCount; // The amount of warmup candles count
+    protected int WarmupCandlesCount { get; } = warmupCandlesCount; // The number of warmup candles count
 
     // --- Methods
     /// <summary>
@@ -160,7 +160,7 @@ public class EngineV1(int warmupCandlesCount) : IEngine
                     .Take(warmedUpIndex..(timeframe.Index + 1)).OrderByDescending(x => x.OpenTime)
                     .Select(candle => candle.Clone());
 
-                // --- No need to add nothing more except interval and candles themself
+                // --- No need to add nothing more except interval and candles themselves
                 timeframes.Add(new TimeframeV1()
                 {
                     Timeframe = timeframe.Timeframe,
@@ -168,7 +168,7 @@ public class EngineV1(int warmupCandlesCount) : IEngine
                 });
             }
 
-            // Create a new symbol data with cloned candlesticks
+            // Create new symbol data with cloned candlesticks
             ISymbolData cloned = new SymbolDataV1()
             {
                 Symbol = symbol.Symbol,
@@ -240,7 +240,7 @@ public class EngineV1(int warmupCandlesCount) : IEngine
         // --- Selecting EndIndexes and forming array from them
         var endIndexesArray = maxSymbol.Select(x => x!.Timeframes.First().EndIndex).ToArray();
         
-        // --- Calculating Sum of the all parts max indexes
+        // --- Calculating Sum of the all-parts max indexes
         MaxIndex = endIndexesArray.Sum();
         
         // --- Taking into account warmup candles for each part
@@ -251,7 +251,7 @@ public class EngineV1(int warmupCandlesCount) : IEngine
     }
 
     /// <summary>
-    /// Max Index property in order to calculate the total index increments during the backtesting
+    /// Max Index property to calculate the total index increments during the backtesting
     /// </summary>
     private decimal MaxIndex { get; set; }
 }

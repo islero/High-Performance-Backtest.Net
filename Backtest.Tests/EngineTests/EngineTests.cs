@@ -55,8 +55,8 @@ public class EngineTests : EngineTestsBase
             _ = symbols;
         };
 
-        // --- Generate Dummy SymbolData splitter
-        var data = GenerateCandles(new DateTime(2023, 1, 1), 500, 1, WarmupCandlesCount);
+        // --- Generate fake SymbolData splitter
+        var data = GenerateSymbolDataList(new DateTime(2023, 1, 1), 500, 1, WarmupCandlesCount);
 
         await Engine.RunAsync(data);
 
@@ -78,8 +78,8 @@ public class EngineTests : EngineTestsBase
             Assert.True(true);
         };
 
-        // --- Generate Dummy SymbolData splitter
-        var data = GenerateCandles(new DateTime(2023, 1, 1), 500, 1, WarmupCandlesCount);
+        // --- Generate fake SymbolData splitter
+        var data = GenerateSymbolDataList(new DateTime(2023, 1, 1), 500, 1, WarmupCandlesCount);
 
         await Engine.RunAsync(data, tokenSource.Token);
     }
@@ -112,8 +112,8 @@ public class EngineTests : EngineTestsBase
             tokenSource.Cancel();
         };
 
-        // --- Generate Dummy SymbolData splitter
-        var data = GenerateCandles(new DateTime(2023, 1, 1), 500, 1, WarmupCandlesCount);
+        // --- Generate fake SymbolData splitter
+        var data = GenerateSymbolDataList(new DateTime(2023, 1, 1), 500, 1, WarmupCandlesCount);
 
         await Engine.RunAsync(data, tokenSource.Token);
     }
@@ -145,8 +145,8 @@ public class EngineTests : EngineTestsBase
             tokenSource.Cancel();
         };
 
-        // --- Generate Dummy SymbolData splitter
-        var data = GenerateCandles(new DateTime(2023, 1, 1), 500, 1, WarmupCandlesCount);
+        // --- Generate fake SymbolData splitter
+        var data = GenerateSymbolDataList(new DateTime(2023, 1, 1), 500, 1, WarmupCandlesCount);
 
         await Engine.RunAsync(data, tokenSource.Token);
 
@@ -183,8 +183,8 @@ public class EngineTests : EngineTestsBase
             tokenSource.Cancel();
         };
 
-        // --- Generate Dummy SymbolData splitter
-        var data = GenerateCandles(backtestingStartingDate, 500, 1, WarmupCandlesCount);
+        // --- Generate fake SymbolData splitter
+        var data = GenerateSymbolDataList(backtestingStartingDate, 500, 1, WarmupCandlesCount);
 
         await Engine.RunAsync(data, tokenSource.Token);
 
@@ -194,8 +194,8 @@ public class EngineTests : EngineTestsBase
     [Fact]
     public async Task TestIfAllIndexesReachedTheEndIndex()
     {
-        // --- Generate Dummy SymbolData splitter
-        var data = GenerateCandles(new DateTime(2023, 1, 1), 500, 1, WarmupCandlesCount);
+        // --- Generate fake SymbolData splitter
+        var data = GenerateSymbolDataList(new DateTime(2023, 1, 1), 500, 1, WarmupCandlesCount);
 
         // --- Checking that before the EngineRun all the data are not reached the EndIndex
         var dataList = data.ToList();
@@ -208,7 +208,7 @@ public class EngineTests : EngineTestsBase
 
         await Engine.RunAsync(dataList);
 
-        // --- Checking that after teh EngineRun all the data are reached EndIndex
+        // --- Checking that after the EngineRun all the data are reached EndIndex
         var allReachedEndIndex = dataList.All(
             x => x.All(
                 y => y.Timeframes.All(
@@ -255,8 +255,8 @@ public class EngineTests : EngineTestsBase
             //tokenSource.Cancel();
         };
 
-        // --- Generate Dummy SymbolData splitter
-        var data = GenerateCandles(new DateTime(2023, 1, 1), 500, 1, WarmupCandlesCount);
+        // --- Generate fake SymbolData splitter
+        var data = GenerateSymbolDataList(new DateTime(2023, 1, 1), 500, 1, WarmupCandlesCount);
 
         await Engine.RunAsync(data, tokenSource.Token);
 
@@ -264,7 +264,7 @@ public class EngineTests : EngineTestsBase
     }
         
     /// <summary>
-    /// Checking if strategy gets all TFs sorted in Ascending order
+    /// Checking if strategy gets all TF sorted in Ascending order
     /// </summary>
     [Fact]
     public async Task TimeframesAreSorted()
@@ -287,8 +287,8 @@ public class EngineTests : EngineTestsBase
             }
         };
 
-        // --- Generate Dummy SymbolData splitter
-        var data = GenerateCandles(new DateTime(2023, 1, 1), 500, 1, WarmupCandlesCount);
+        // --- Generate fake SymbolData splitter
+        var data = GenerateSymbolDataList(new DateTime(2023, 1, 1), 500, 1, WarmupCandlesCount);
 
         await Engine.RunAsync(data);
 
@@ -296,8 +296,8 @@ public class EngineTests : EngineTestsBase
     }
         
     /// <summary>
-    /// Testing that each next TF open and close contains prior timeframe open close inside its range
-    /// For example if 5m tf openTime = 1/1/23 12:00:00 and closeTime 1/1/23 12:05:00
+    /// Testing that each next TF open and close contains prior timeframe open close inside its range,
+    /// For example, if 5m tf openTime = 1/1/23 12:00:00 and closeTime 1/1/23 12:05:00
     /// 1d tf can't have openTime 1/2/23 12:00:00 and closeTime 1/2/23 23:59:59
     /// </summary>
     [Fact]
@@ -332,23 +332,97 @@ public class EngineTests : EngineTestsBase
             }
         };
 
-        // --- Generate Dummy SymbolData splitter
-        var data = GenerateCandles(new DateTime(2023, 1, 1), 500, 1, WarmupCandlesCount);
+        // --- Generate fake SymbolData splitter
+        var data = GenerateSymbolDataList(new DateTime(2023, 1, 1), 500, 1, WarmupCandlesCount);
 
         await Engine.RunAsync(data);
 
         Assert.True(true);
     }
-        
+    
     /// <summary>
-    /// Generates Dummy Data Splitter Result
+    /// Testing backtesting progress is 100 at the end of the backtesting for single symbol
+    /// </summary>
+    [Theory]
+    [InlineData(0, 2)]
+    [InlineData(1, 2)]
+    [InlineData(2, 2)]
+    [InlineData(3, 2)]
+    [InlineData(30, 2)]
+    [InlineData(0, 10)]
+    [InlineData(1, 10)]
+    [InlineData(2, 10)]
+    [InlineData(3, 10)]
+    [InlineData(30, 10)]
+    public async Task TestBacktestingProgress_Single_Symbol(int daysPerSplit, int warmupCandlesCount)
+    {
+        Strategy.ExecuteStrategyDelegate = symbols =>
+        {
+            _ = symbols;
+        };
+
+        // --- Generate fake SymbolData splitter
+        var data = GenerateSingleSymbolDataList(new DateTime(2023, 1, 1), 1000, daysPerSplit, warmupCandlesCount);
+
+        await Engine.RunAsync(data);
+        Assert.Equal(100, Engine.GetProgress());
+    }
+    
+    /// <summary>
+    /// Testing backtesting progress is 100 at the end of the backtesting for multiple symbols
+    /// </summary>
+    [Theory]
+    [InlineData(0, 2)]
+    [InlineData(1, 2)]
+    [InlineData(2, 2)]
+    [InlineData(3, 2)]
+    [InlineData(30, 2)]
+    [InlineData(0, 50)]
+    [InlineData(1, 50)]
+    [InlineData(2, 50)]
+    [InlineData(3, 50)]
+    [InlineData(30, 50)]
+    public async Task TestBacktestingProgress_Multiple_Symbols(int daysPerSplit, int warmupCandlesCount)
+    {
+        Strategy.ExecuteStrategyDelegate = symbols =>
+        {
+            _ = symbols;
+        };
+
+        // --- Generate fake SymbolData splitter
+        var data = GenerateSymbolDataList(new DateTime(2023, 1, 1), 500, daysPerSplit, warmupCandlesCount);
+
+        await Engine.RunAsync(data);
+
+        Assert.Equal(100, Engine.GetProgress());
+    }
+
+    /// <summary>
+    /// Generates fake symbol data list
     /// </summary>
     /// <returns></returns>
-    private List<List<ISymbolData>> GenerateCandles(DateTime startingDate, int totalCandlesCount, int daysPerSplit, int warmupCandlesCount)
+    private List<List<ISymbolData>> GenerateSymbolDataList(DateTime startingDate, int totalCandlesCount,
+        int daysPerSplit, int warmupCandlesCount)
     {
         var symbolDataSplitter = new SymbolDataSplitterV1(daysPerSplit, warmupCandlesCount, startingDate, true);
 
         var generatedSymbolsData = GenerateFakeSymbolsData(["BTCUSDT", "ETHUSDT", "SOLUSDT"],
+            [CandlestickInterval.M5, CandlestickInterval.M15, CandlestickInterval.M30, CandlestickInterval.H1],
+            startingDate.AddHours(-warmupCandlesCount), totalCandlesCount);
+
+        return symbolDataSplitter.SplitAsync(generatedSymbolsData).Result;
+    }
+    
+    /// <summary>
+    /// Generates fake single symbol data list
+    /// </summary>
+    /// <returns></returns>
+    private List<List<ISymbolData>> GenerateSingleSymbolDataList(DateTime startingDate, int totalCandlesCount,
+        int daysPerSplit, int warmupCandlesCount)
+    {
+        var symbolDataSplitter = new SymbolDataSplitterV1(daysPerSplit, warmupCandlesCount, startingDate, true);
+
+        var generatedSymbolsData = GenerateFakeSymbolsData(["BTCUSDT"],
             [CandlestickInterval.M5, CandlestickInterval.M15, CandlestickInterval.M30, CandlestickInterval.H1],
             startingDate.AddHours(-warmupCandlesCount), totalCandlesCount);
 
