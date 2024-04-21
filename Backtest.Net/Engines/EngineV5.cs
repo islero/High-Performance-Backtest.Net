@@ -120,7 +120,7 @@ public class EngineV5(int warmupCandlesCount) : EngineV4(warmupCandlesCount)
                         lowestTimeframeIndexTime = timeframe.Candlesticks[timeframe.Index].OpenTime;
                         
                         // --- Managing bot progress
-                        Index++;
+                        Index = timeframe.Index;
                     }
 
                     continue;

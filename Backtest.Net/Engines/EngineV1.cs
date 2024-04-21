@@ -113,7 +113,7 @@ public class EngineV1(int warmupCandlesCount) : IEngine
                         lowestTimeframeIndexTime = timeframe.Candlesticks.ElementAt(timeframe.Index).OpenTime;
                         
                         // --- Managing bot progress
-                        Index++;
+                        Index = timeframe.Index;
                     }
 
                     continue;
@@ -233,6 +233,22 @@ public class EngineV1(int warmupCandlesCount) : IEngine
     /// <param name="symbolDataParts"></param>
     protected void ApplySumOfEndIndexes(List<List<ISymbolData>> symbolDataParts)
     {
+        /*MaxIndex = 0;
+        Index = 0;
+        // Calculating the sum of all symbol data parts and their symbol data lists and timeframes
+        foreach (var symbolDataList in symbolDataParts)
+        {
+            foreach (var symbolData in symbolDataList)
+            {
+                foreach (var timeframe in symbolData.Timeframes)
+                {
+                    MaxIndex += timeframe.EndIndex - 1;
+                    Index += timeframe.StartIndex;
+                }
+            }
+        }
+        return;*/
+        
         // --- Getting Symbols Data that have highest EndIndexes
         var maxSymbol = symbolDataParts.Select(x => x.MaxBy(
             y => y.Timeframes.First().EndIndex));
@@ -244,10 +260,10 @@ public class EngineV1(int warmupCandlesCount) : IEngine
         MaxIndex = endIndexesArray.Sum();
         
         // --- Taking into account warmup candles for each part
-        MaxIndex -= (endIndexesArray.Length - 1) * (WarmupCandlesCount - 1);
+        //MaxIndex -= (endIndexesArray.Length - 1) * (WarmupCandlesCount - 1);
 
         // --- All indexes must start from warmup candles count value
-        Index = WarmupCandlesCount;
+        //Index = WarmupCandlesCount;
     }
 
     /// <summary>
