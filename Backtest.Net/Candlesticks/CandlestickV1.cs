@@ -1,5 +1,4 @@
-﻿using Backtest.Net.Interfaces;
-using Models.Net.Interfaces;
+﻿using Models.Net.Interfaces;
 
 namespace Backtest.Net.Candlesticks;
 
@@ -16,7 +15,7 @@ public sealed class CandlestickV1 : ICandlestick
     public DateTime CloseTime { get; set; }
 
     /// <summary>
-    /// Cloning themself method
+    /// Cloning themselves method
     /// </summary>
     /// <returns></returns>
     public ICandlestick Clone()

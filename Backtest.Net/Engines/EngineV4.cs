@@ -1,5 +1,4 @@
 using System.Collections.Concurrent;
-using Backtest.Net.Interfaces;
 using Backtest.Net.SymbolsData;
 using Backtest.Net.Timeframes;
 using Models.Net.Interfaces;
@@ -47,7 +46,7 @@ public class EngineV4(int warmupCandlesCount) : EngineV3(warmupCandlesCount)
                     // --- Sending OnTick Action
                     await OnTick(feedingData);
                         
-                    // --- Clearing unnecessary data right after strategy is executed
+                    // --- Clearing unnecessary data right after the strategy is executed
                     ClonedSymbolsData.Clear();
                     
                     // --- Incrementing indexes
@@ -91,7 +90,7 @@ public class EngineV4(int warmupCandlesCount) : EngineV3(warmupCandlesCount)
 
                 clonedCandlesticks.Reverse();
 
-                // --- No need to add nothing more except interval and candles themself
+                // --- No need to add nothing more except interval and candles themselves
                 timeframes.Enqueue(new TimeframeV1
                 {
                     Timeframe = timeframe.Timeframe,
@@ -99,7 +98,7 @@ public class EngineV4(int warmupCandlesCount) : EngineV3(warmupCandlesCount)
                 });
             }
 
-            // Create a new symbol data with cloned candlesticks
+            // Create new symbol data with cloned candlesticks
             ISymbolData cloned = new SymbolDataV1
             {
                 Symbol = symbol.Symbol,
