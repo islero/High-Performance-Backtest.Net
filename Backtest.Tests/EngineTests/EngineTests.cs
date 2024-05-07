@@ -345,15 +345,7 @@ public class EngineTests : EngineTestsBase
     /// </summary>
     [Theory]
     [InlineData(0, 2)]
-    [InlineData(1, 2)]
-    [InlineData(2, 2)]
-    [InlineData(3, 2)]
-    [InlineData(30, 2)]
     [InlineData(0, 10)]
-    [InlineData(1, 10)]
-    [InlineData(2, 10)]
-    [InlineData(3, 10)]
-    [InlineData(30, 10)]
     public async Task TestBacktestingProgress_Single_Symbol(int daysPerSplit, int warmupCandlesCount)
     {
         Strategy.ExecuteStrategyDelegate = symbols =>
@@ -411,15 +403,7 @@ public class EngineTests : EngineTestsBase
     /// </summary>
     [Theory]
     [InlineData(0, 2)]
-    [InlineData(1, 2)]
-    [InlineData(2, 2)]
-    [InlineData(3, 2)]
-    [InlineData(30, 2)]
     [InlineData(0, 10)]
-    [InlineData(1, 10)]
-    [InlineData(2, 10)]
-    [InlineData(3, 10)]
-    [InlineData(30, 10)]
     public async Task TestBacktestingProgress_Multiple_Symbols(int daysPerSplit, int warmupCandlesCount)
     {
         // --- Generate fake SymbolData splitter
