@@ -6,12 +6,12 @@
     <Nullable>enable</Nullable>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <Platforms>AnyCPU</Platforms>
-    <AssemblyVersion>3.0.23.0</AssemblyVersion>
-    <FileVersion>3.0.23.0</FileVersion>
-    <Version>3.0.23</Version>
+    <AssemblyVersion>3.0.26.0</AssemblyVersion>
+    <FileVersion>3.0.26.0</FileVersion>
+    <Version>3.0.26</Version>
     <RepositoryUrl>https://github.com/islero/High-Performance-Backtest.Net</RepositoryUrl>
     <Description></Description>
-    <PackageReleaseNotes>The best result so far</PackageReleaseNotes>
+    <PackageReleaseNotes>Interesting concept</PackageReleaseNotes>
     <Configurations>Release;Debug</Configurations>
     <Authors>Yurii Dumanskyi</Authors>
     <Title>High-Performance Backtest.Net library</Title>

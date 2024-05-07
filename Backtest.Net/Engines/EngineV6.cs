@@ -33,8 +33,8 @@ public sealed class EngineV6(int warmupCandlesCount) : EngineV5(warmupCandlesCou
                 var warmedUpIndex = timeframe.Index - WarmupCandlesCount > timeframe.StartIndex
                     ? timeframe.Index - WarmupCandlesCount
                     : timeframe.StartIndex;
-                var clonedCandlesticks = timeframe.Candlesticks
-                    .Take(warmedUpIndex..(timeframe.Index + 1)).ToList();
+                var clonedCandlesticks = timeframe.Candlesticks[warmedUpIndex..(timeframe.Index + 1)];
+                    //.Take(warmedUpIndex..(timeframe.Index + 1)).ToList();
 
                 // --- No need to add nothing more except interval and candles themselves
                 timeframes.Add(new TimeframeV1
@@ -81,11 +81,11 @@ public sealed class EngineV6(int warmupCandlesCount) : EngineV5(warmupCandlesCou
 
             foreach (var timeframe in symbol.Timeframes)
             {
-                // Replacing last element with cloned candle
-                timeframe.Candlesticks[^1] = firstTimeframeCandle;
-                
                 // Reversing list to make first candle the most recent one
                 timeframe.Candlesticks.Reverse();
+                
+                // Replacing last element with cloned candle
+                timeframe.Candlesticks[0] = firstTimeframeCandle;
             }
 
             return default;
