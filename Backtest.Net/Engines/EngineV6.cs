@@ -34,13 +34,13 @@ public sealed class EngineV6(int warmupCandlesCount) : EngineV5(warmupCandlesCou
                     ? timeframe.Index - WarmupCandlesCount
                     : timeframe.StartIndex;
                 var clonedCandlesticks = timeframe.Candlesticks
-                    .Take(warmedUpIndex..(timeframe.Index + 1));
+                    .Take(warmedUpIndex..(timeframe.Index + 1)).ToList();
 
                 // --- No need to add nothing more except interval and candles themselves
                 timeframes.Add(new TimeframeV1
                 {
                     Timeframe = timeframe.Timeframe,
-                    Candlesticks = clonedCandlesticks.ToList()
+                    Candlesticks = clonedCandlesticks
                 });
             }
 
