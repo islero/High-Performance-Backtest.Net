@@ -30,7 +30,7 @@ public sealed class EngineV6(int warmupCandlesCount) : EngineV5(warmupCandlesCou
             // timeframes in ascending order, which may take more resources than benefits from using parallel execution
             foreach (var timeframe in symbol.Timeframes)
             {
-                // If there is not enough of candles to slice need to use a whole list of them 
+                // If there is not enough of candles to slice, need to use a whole list of them 
                 if(timeframe.Index < 0)
                 {
                     timeframes.Add(new TimeframeV1
@@ -38,6 +38,8 @@ public sealed class EngineV6(int warmupCandlesCount) : EngineV5(warmupCandlesCou
                         Timeframe = timeframe.Timeframe,
                         Candlesticks = timeframe.Candlesticks
                     });
+                    
+                    continue;
                 }
                 
                 var warmedUpIndex = timeframe.Index - WarmupCandlesCount > timeframe.StartIndex
