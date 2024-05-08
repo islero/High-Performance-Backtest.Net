@@ -29,10 +29,14 @@ public abstract class SymbolDataSplitterBase(
     /// <param name="candlesticks"></param>
     /// <param name="targetDateTime"></param>
     /// <returns></returns>
-    protected int GetCandlesticksIndexByOpenTime(IEnumerable<ICandlestick> candlesticks, DateTime targetDateTime)
+    protected static int GetCandlesticksIndexByOpenTime(IEnumerable<ICandlestick> candlesticks, DateTime targetDateTime)
     {
         var candlesticksList = candlesticks.ToList();
-        return candlesticksList.FindIndex(candle => candle.OpenTime >= targetDateTime);
+        var index = candlesticksList.FindIndex(candle => candle.OpenTime >= targetDateTime);
+
+        if (index < 0) index = 0;
+
+        return index;
     }
 
     /// <summary>
