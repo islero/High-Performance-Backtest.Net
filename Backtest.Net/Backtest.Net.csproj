@@ -6,12 +6,12 @@
     <Nullable>enable</Nullable>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <Platforms>AnyCPU</Platforms>
-    <AssemblyVersion>3.0.28.0</AssemblyVersion>
-    <FileVersion>3.0.28.0</FileVersion>
-    <Version>3.0.28</Version>
+    <AssemblyVersion>3.0.29</AssemblyVersion>
+    <FileVersion>3.0.29</FileVersion>
+    <Version>3.0.29</Version>
     <RepositoryUrl>https://github.com/islero/High-Performance-Backtest.Net</RepositoryUrl>
     <Description></Description>
-    <PackageReleaseNotes>Turned back the best result variant</PackageReleaseNotes>
+    <PackageReleaseNotes>Copied cloned candles to list</PackageReleaseNotes>
     <Configurations>Release;Debug</Configurations>
     <Authors>Yurii Dumanskyi</Authors>
     <Title>High-Performance Backtest.Net library</Title>
