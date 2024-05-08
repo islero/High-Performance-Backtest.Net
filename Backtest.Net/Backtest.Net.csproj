@@ -6,12 +6,12 @@
     <Nullable>enable</Nullable>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <Platforms>AnyCPU</Platforms>
-    <AssemblyVersion>3.0.26.0</AssemblyVersion>
-    <FileVersion>3.0.26.0</FileVersion>
-    <Version>3.0.26</Version>
+    <AssemblyVersion>3.0.28.0</AssemblyVersion>
+    <FileVersion>3.0.28.0</FileVersion>
+    <Version>3.0.28</Version>
     <RepositoryUrl>https://github.com/islero/High-Performance-Backtest.Net</RepositoryUrl>
     <Description></Description>
-    <PackageReleaseNotes>Interesting concept</PackageReleaseNotes>
+    <PackageReleaseNotes>Turned back the best result variant</PackageReleaseNotes>
     <Configurations>Release;Debug</Configurations>
     <Authors>Yurii Dumanskyi</Authors>
     <Title>High-Performance Backtest.Net library</Title>
@@ -26,7 +26,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="models.net" Version="1.0.36" />
+    <PackageReference Include="models.net" Version="1.0.39" />
     <PackageReference Include="SimdLinq" Version="1.3.2" />
   </ItemGroup>
 
