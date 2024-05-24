@@ -85,7 +85,11 @@ public sealed class EngineV6(int warmupCandlesCount) : EngineV5(warmupCandlesCou
                 timeframe.Candlesticks.Reverse();
                 
                 // Replacing last element with cloned candle
-                timeframe.Candlesticks[0] = firstTimeframeCandle;
+                timeframe.Candlesticks[0] = timeframe.Candlesticks[0].Clone();
+                timeframe.Candlesticks[0].Close = firstTimeframeCandle.Close;
+                timeframe.Candlesticks[0].CloseTime = firstTimeframeCandle.CloseTime;
+                timeframe.Candlesticks[0].High = firstTimeframeCandle.High;
+                timeframe.Candlesticks[0].Low = firstTimeframeCandle.Low;
             }
 
             return default;
