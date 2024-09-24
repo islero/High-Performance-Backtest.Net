@@ -1,6 +1,4 @@
-﻿using Backtest.Net.Enums;
-using Backtest.Net.Interfaces;
-using Backtest.Net.SymbolsData;
+﻿using Backtest.Net.SymbolsData;
 using Backtest.Net.Timeframes;
 using Models.Net.Enums;
 using Models.Net.Interfaces;
@@ -9,8 +7,8 @@ namespace Backtest.Net.SymbolDataSplitters;
 
 /// <summary>
 /// Symbol data splitter V1
-/// The main goal is split Symbol Data on smaller parts with recalculating indexes of these parts in most efficient
-/// way and use this smaller parts in order to speed up the backtesting process
+/// The main goal is split Symbol Data on smaller parts with recalculating indexes of these parts in the most efficient
+/// way and use this smaller parts to speed up the backtesting process
 /// </summary>
 public class SymbolDataSplitterV1(
     int daysPerSplit,
@@ -25,7 +23,7 @@ public class SymbolDataSplitterV1(
 
     // --- Methods
     /// <summary>
-    /// Main Method that actually splits the symbols data
+    /// Main Method that actually splits the symbol data
     /// </summary>
     /// <param name="symbolsData"></param>
     /// <returns></returns>
@@ -66,7 +64,7 @@ public class SymbolDataSplitterV1(
             return Task.FromResult(splitSymbolsData);
         }
 
-        // --- Getting correct warmup timeframe
+        // --- Getting the correct warmup timeframe
         WarmupTimeframe = GetWarmupTimeframe(symbolsDataList);
 
         var ongoingBacktestingTime = BacktestingStartDateTime;
@@ -75,7 +73,7 @@ public class SymbolDataSplitterV1(
             var symbolsDataPart = new List<ISymbolData>();
             foreach (var symbol in symbolsDataList)
             {
-                // --- Checking if there any symbol with no more history
+                // --- Checking if there is any symbol with no more history
                 if (symbol.Timeframes.Any(x => x.NoMoreHistory))
                 {
                     // --- Adding days per split to ongoing backtesting time
@@ -129,8 +127,7 @@ public class SymbolDataSplitterV1(
                     // --- Deleting source candles and readjusting indexes
                     if (timeframe.StartIndex > 0)
                     {
-                        // --- Please, note that candles readjusting is corrupting source candles
-                        // --- Perform readjusting
+                        // --- Note that candles readjusting is corrupting source candles perform readjusting
                         timeframe.Candlesticks = timeframe.Candlesticks.Skip(timeframe.StartIndex).ToList();
 
                         // --- Perform reindexing
@@ -153,7 +150,7 @@ public class SymbolDataSplitterV1(
                         Candlesticks = candlesticks,
                     };
 
-                    // --- Appending a timeframe to the timeframes list
+                    // --- Appending a timeframe to the timeframe list
                     symbolDataPart.Timeframes.Add(timeframePart);
                 }
 
@@ -165,7 +162,7 @@ public class SymbolDataSplitterV1(
                 ongoingBacktestingTime = AddDaysToOngoingBacktestingTime(ongoingBacktestingTime, symbol == symbolsDataList.Last());
             }
 
-            // --- Append symbolsDataPart if it contain any record
+            // --- Append symbolsDataPart if it contains any record
             if (symbolsDataPart.Count != 0)
                 splitSymbolsData.Add(symbolsDataPart);
         }

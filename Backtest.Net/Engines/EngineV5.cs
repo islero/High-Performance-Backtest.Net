@@ -8,7 +8,7 @@ namespace Backtest.Net.Engines;
 /// Engine V5
 /// The Engine V5 is going to use fully async/await functionality without returning Task.FromResult
 /// Which may be more efficient if real world use rather than on benchmarks, since Engine V2 maybe still
-/// the best performer despite it still not fully optimized as V4 for example
+/// the best performer despite it still not fully optimized as V4, for example
 /// </summary>
 /// <param name="warmupCandlesCount"></param>
 public class EngineV5(int warmupCandlesCount) : EngineV4(warmupCandlesCount)
@@ -41,7 +41,7 @@ public class EngineV5(int warmupCandlesCount) : EngineV4(warmupCandlesCount)
 
                 clonedCandlesticks.Reverse();
                     
-                // --- No need to add nothing more except interval and candles themself
+                // --- No need to add nothing more except interval and candles themselves
                 timeframes.Add(new TimeframeV1
                 {
                     Timeframe = timeframe.Timeframe,
@@ -49,7 +49,7 @@ public class EngineV5(int warmupCandlesCount) : EngineV4(warmupCandlesCount)
                 });
             }
 
-            // Create a new symbol data with cloned candlesticks
+            // Create new symbol data with cloned candlesticks
             ISymbolData cloned = new SymbolDataV1
             {
                 Symbol = symbol.Symbol,
