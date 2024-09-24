@@ -101,9 +101,9 @@ public sealed class BacktestingNetExecutor
     /// <returns></returns>
     public decimal BacktestingProgress()
     {
-        return Engine?.GetProgress() ?? 0;
+        return Engine.GetProgress();
     }
-        
+    
     /// <summary>
     /// Notifies Subscribed Objects about backtesting status
     /// </summary>
