@@ -1,25 +1,24 @@
 ﻿using Backtest.Net.Engines;
 
-namespace Backtest.Tests.EngineTests
+namespace Backtest.Tests.EngineTests;
+
+/// <summary>
+/// Testing backtesting Engine V3
+/// </summary>
+public class EngineV3Tests : EngineTests
 {
     /// <summary>
-    /// Testing backtesting Engine V3
+    /// Initializing Engine V3
     /// </summary>
-    public class EngineV3Tests : EngineTests
+    public EngineV3Tests()
     {
-        /// <summary>
-        /// Initializing Engine V3
-        /// </summary>
-        public EngineV3Tests()
-        {
-            WarmupCandlesCount = 2;
-            Trade = new TestTrade();
-            Strategy = new TestStrategy();
+        WarmupCandlesCount = 2;
+        Trade = new TestTrade();
+        Strategy = new TestStrategy();
 
-            Engine = new EngineV3(WarmupCandlesCount)
-            {
-                OnTick = OnTickMethod
-            };
-        }
+        Engine = new EngineV3(WarmupCandlesCount)
+        {
+            OnTick = OnTickMethod
+        };
     }
 }

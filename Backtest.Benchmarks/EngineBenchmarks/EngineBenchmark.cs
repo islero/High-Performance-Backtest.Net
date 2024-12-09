@@ -38,7 +38,7 @@ public class EngineBenchmark
         SplittedData = await symbolDataSplitter.SplitAsync(GeneratedSymbolsData!);
     }
     
-    [Benchmark(Baseline = true)]
+    //[Benchmark(Baseline = true)]
     public async Task EngineV1_Run()
     {
         var engine = new EngineV1(WarmupCandlesCount)
@@ -48,7 +48,7 @@ public class EngineBenchmark
         await engine.RunAsync(SplittedData);
     }
     
-    [Benchmark]
+    //[Benchmark]
     public async Task EngineV2_Run()
     {
         var engine = new EngineV2(WarmupCandlesCount)
@@ -58,7 +58,7 @@ public class EngineBenchmark
         await engine.RunAsync(SplittedData);
     }
     
-    [Benchmark]
+    //[Benchmark]
     public async Task EngineV3_Run()
     {
         var engine = new EngineV3(WarmupCandlesCount)
@@ -68,7 +68,8 @@ public class EngineBenchmark
         await engine.RunAsync(SplittedData);
     }
     
-    [Benchmark]
+    //[Benchmark]
+    [Benchmark(Baseline = true)]
     public async Task EngineV4_Run()
     {
         var engine = new EngineV4(WarmupCandlesCount)
@@ -78,7 +79,7 @@ public class EngineBenchmark
         await engine.RunAsync(SplittedData);
     }
     
-    [Benchmark]
+    //[Benchmark]
     public async Task EngineV5_Run()
     {
         var engine = new EngineV5(WarmupCandlesCount)
@@ -92,6 +93,16 @@ public class EngineBenchmark
     public async Task EngineV6_Run()
     {
         var engine = new EngineV6(WarmupCandlesCount)
+        {
+            OnTick = _ => Task.CompletedTask
+        };
+        await engine.RunAsync(SplittedData);
+    }
+    
+    [Benchmark]
+    public async Task EngineV7_Run()
+    {
+        var engine = new EngineV7(WarmupCandlesCount)
         {
             OnTick = _ => Task.CompletedTask
         };

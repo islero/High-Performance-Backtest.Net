@@ -9,7 +9,7 @@ namespace Backtest.Net.Engines;
 /// The Engine V6 trying to avoid cloning whole range of candles, but the latest one instead
 /// </summary>
 /// <param name="warmupCandlesCount"></param>
-public sealed class EngineV6(int warmupCandlesCount) : EngineV5(warmupCandlesCount)
+public class EngineV6(int warmupCandlesCount) : EngineV5(warmupCandlesCount)
 {
     /// <summary>
     /// Cloning necessary symbol data range

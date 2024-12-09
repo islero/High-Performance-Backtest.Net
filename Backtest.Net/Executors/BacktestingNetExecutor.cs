@@ -39,8 +39,10 @@ public sealed class BacktestingNetExecutor
     /// <param name="correctEndIndex"></param>
     /// <param name="warmupTimeframe"></param>
     public BacktestingNetExecutor(DateTime startDateTime,
-        int daysPerSplit,
-        int warmupCandlesCount, Func<IEnumerable<ISymbolData>, Task> onTick, bool correctEndIndex = false,
+        int warmupCandlesCount, 
+        Func<IEnumerable<ISymbolData>, Task> onTick, 
+        int daysPerSplit = 0,
+        bool correctEndIndex = false,
         CandlestickInterval? warmupTimeframe = null)
     {
         StartDateTime = startDateTime;
