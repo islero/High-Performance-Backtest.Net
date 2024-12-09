@@ -56,7 +56,7 @@ public sealed class BacktestingNetExecutor
             WarmupTimeframe);
 
         // --- Create and Select Engine version
-        Engine = new EngineV6(WarmupCandlesCount)
+        Engine = new EngineV7(WarmupCandlesCount)
         {
             OnTick = onTick
         };
