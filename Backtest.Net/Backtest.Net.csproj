@@ -6,12 +6,12 @@
     <Nullable>enable</Nullable>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <Platforms>AnyCPU</Platforms>
-    <AssemblyVersion>3.1.0</AssemblyVersion>
-    <FileVersion>3.1.0</FileVersion>
-    <Version>3.1.0</Version>
+    <AssemblyVersion>3.1.1</AssemblyVersion>
+    <FileVersion>3.1.1</FileVersion>
+    <Version>3.1.1</Version>
     <RepositoryUrl>https://github.com/islero/High-Performance-Backtest.Net</RepositoryUrl>
     <Description></Description>
-    <PackageReleaseNotes>Applying EngineV7 as a main engine of the backtester</PackageReleaseNotes>
+    <PackageReleaseNotes>Implemented use full candle for current</PackageReleaseNotes>
     <Configurations>Release;Debug</Configurations>
     <Authors>Yurii Dumanskyi</Authors>
     <Title>High-Performance Backtest.Net library</Title>
