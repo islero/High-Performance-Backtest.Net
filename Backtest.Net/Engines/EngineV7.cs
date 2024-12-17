@@ -9,7 +9,7 @@ namespace Backtest.Net.Engines;
 /// Aiming to utilize .NET 9 performance gain as much as possible
 /// </summary>
 /// <param name="warmupCandlesCount"></param>
-public sealed class EngineV7(int warmupCandlesCount) : EngineV6(warmupCandlesCount)
+public sealed class EngineV7(int warmupCandlesCount, bool useFullCandleForCurrent = false) : EngineV6(warmupCandlesCount, useFullCandleForCurrent)
 {
     /// <summary>
     /// Starts the engine and feeds the strategy with data
@@ -18,7 +18,7 @@ public sealed class EngineV7(int warmupCandlesCount) : EngineV6(warmupCandlesCou
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
     public override async Task RunAsync(List<List<ISymbolData>> symbolDataParts,
-        CancellationToken? cancellationToken = default)
+        CancellationToken? cancellationToken = null)
     {
         try
         {
@@ -44,7 +44,8 @@ public sealed class EngineV7(int warmupCandlesCount) : EngineV6(warmupCandlesCou
                     var feedingData = await CloneFeedingSymbolData(part).ConfigureAwait(false);
 
                     // Apply open price to OHLC for all first candles (also synchronous parallel)
-                    await HandleOhlc(feedingData).ConfigureAwait(false);
+                    if (!UseFullCandleForCurrent)
+                        await HandleOhlc(feedingData).ConfigureAwait(false);
 
                     // Trigger OnTick action (assuming OnTick is truly async and must be awaited)
                     await OnTick(feedingData).ConfigureAwait(false);

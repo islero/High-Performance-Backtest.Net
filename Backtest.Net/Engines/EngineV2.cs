@@ -7,7 +7,7 @@ namespace Backtest.Net.Engines;
 /// Engine V2
 /// Prepares parts before feeding them into strategy
 /// </summary>
-public class EngineV2(int warmupCandlesCount) : EngineV1(warmupCandlesCount)
+public class EngineV2(int warmupCandlesCount, bool useFullCandleForCurrent = false) : EngineV1(warmupCandlesCount, useFullCandleForCurrent)
 {
     // --- Methods
     /// <summary>
@@ -16,7 +16,7 @@ public class EngineV2(int warmupCandlesCount) : EngineV1(warmupCandlesCount)
     /// <param name="symbolDataParts"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    public override async Task RunAsync(List<List<ISymbolData>> symbolDataParts, CancellationToken? cancellationToken = default)
+    public override async Task RunAsync(List<List<ISymbolData>> symbolDataParts, CancellationToken? cancellationToken = null)
     {
         try
         {
@@ -40,7 +40,8 @@ public class EngineV2(int warmupCandlesCount) : EngineV1(warmupCandlesCount)
                     var feedingDataList = feedingData;
                         
                     // --- Apply Open Price to OHLC for all first candles
-                    await HandleOhlc(feedingDataList);
+                    if (!UseFullCandleForCurrent)
+                        await HandleOhlc(feedingDataList);
 
                     // --- Sending OnTick Action
                     await OnTick(feedingDataList);

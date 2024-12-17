@@ -12,7 +12,7 @@ namespace Backtest.Net.Engines;
 /// benchmark shows better results
 /// </summary>
 /// <param name="warmupCandlesCount"></param>
-public class EngineV4(int warmupCandlesCount) : EngineV3(warmupCandlesCount)
+public class EngineV4(int warmupCandlesCount, bool useFullCandleForCurrent = false) : EngineV3(warmupCandlesCount, useFullCandleForCurrent)
 {
     /// <summary>
     /// Starts the engine and feeds the strategy with data
@@ -41,7 +41,8 @@ public class EngineV4(int warmupCandlesCount) : EngineV3(warmupCandlesCount)
                     var feedingData = await CloneFeedingSymbolData(part);
 
                     // --- Apply Open Price to OHLC for all first candles
-                    await HandleOhlc(feedingData);
+                    if (!UseFullCandleForCurrent)
+                        await HandleOhlc(feedingData);
 
                     // --- Sending OnTick Action
                     await OnTick(feedingData);

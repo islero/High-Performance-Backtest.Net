@@ -10,7 +10,7 @@ namespace Backtest.Net.Engines;
 /// Engine V3
 /// Prepares parts before feeding them into strategy
 /// </summary>
-public class EngineV3(int warmupCandlesCount) : EngineV2(warmupCandlesCount)
+public class EngineV3(int warmupCandlesCount, bool useFullCandleForCurrent = false) : EngineV2(warmupCandlesCount, useFullCandleForCurrent)
 {
     /// <summary>
     /// Increment Symbol Data indexes

@@ -33,6 +33,7 @@ public sealed class BacktestingNetExecutor
     /// Constructor
     /// </summary>
     /// <param name="startDateTime"></param>
+    /// <param name="useFullCandleForCurrent"></param>
     /// <param name="daysPerSplit"></param>
     /// <param name="warmupCandlesCount"></param>
     /// <param name="onTick"></param>
@@ -41,6 +42,7 @@ public sealed class BacktestingNetExecutor
     public BacktestingNetExecutor(DateTime startDateTime,
         int warmupCandlesCount, 
         Func<IEnumerable<ISymbolData>, Task> onTick, 
+        bool useFullCandleForCurrent = false,
         int daysPerSplit = 0,
         bool correctEndIndex = false,
         CandlestickInterval? warmupTimeframe = null)
@@ -56,7 +58,7 @@ public sealed class BacktestingNetExecutor
             WarmupTimeframe);
 
         // --- Create and Select Engine version
-        Engine = new EngineV7(WarmupCandlesCount)
+        Engine = new EngineV7(WarmupCandlesCount, useFullCandleForCurrent)
         {
             OnTick = onTick
         };

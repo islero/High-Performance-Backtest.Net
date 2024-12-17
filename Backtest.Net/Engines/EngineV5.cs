@@ -11,7 +11,7 @@ namespace Backtest.Net.Engines;
 /// the best performer despite it still not fully optimized as V4, for example
 /// </summary>
 /// <param name="warmupCandlesCount"></param>
-public class EngineV5(int warmupCandlesCount) : EngineV4(warmupCandlesCount)
+public class EngineV5(int warmupCandlesCount, bool useFullCandleForCurrent = false) : EngineV4(warmupCandlesCount, useFullCandleForCurrent)
 {
     /// <summary>
     /// Cloning necessary symbol data range

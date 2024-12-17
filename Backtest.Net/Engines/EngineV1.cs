@@ -11,7 +11,7 @@ namespace Backtest.Net.Engines;
 /// Engine V1
 /// Prepares parts before feeding them into strategy
 /// </summary>
-public class EngineV1(int warmupCandlesCount) : IEngine
+public class EngineV1(int warmupCandlesCount, bool useFullCandleForCurrent = false) : IEngine
 {
     // --- Delegates
     /// <summary>
@@ -26,6 +26,18 @@ public class EngineV1(int warmupCandlesCount) : IEngine
     
     // --- Properties
     protected int WarmupCandlesCount { get; } = warmupCandlesCount; // The number of warmup candles count
+
+    /// <summary>
+    /// Determines whether the backtester uses the full (completed) candle for the current candle logic.
+    /// When set to true, the backtester will treat the current candle as fully formed,
+    /// including all its OHLC (Open, High, Low, Close) data, rather than partial real-time data.
+    /// </summary>
+    /// <remarks>
+    /// Enabling this option can impact backtesting behavior by ensuring that decisions
+    /// are made based on completed candle data, which is particularly useful for historical backtesting.
+    /// If set to false, the current candle data will be treated as incomplete.
+    /// </remarks>
+    protected bool UseFullCandleForCurrent { get; } = useFullCandleForCurrent;
 
     // --- Methods
     /// <summary>
@@ -61,7 +73,8 @@ public class EngineV1(int warmupCandlesCount) : IEngine
                     var feedingDataList = feedingData.ToList();
                         
                     // --- Apply Open Price to OHLC for all first candles
-                    await HandleOhlc(feedingDataList);
+                    if (!UseFullCandleForCurrent)
+                        await HandleOhlc(feedingDataList);
 
                     // --- Sending OnTick Action
                     await OnTick(feedingDataList);
