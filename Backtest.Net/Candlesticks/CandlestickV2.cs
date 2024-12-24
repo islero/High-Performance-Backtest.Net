@@ -1,6 +1,4 @@
-﻿using Models.Net.Interfaces;
-
-namespace Backtest.Net.Candlesticks;
+﻿namespace Backtest.Net.Candlesticks;
 
 /// <summary>
 /// Simple implementation of ICandlestick interface
