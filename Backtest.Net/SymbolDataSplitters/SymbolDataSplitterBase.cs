@@ -15,7 +15,7 @@ public abstract class SymbolDataSplitterBase(
     // --- Properties
     protected CandlestickInterval? WarmupTimeframe { get; set; } = warmupTimeframe; // The timeframe must be warmed up and all lower timeframes accordingly, if null - will be set automatically
     protected int DaysPerSplit { get; } = daysPerSplit; // How many days in one split range should exist
-    private int WarmupCandlesCount { get; } = warmupCandlesCount; // The amount of warmup candles count
+    protected int WarmupCandlesCount { get; } = warmupCandlesCount; // The amount of warmup candles count
     protected DateTime BacktestingStartDateTime { get; } = backtestingStartDateTime; // Backtesting Start DateTime
         
     // --- Constructors

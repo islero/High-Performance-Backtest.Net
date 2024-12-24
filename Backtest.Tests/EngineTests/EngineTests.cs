@@ -1,6 +1,7 @@
 ﻿using Backtest.Net.Engines;
 using Backtest.Net.Interfaces;
 using Backtest.Net.SymbolDataSplitters;
+using Backtest.Net.SymbolsData;
 using Models.Net.Enums;
 using Models.Net.Interfaces;
 
@@ -15,6 +16,7 @@ public class EngineTests : EngineTestsBase
     /// Engine for tests
     /// </summary>
     protected IEngine Engine { get; init; }
+    protected IEngineV2 EngineV2 { get; init; }
     protected ITrade Trade { get; init; }
     protected TestStrategy Strategy { get; init; }
     protected int WarmupCandlesCount { get; init; }
@@ -24,6 +26,11 @@ public class EngineTests : EngineTestsBase
     /// </summary>
     public EngineTests()
     {
+        EngineV2 = new EngineV8(WarmupCandlesCount)
+        {
+            OnTick = OnTickMethodV2
+        };
+        
         WarmupCandlesCount = 2;
         Trade = new TestTrade();
         Strategy = new TestStrategy();
@@ -41,6 +48,19 @@ public class EngineTests : EngineTestsBase
     protected async Task OnTickMethod(IEnumerable<ISymbolData> symbolData)
     {
         var signals = await Strategy.Execute(symbolData.ToList());
+        if (signals.Count != 0)
+        {
+            _ = await Trade.Execute(signals);
+        }
+    }
+    
+    /// <summary>
+    /// On Tick Method Implementation
+    /// </summary>
+    /// <param name="symbolData"></param>
+    protected async Task OnTickMethodV2(List<SymbolDataV2> symbolData)
+    {
+        var signals = await Strategy.ExecuteV2(symbolData.ToList());
         if (signals.Count != 0)
         {
             _ = await Trade.Execute(signals);

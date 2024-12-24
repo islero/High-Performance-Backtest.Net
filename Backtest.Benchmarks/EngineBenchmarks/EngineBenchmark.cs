@@ -2,6 +2,7 @@ using Backtest.Benchmarks.SymbolDataSplitterBenchmarks;
 using Backtest.Net.Engines;
 using Backtest.Net.Interfaces;
 using Backtest.Net.SymbolDataSplitters;
+using Backtest.Net.SymbolsData;
 using BenchmarkDotNet.Attributes;
 using Models.Net.Enums;
 using Models.Net.Interfaces;
@@ -16,7 +17,9 @@ public class EngineBenchmark
 {
     // --- Properties
     private List<ISymbolData>? GeneratedSymbolsData { get; set; }
+    private List<SymbolDataV2>? GeneratedSymbolsDataV2 { get; set; }
     private List<List<ISymbolData>> SplittedData;
+    private List<List<SymbolDataV2>> SplittedDataV2;
     private DateTime StartingDate { get; set; }
     private int DaysPerSplit { get; set; }
     private int WarmupCandlesCount { get; set; }
@@ -33,9 +36,15 @@ public class EngineBenchmark
             [CandlestickInterval.M5, CandlestickInterval.D1],
             StartingDate.AddHours(-WarmupCandlesCount), 5000);
         
-        ISymbolDataSplitter symbolDataSplitter = new SymbolDataSplitterV1(DaysPerSplit, WarmupCandlesCount, StartingDate, true);
-
+        var symbolDataSplitter = new SymbolDataSplitterV1(DaysPerSplit, WarmupCandlesCount, StartingDate, true);
         SplittedData = await symbolDataSplitter.SplitAsync(GeneratedSymbolsData!);
+        
+        GeneratedSymbolsDataV2 = SymbolDataSplitterBenchmark.GenerateFakeSymbolsDataV2(["BTCUSDT"],
+            [CandlestickInterval.M5, CandlestickInterval.D1],
+            StartingDate.AddHours(-WarmupCandlesCount), 5000);
+        
+        var symbolDataSplitterV2 = new SymbolDataSplitterV2(DaysPerSplit, WarmupCandlesCount, StartingDate, true);
+        SplittedDataV2 = await symbolDataSplitterV2.SplitAsyncV2(GeneratedSymbolsDataV2!);
     }
     
     //[Benchmark(Baseline = true)]
@@ -69,7 +78,7 @@ public class EngineBenchmark
     }
     
     //[Benchmark]
-    [Benchmark(Baseline = true)]
+    //[Benchmark(Baseline = true)]
     public async Task EngineV4_Run()
     {
         var engine = new EngineV4(WarmupCandlesCount)
@@ -89,7 +98,7 @@ public class EngineBenchmark
         await engine.RunAsync(SplittedData);
     }
     
-    [Benchmark]
+    //[Benchmark]
     public async Task EngineV6_Run()
     {
         var engine = new EngineV6(WarmupCandlesCount)
@@ -99,7 +108,7 @@ public class EngineBenchmark
         await engine.RunAsync(SplittedData);
     }
     
-    [Benchmark]
+    [Benchmark(Baseline = true)]
     public async Task EngineV7_Run()
     {
         var engine = new EngineV7(WarmupCandlesCount)
@@ -107,5 +116,15 @@ public class EngineBenchmark
             OnTick = _ => Task.CompletedTask
         };
         await engine.RunAsync(SplittedData);
+    }
+    
+    [Benchmark]
+    public async Task EngineV8_Run()
+    {
+        var engine = new EngineV8(WarmupCandlesCount)
+        {
+            OnTick = _ => Task.CompletedTask
+        };
+        await engine.RunAsync(SplittedDataV2);
     }
 }

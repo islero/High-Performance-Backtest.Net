@@ -2,8 +2,8 @@
 using Backtest.Net.Engines;
 using Backtest.Net.Enums;
 using Backtest.Net.SymbolDataSplitters;
+using Backtest.Net.SymbolsData;
 using Models.Net.Enums;
-using Models.Net.Interfaces;
 
 namespace Backtest.Net.Executors;
 
@@ -22,8 +22,8 @@ public sealed class BacktestingNetExecutor
     private int DaysPerSplit { get; } // Decides how many days in one split range should exist?
     // Concrete types were used on purpose based on this article to improve performance
     // CA1859: Use concrete types when possible for improved performance
-    private SymbolDataSplitterV1 Splitter { get; set;  } // Splits entire history on smaller pieces
-    private EngineV6 Engine { get; set;  } // The backtesting engine itself, performs backtesting,
+    private SymbolDataSplitterV2 Splitter { get; set;  } // Splits entire history on smaller pieces
+    private EngineV8 Engine { get; set;  } // The backtesting engine itself, performs backtesting,
                                             // passes prepared history into strategy
 
     // --- Delegates
@@ -41,7 +41,7 @@ public sealed class BacktestingNetExecutor
     /// <param name="warmupTimeframe"></param>
     public BacktestingNetExecutor(DateTime startDateTime,
         int warmupCandlesCount, 
-        Func<IEnumerable<ISymbolData>, Task> onTick, 
+        Func<List<SymbolDataV2>, Task> onTick, 
         bool useFullCandleForCurrent = false,
         int daysPerSplit = 0,
         bool correctEndIndex = false,
@@ -54,11 +54,11 @@ public sealed class BacktestingNetExecutor
         DaysPerSplit = daysPerSplit;
         
         // --- Create and Select DataSplitter version
-        Splitter = new SymbolDataSplitterV1(DaysPerSplit, WarmupCandlesCount, StartDateTime, CorrectEndIndex,
+        Splitter = new SymbolDataSplitterV2(DaysPerSplit, WarmupCandlesCount, StartDateTime, CorrectEndIndex,
             WarmupTimeframe);
 
         // --- Create and Select Engine version
-        Engine = new EngineV7(WarmupCandlesCount, useFullCandleForCurrent)
+        Engine = new EngineV8(WarmupCandlesCount, useFullCandleForCurrent)
         {
             OnTick = onTick
         };
@@ -71,7 +71,7 @@ public sealed class BacktestingNetExecutor
     /// <param name="symbolsData"></param>
     /// <param name="cancellationToken"></param>
     /// <exception cref="ArgumentException"></exception>
-    public async Task PerformAsync(List<ISymbolData>? symbolsData, CancellationToken cancellationToken = default)
+    public async Task PerformAsync(List<SymbolDataV2> symbolsData, CancellationToken cancellationToken = default)
     {
         // --- Validating Symbols Data
         if(symbolsData == null || symbolsData.Count == 0)
@@ -84,7 +84,7 @@ public sealed class BacktestingNetExecutor
 
         // --- Split Symbols Data
         NotifyBacktestingEvent(BacktestingEventStatus.SplitStarted, Splitter.GetType().Name);
-        var symbolDataParts = await Splitter.SplitAsync(symbolsData);
+        var symbolDataParts = await Splitter.SplitAsyncV2(symbolsData);
         NotifyBacktestingEvent(BacktestingEventStatus.SplitFinished, Splitter.GetType().Name);
 
         // --- Run Engine
