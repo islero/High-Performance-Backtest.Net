@@ -1,7 +1,6 @@
 using Backtest.Net.Interfaces;
 using Backtest.Net.SymbolsData;
 using Backtest.Net.Timeframes;
-using Models.Net.Interfaces;
 
 namespace Backtest.Net.Engines;
 
@@ -10,7 +9,7 @@ namespace Backtest.Net.Engines;
 /// Aiming to utilize .NET 9 performance gain as much as possible
 /// </summary>
 /// <param name="warmupCandlesCount"></param>
-public sealed class EngineV8(int warmupCandlesCount, bool useFullCandleForCurrent = false): IEngineV2
+public sealed class EngineV8(int warmupCandlesCount, bool useFullCandleForCurrent = false) : IEngineV2
 {
     // --- Delegates
     /// <summary>
@@ -108,7 +107,7 @@ public sealed class EngineV8(int warmupCandlesCount, bool useFullCandleForCurren
             // Pre-allocate the timeframe list with capacity equal to the symbol's timeframe count.
             var clonedTimeframes = new List<TimeframeV2>(timeframeCount);
 
-            for (int j = 0; j < timeframeCount; j++)
+            for (var j = 0; j < timeframeCount; j++)
             {
                 var originalTimeframe = originalTimeframes[j];
 
