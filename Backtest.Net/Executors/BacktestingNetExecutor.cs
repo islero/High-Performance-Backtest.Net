@@ -41,7 +41,7 @@ public sealed class BacktestingNetExecutor
     /// <param name="warmupTimeframe"></param>
     public BacktestingNetExecutor(DateTime startDateTime,
         int warmupCandlesCount, 
-        Func<List<SymbolDataV2>, Task> onTick, 
+        Func<SymbolDataV2[], Task> onTick, 
         bool useFullCandleForCurrent = false,
         int daysPerSplit = 0,
         bool correctEndIndex = false,

@@ -58,7 +58,7 @@ public class EngineTests : EngineTestsBase
     /// On Tick Method Implementation
     /// </summary>
     /// <param name="symbolData"></param>
-    protected async Task OnTickMethodV2(List<SymbolDataV2> symbolData)
+    protected async Task OnTickMethodV2(SymbolDataV2[] symbolData)
     {
         var signals = await Strategy.ExecuteV2(symbolData.ToList());
         if (signals.Count != 0)

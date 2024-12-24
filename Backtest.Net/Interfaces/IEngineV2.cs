@@ -16,7 +16,7 @@ public interface IEngineV2
 {
     // --- Delegates
     public Action? OnCancellationFinishedDelegate { get; set; }
-    public Func<List<SymbolDataV2>, Task> OnTick { get; set; }
+    public Func<SymbolDataV2[], Task> OnTick { get; set; }
 
     /// <summary>
     /// Main Method that starts the engine

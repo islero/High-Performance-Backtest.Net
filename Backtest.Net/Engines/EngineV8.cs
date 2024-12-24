@@ -15,7 +15,7 @@ public sealed class EngineV8(int warmupCandlesCount, bool useFullCandleForCurren
     /// <summary>
     /// Main Action of the Engine, it passes data to OnTick function
     /// </summary>
-    public required Func<List<SymbolDataV2>, Task> OnTick { get; set; }
+    public required Func<SymbolDataV2[], Task> OnTick { get; set; }
     
     /// <summary>
     /// Notifies about backtesting cancellation
@@ -93,46 +93,46 @@ public sealed class EngineV8(int warmupCandlesCount, bool useFullCandleForCurren
     /// </summary>
     /// <param name="symbolData"></param>
     /// <returns></returns>
-    private Task<List<SymbolDataV2>> CloneFeedingSymbolData(List<SymbolDataV2> symbolData)
+    private Task<SymbolDataV2[]> CloneFeedingSymbolData(List<SymbolDataV2> symbolData)
     {
         var count = symbolData.Count;
         var result = new SymbolDataV2[count];
 
+        // Execute in parallel to boost performance for large symbolData lists.
         Parallel.For(0, count, i =>
         {
             var originalSymbol = symbolData[i];
             var originalTimeframes = originalSymbol.Timeframes;
             var timeframeCount = originalTimeframes.Count;
 
-            // Pre-allocate the timeframe list with capacity equal to the symbol's timeframe count.
+            // Pre-allocate a timeframe list matching the symbol's timeframe count.
             var clonedTimeframes = new List<TimeframeV2>(timeframeCount);
 
             for (var j = 0; j < timeframeCount; j++)
             {
                 var originalTimeframe = originalTimeframes[j];
 
-                // Calculate the start index for warmed-up candlesticks.
-                var warmedUpIndex = originalTimeframe.Index - WarmupCandlesCount > originalTimeframe.StartIndex
-                    ? originalTimeframe.Index - WarmupCandlesCount
-                    : originalTimeframe.StartIndex;
+                // Calculate the 'warmed-up' start index.
+                var warmedUpIndex = 
+                    originalTimeframe.Index - WarmupCandlesCount > originalTimeframe.StartIndex
+                        ? originalTimeframe.Index - WarmupCandlesCount
+                        : originalTimeframe.StartIndex;
 
-                // Calculate how many candlesticks to copy.
-                var length = (originalTimeframe.Index + 1) - warmedUpIndex;
+                // Determine how many candlesticks to copy.
+                var length = originalTimeframe.Index + 1 - warmedUpIndex;
 
-                // Create a copy of the necessary candlesticks via GetRange.
+                // Clone the necessary candlesticks.
                 var clonedCandlesticks = originalTimeframe.Candlesticks.GetRange(warmedUpIndex, length);
 
-                // Build the cloned timeframe object.
-                var newTimeframe = new TimeframeV2
+                // Create the new timeframe.
+                clonedTimeframes.Add(new TimeframeV2
                 {
                     Timeframe = originalTimeframe.Timeframe,
                     Candlesticks = clonedCandlesticks
-                };
-
-                clonedTimeframes.Add(newTimeframe);
+                });
             }
 
-            // Create a new symbol data instance.
+            // Construct the cloned symbol data.
             result[i] = new SymbolDataV2
             {
                 Symbol = originalSymbol.Symbol,
@@ -140,8 +140,8 @@ public sealed class EngineV8(int warmupCandlesCount, bool useFullCandleForCurren
             };
         });
 
-        // Convert the result array to a List without extra concurrency overhead.
-        return Task.FromResult(result.ToList());
+        // Return the result array as a List without extra concurrency overhead.
+        return Task.FromResult(result);
     }
 
     /// <summary>
@@ -149,7 +149,7 @@ public sealed class EngineV8(int warmupCandlesCount, bool useFullCandleForCurren
     /// </summary>
     /// <param name="symbolData"></param>
     /// <returns></returns>
-    private static Task HandleOhlc(List<SymbolDataV2> symbolData)
+    private static Task HandleOhlc(SymbolDataV2[] symbolData)
     {
         Parallel.ForEach(symbolData, symbol =>
         {
@@ -188,33 +188,48 @@ public sealed class EngineV8(int warmupCandlesCount, bool useFullCandleForCurren
     /// <returns></returns>
     private Task IncrementIndexes(List<SymbolDataV2> symbolData)
     {
-        // Use Parallel.ForEach to avoid async overhead
+        // Use Parallel.ForEach to process symbolData concurrently.
         Parallel.ForEach(symbolData, symbol =>
         {
             var timeframes = symbol.Timeframes;
             var firstTimeframe = timeframes[0];
+            var firstTimeframeIndex = firstTimeframe.Index;
+
+            // Initialize this to an invalid date so we can compare with valid times later.
             var lowestTimeframeIndexTime = DateTime.MinValue;
 
-            // Handle the lowest timeframe (firstTimeframe)
-            if (firstTimeframe.Index >= firstTimeframe.StartIndex && firstTimeframe.Index < firstTimeframe.EndIndex)
+            // 1) Handle the lowest timeframe (index = 0)
+            // Make sure we're within valid range [StartIndex..EndIndex).
+            if (firstTimeframeIndex >= firstTimeframe.StartIndex && firstTimeframeIndex < firstTimeframe.EndIndex)
             {
-                firstTimeframe.Index++;
-                lowestTimeframeIndexTime = firstTimeframe.Candlesticks[firstTimeframe.Index].OpenTime;
-                Index = firstTimeframe.Index; // Managing bot progress
+                firstTimeframeIndex++;
+                // Safely update the timeframe's Index
+                firstTimeframe.Index = firstTimeframeIndex;
+
+                // Extract OpenTime of the candle at the newly incremented index
+                lowestTimeframeIndexTime = firstTimeframe.Candlesticks[firstTimeframeIndex].OpenTime;
+
+                // Optionally track this globally/externally
+                Index = firstTimeframeIndex;
             }
 
-            // Handle higher timeframes
-            for (var i = 1; i < timeframes.Count; i++)
+            // 2) Handle the higher timeframes (index = 1..Count-1)
+            var timeframesCount = timeframes.Count;
+            for (var i = 1; i < timeframesCount; i++)
             {
                 var timeframe = timeframes[i];
-                // Check we can safely access the current candle at timeframe.Index
-                if (timeframe.Index >= timeframe.StartIndex && timeframe.Index < timeframe.EndIndex)
+                var idx = timeframe.Index;
+
+                // Still within valid range
+                if (idx >= timeframe.StartIndex && idx < timeframe.EndIndex)
                 {
-                    // Extract closeTime once
-                    var closeTime = timeframe.Candlesticks[timeframe.Index].CloseTime;
+                    // Compare the current candlestick's CloseTime to the "lowest" timeframe's OpenTime
+                    var closeTime = timeframe.Candlesticks[idx].CloseTime;
                     if (closeTime < lowestTimeframeIndexTime)
                     {
-                        timeframe.Index++;
+                        // Only increment if it is strictly below the reference time
+                        idx++;
+                        timeframe.Index = idx;
                     }
                 }
             }
@@ -222,7 +237,7 @@ public sealed class EngineV8(int warmupCandlesCount, bool useFullCandleForCurren
 
         return Task.CompletedTask;
     }
-    
+
     /// <summary>
     /// Index iterator to manage backtesting progress
     /// </summary>
