@@ -153,38 +153,28 @@ public sealed class EngineV8(int warmupCandlesCount, bool useFullCandleForCurren
     {
         Parallel.ForEach(symbolData, symbol =>
         {
-            // Grab the reference candle from the last candlestick of the first timeframe
+            // Clone the last candle of the first timeframe
             var firstTimeframe = symbol.Timeframes[0];
-            var firstTimeframeCandles = firstTimeframe.Candlesticks;
-            var referenceCandle = firstTimeframeCandles[^1].Clone();
-
-            // Reset reference candle’s OHLC to match the Open
+            var referenceCandle = firstTimeframe.Candlesticks[^1].Clone();
             referenceCandle.High = referenceCandle.Open;
             referenceCandle.Low = referenceCandle.Open;
             referenceCandle.Close = referenceCandle.Open;
             referenceCandle.CloseTime = referenceCandle.OpenTime;
 
-            // Apply logic to each timeframe
-            var timeframes = symbol.Timeframes;
-            var timeframeCount = timeframes.Count; // or .Count if it is a List
-            for (var i = 0; i < timeframeCount; i++)
+            foreach (var timeframe in symbol.Timeframes)
             {
-                var timeframe = timeframes[i];
-                var candlesticks = timeframe.Candlesticks;
+                // If we must reverse:
+                timeframe.Candlesticks.Reverse();
 
-                // If reversing is truly needed:
-                candlesticks.Reverse();
-
-                // Now the "last" candle is at index 0
-                var candle = candlesticks[0].Clone();
+                // Now the last candle is at index 0 due to the reversal
+                var candle = timeframe.Candlesticks[0].Clone();
 
                 candle.Close = referenceCandle.Close;
                 candle.CloseTime = referenceCandle.CloseTime;
                 candle.High = referenceCandle.High;
                 candle.Low = referenceCandle.Low;
 
-                // Overwrite the 0th candlestick
-                candlesticks[0] = candle;
+                timeframe.Candlesticks[0] = candle;
             }
         });
 
