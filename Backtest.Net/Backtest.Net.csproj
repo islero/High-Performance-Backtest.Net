@@ -6,9 +6,9 @@
     <Nullable>enable</Nullable>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <Platforms>AnyCPU</Platforms>
-    <AssemblyVersion>4.0.6</AssemblyVersion>
-    <FileVersion>4.0.6</FileVersion>
-    <Version>4.0.6</Version>
+    <AssemblyVersion>4.0.7</AssemblyVersion>
+    <FileVersion>4.0.7</FileVersion>
+    <Version>4.0.7</Version>
     <RepositoryUrl>https://github.com/islero/High-Performance-Backtest.Net</RepositoryUrl>
     <Description></Description>
     <PackageReleaseNotes>Using foreach cycle instead of for in handling OHLC</PackageReleaseNotes>

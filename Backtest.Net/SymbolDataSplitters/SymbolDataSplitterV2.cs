@@ -176,10 +176,14 @@ public class SymbolDataSplitterV2(
     /// </summary>
     /// <param name="symbolsData"></param>
     /// <returns></returns>
-    protected static bool QuickSymbolDataValidationV2(List<SymbolDataV2> symbolsData)
+    private static bool QuickSymbolDataValidationV2(List<SymbolDataV2> symbolsData)
     {
         foreach (var symbol in symbolsData)
         {
+            // --- Validating timeframes
+            if(symbol.Timeframes.Count == 0)
+                continue;
+            
             var priorTimeframe = symbol.Timeframes.First();
             foreach (var timeframe in symbol.Timeframes.Skip(1))
             {
@@ -191,9 +195,12 @@ public class SymbolDataSplitterV2(
                 }
 
                 // --- Validating that candles are sorted by ascending
+                if(timeframe.Candlesticks.Count < 2)
+                    continue;
+                
                 if (timeframe.Candlesticks.Skip(1).First().OpenTime < timeframe.Candlesticks.First().OpenTime)
                 {
-                    // --- Candles aren't sorted (very rough check, but it's quicker)
+                    // --- Candles aren't sorted (very rough check, but it is quicker)
                     return false;
                 }
 
