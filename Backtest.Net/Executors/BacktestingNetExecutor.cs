@@ -87,6 +87,13 @@ public sealed class BacktestingNetExecutor
         var symbolDataParts = await Splitter.SplitAsyncV2(symbolsData);
         NotifyBacktestingEvent(BacktestingEventStatus.SplitFinished, Splitter.GetType().Name);
 
+        // --- Removing invalid indexes
+        foreach (var part in symbolDataParts)
+        {
+            part.RemoveAll(symbolData => 
+                symbolData.Timeframes.Any(timeframe => timeframe.EndIndex < 0));
+        }
+        
         // --- Run Engine
         NotifyBacktestingEvent(BacktestingEventStatus.EngineStarted, Engine.GetType().Name);
         await Engine.RunAsync(symbolDataParts, cancellationToken);
