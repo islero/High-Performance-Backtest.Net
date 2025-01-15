@@ -58,9 +58,10 @@ public sealed class EngineV8(int warmupCandlesCount, bool useFullCandleForCurren
             {
                 // Pre-extract the first timeframes for faster checks
                 var firstTimeframes = part.Select(x => x.Timeframes.First()).ToList();
+                var lastTimeframes = part.Select(x => x.Timeframes.Last()).ToList();
 
                 // Main cycle
-                while (firstTimeframes.All(tf => tf.Index < tf.EndIndex))
+                while (firstTimeframes.All(tf => tf.Index < tf.EndIndex) && lastTimeframes.All(tf => tf.Index < tf.EndIndex))
                 {
                     // Check for cancellation
                     if (ct.IsCancellationRequested)
