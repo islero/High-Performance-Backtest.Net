@@ -8,7 +8,7 @@ namespace Backtest.Net.Engines;
 /// <summary>
 /// Engine V4
 /// The whole point of this version is optimizing all we have in V3
-/// Getting rid of all ToList, ToArray conversions, in practise it increases real backtesting time despite
+/// Getting rid of all ToList, ToArray conversions; in practice it increases real backtesting time despite
 /// benchmark shows better results
 /// </summary>
 /// <param name="warmupCandlesCount"></param>
@@ -20,11 +20,11 @@ public class EngineV4(int warmupCandlesCount, bool useFullCandleForCurrent = fal
     /// <param name="symbolDataParts"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    public override async Task RunAsync(List<List<ISymbolData>> symbolDataParts, CancellationToken? cancellationToken = default)
+    public override async Task RunAsync(List<List<ISymbolData>> symbolDataParts, CancellationToken? cancellationToken = null)
     {
         try
         {
-            // --- Applying Sum of the all parts End Indexes to MaxIndex
+            // --- Applying Sum of the all-parts End Indexes to MaxIndex
             ApplySumOfEndIndexes(symbolDataParts);
             
             // --- Run every symbolDataPart
@@ -133,7 +133,7 @@ public class EngineV4(int warmupCandlesCount, bool useFullCandleForCurrent = fal
                 var candleSticks = timeframe.Candlesticks.ToList();
                 var firstCandle = candleSticks.First();
                     
-                // Applying OHLC value as lowest timeframe open price and close time as open time
+                // Applying OHLC value as the lowest timeframe open price and close time as open time
                 firstCandle.Open = firstTimeframeCandle.Open;
                 firstCandle.High = firstTimeframeCandle.Open;
                 firstCandle.Low = firstTimeframeCandle.Open;

@@ -6,7 +6,7 @@ namespace Backtest.Net.Engines;
 
 /// <summary>
 /// Engine V8
-/// Aiming to utilize .NET 9 performance gain as much as possible
+/// Aiming to use .NET 9 performance gains as much as possible
 /// </summary>
 /// <param name="warmupCandlesCount"></param>
 public sealed class EngineV8(int warmupCandlesCount, bool useFullCandleForCurrent = false) : IEngineV2
@@ -200,7 +200,7 @@ public sealed class EngineV8(int warmupCandlesCount, bool useFullCandleForCurren
             var lowestTimeframeIndexTime = DateTime.MinValue;
 
             // 1) Handle the lowest timeframe (index = 0)
-            // Make sure we're within valid range [StartIndex..EndIndex).
+            // Make sure we're within the valid range [StartIndex..EndIndex).
             if (firstTimeframeIndex >= firstTimeframe.StartIndex && firstTimeframeIndex < firstTimeframe.EndIndex)
             {
                 firstTimeframeIndex++;
@@ -221,7 +221,7 @@ public sealed class EngineV8(int warmupCandlesCount, bool useFullCandleForCurren
                 var timeframe = timeframes[i];
                 var idx = timeframe.Index;
 
-                // Still within valid range
+                // Still within the valid range
                 if (idx >= timeframe.StartIndex && idx < timeframe.EndIndex)
                 {
                     // Compare the current candlestick's CloseTime to the "lowest" timeframe's OpenTime
@@ -260,7 +260,7 @@ public sealed class EngineV8(int warmupCandlesCount, bool useFullCandleForCurren
         var maxSymbol = symbolDataParts.Select(x => x.MaxBy(
             y => y.Timeframes.First().EndIndex));
 
-        // --- Selecting EndIndexes and forming array from them
+        // --- Selecting EndIndexes and forming an array from them
         var endIndexesArray = maxSymbol.Select(x => x!.Timeframes.First().EndIndex).ToArray();
         
         // --- Calculating Sum of the all-parts max indexes
