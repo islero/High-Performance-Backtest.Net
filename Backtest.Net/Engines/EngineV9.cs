@@ -107,13 +107,10 @@ public sealed class EngineV9(int warmupCandlesCount, bool sortCandlesInDescOrder
                 var candleClone = timeframe.Candlesticks[^1].Clone();
                 
                 // Resetting a current if the open time is the same as for the reference candle
-                if(candle.OpenTime == referenceCandle.OpenTime)
-                {
-                    candleClone.Close = referenceCandle.Close;
-                    candleClone.CloseTime = referenceCandle.CloseTime;
-                    candleClone.High = referenceCandle.High;
-                    candleClone.Low = referenceCandle.Low;
-                }
+                candleClone.Close = referenceCandle.Close;
+                candleClone.CloseTime = referenceCandle.CloseTime;
+                candleClone.High = referenceCandle.High;
+                candleClone.Low = referenceCandle.Low;
                 
                 // Make sure the candle is in between the higher timeframe open time and close time
                 if(referenceCandle.OpenTime > candle.OpenTime && referenceCandleCloseTime < candle.CloseTime)
