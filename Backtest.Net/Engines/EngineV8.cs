@@ -1,15 +1,15 @@
 using Backtest.Net.Interfaces;
 using Backtest.Net.SymbolsData;
 using Backtest.Net.Timeframes;
+using Backtest.Net.Utils;
 
 namespace Backtest.Net.Engines;
 
 /// <summary>
-/// Engine V8
+/// Represents the EngineV8 class, which is responsible for running backtesting simulations.
 /// Aiming to use .NET 9 performance gains as much as possible
 /// </summary>
-/// <param name="warmupCandlesCount"></param>
-public sealed class EngineV8(int warmupCandlesCount, bool useFullCandleForCurrent = false) : IEngineV2
+public class EngineV8(int warmupCandlesCount, bool useFullCandleForCurrent) : IEngineV2
 {
     // --- Delegates
     /// <summary>
@@ -22,28 +22,13 @@ public sealed class EngineV8(int warmupCandlesCount, bool useFullCandleForCurren
     /// </summary>
     public Action? OnCancellationFinishedDelegate { get; set; }
     
-    // --- Properties
-    private int WarmupCandlesCount { get; } = warmupCandlesCount; // The number of warmup candles count
-
-    /// <summary>
-    /// Determines whether the backtester uses the full (completed) candle for the current candle logic.
-    /// When set to true, the backtester will treat the current candle as fully formed,
-    /// including all its OHLC (Open, High, Low, Close) data, rather than partial real-time data.
-    /// </summary>
-    /// <remarks>
-    /// Enabling this option can impact backtesting behavior by ensuring that decisions
-    /// are made based on completed candle data, which is particularly useful for historical backtesting.
-    /// If set to false, the current candle data will be treated as incomplete.
-    /// </remarks>
-    private bool UseFullCandleForCurrent { get; } = useFullCandleForCurrent;
-    
     /// <summary>
     /// Starts the engine and feeds the strategy with data
     /// </summary>
     /// <param name="symbolDataParts"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    public async Task RunAsync(List<List<SymbolDataV2>> symbolDataParts,
+    public virtual async Task RunAsync(List<List<SymbolDataV2>> symbolDataParts,
         CancellationToken? cancellationToken = null)
     {
         try
@@ -71,7 +56,7 @@ public sealed class EngineV8(int warmupCandlesCount, bool useFullCandleForCurren
                     var feedingData = await CloneFeedingSymbolData(part).ConfigureAwait(false);
 
                     // Apply open price to OHLC for all first candles (also synchronous parallel)
-                    if (!UseFullCandleForCurrent)
+                    if (!useFullCandleForCurrent)
                         await HandleOhlc(feedingData).ConfigureAwait(false);
 
                     // Trigger OnTick action (assuming OnTick is truly async and must be awaited)
@@ -94,7 +79,7 @@ public sealed class EngineV8(int warmupCandlesCount, bool useFullCandleForCurren
     /// </summary>
     /// <param name="symbolData"></param>
     /// <returns></returns>
-    private Task<SymbolDataV2[]> CloneFeedingSymbolData(List<SymbolDataV2> symbolData)
+    protected Task<SymbolDataV2[]> CloneFeedingSymbolData(List<SymbolDataV2> symbolData)
     {
         var count = symbolData.Count;
         var result = new SymbolDataV2[count];
@@ -115,8 +100,8 @@ public sealed class EngineV8(int warmupCandlesCount, bool useFullCandleForCurren
 
                 // Calculate the 'warmed-up' start index.
                 var warmedUpIndex = 
-                    originalTimeframe.Index - WarmupCandlesCount > originalTimeframe.StartIndex
-                        ? originalTimeframe.Index - WarmupCandlesCount
+                    originalTimeframe.Index - warmupCandlesCount > originalTimeframe.StartIndex
+                        ? originalTimeframe.Index - warmupCandlesCount
                         : originalTimeframe.StartIndex;
 
                 // Determine how many candlesticks to copy.
@@ -187,7 +172,7 @@ public sealed class EngineV8(int warmupCandlesCount, bool useFullCandleForCurren
     /// </summary>
     /// <param name="symbolData"></param>
     /// <returns></returns>
-    private Task IncrementIndexes(List<SymbolDataV2> symbolData)
+    protected Task IncrementIndexes(List<SymbolDataV2> symbolData)
     {
         // Use Parallel.ForEach to process symbolData concurrently.
         Parallel.ForEach(symbolData, symbol =>
@@ -244,7 +229,6 @@ public sealed class EngineV8(int warmupCandlesCount, bool useFullCandleForCurren
     /// </summary>
     private decimal Index { get; set; }
     
-    
     /// <summary>
     /// Max Index property to calculate the total index increments during the backtesting
     /// </summary>
@@ -254,7 +238,7 @@ public sealed class EngineV8(int warmupCandlesCount, bool useFullCandleForCurren
     /// Applies Sum of all EndIndexes to MaxIndex
     /// </summary>
     /// <param name="symbolDataParts"></param>
-    private void ApplySumOfEndIndexes(List<List<SymbolDataV2>> symbolDataParts)
+    protected void ApplySumOfEndIndexes(List<List<SymbolDataV2>> symbolDataParts)
     {
         // --- Getting Symbols Data that have highest EndIndexes
         var maxSymbol = symbolDataParts.Select(x => x.MaxBy(

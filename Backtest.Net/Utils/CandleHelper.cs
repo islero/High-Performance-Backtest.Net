@@ -1,0 +1,85 @@
+using System.Runtime.CompilerServices;
+using Backtest.Net.Candlesticks;
+using Backtest.Net.SymbolsData;
+
+namespace Backtest.Net.Utils;
+
+/// <summary>
+/// Provides utility methods for processing and manipulating candlestick data.
+/// </summary>
+public static class CandleHelper
+{
+    /// <summary>
+    /// Filters a list of candlesticks to include only those that have an open time greater than or equal to a specified open time, starting from a reference candlestick.
+    /// </summary>
+    /// <param name="candles">The list of candlesticks to filter.</param>
+    /// <param name="referenceCandle">The candlestick to include first in the result regardless of its open time.</param>
+    /// <param name="openTime">The minimum open time for candlesticks to be included in the result.</param>
+    /// <returns>A list of candlesticks starting with the reference candlestick, followed by those with an open time greater than or equal to the specified open time.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static List<CandlestickV2> TakeCandlesFromOpenTime(
+        List<CandlestickV2> candles,
+        CandlestickV2 referenceCandle,
+        DateTime openTime)
+    {
+        var count = candles.Count;
+        var result = new List<CandlestickV2>(count) { referenceCandle };
+
+        // Find the first index >= 1 where candle.OpenTime >= openTime.
+        var lo = 1;
+        var hi = count - 1;
+        var firstValidIndex = count; // default, if none found
+        while (lo <= hi)
+        {
+            var mid = lo + ((hi - lo) >> 1);
+            if (candles[mid].OpenTime >= openTime)
+            {
+                firstValidIndex = mid;
+                hi = mid - 1;
+            }
+            else
+            {
+                lo = mid + 1;
+            }
+        }
+
+        // If we found any valid candles, append them all at once.
+        if (firstValidIndex < count)
+        {
+            result.AddRange(candles.GetRange(firstValidIndex, count - firstValidIndex));
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Reverses the order of candlestick lists for all timeframes associated with the specified symbol.
+    /// </summary>
+    /// <param name="symbol">The symbol data containing timeframes with candlestick lists to be reversed.</param>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void ReverseTimeframesCandles(SymbolDataV2 symbol)
+    {
+        var timeframes = symbol.Timeframes;
+        var count = timeframes.Count;
+        for (var i = 0; i < count; i++)
+        {
+            ReverseInPlace(timeframes[i].Candlesticks);
+        }
+    }
+
+    /// <summary>
+    /// Reverses the order of elements in the given list of candlesticks in place.
+    /// </summary>
+    /// <param name="candlesticks">The list of candlesticks to be reversed.</param>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void ReverseInPlace(List<CandlestickV2> candlesticks)
+    {
+        var n = candlesticks.Count;
+        // Only perform reversal if there is more than one element.
+        for (int j = 0, k = n - 1; j < k; j++, k--)
+        {
+            // Manually swap the elements.
+            (candlesticks[j], candlesticks[k]) = (candlesticks[k], candlesticks[j]);
+        }
+    }
+}

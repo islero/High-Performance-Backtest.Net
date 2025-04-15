@@ -28,6 +28,7 @@ public sealed class BacktestingNetExecutor
     /// Constructor
     /// </summary>
     /// <param name="startDateTime">Backtesting Start DateTime</param>
+    /// <param name="sortCandlesInDescOrder">Sort candles open time in descending order</param>
     /// <param name="useFullCandleForCurrent">Uses current candle full candle instead of open price of the lowest timeframe</param>
     /// <param name="daysPerSplit">Decides how many days in one split range should exist?</param>
     /// <param name="warmupCandlesCount">The number of warmup candles count</param>
@@ -38,6 +39,7 @@ public sealed class BacktestingNetExecutor
     public BacktestingNetExecutor(DateTime startDateTime,
         int warmupCandlesCount, 
         Func<SymbolDataV2[], Task> onTick, 
+        bool sortCandlesInDescOrder = true,
         bool useFullCandleForCurrent = false,
         int daysPerSplit = 0,
         bool correctEndIndex = false,
@@ -48,7 +50,7 @@ public sealed class BacktestingNetExecutor
             warmupTimeframe);
 
         // --- Create and Select Engine version
-        Engine = new EngineV8(warmupCandlesCount, useFullCandleForCurrent)
+        Engine = new EngineV9(warmupCandlesCount, sortCandlesInDescOrder, useFullCandleForCurrent)
         {
             OnTick = onTick
         };

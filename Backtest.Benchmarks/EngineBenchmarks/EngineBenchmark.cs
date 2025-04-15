@@ -121,7 +121,17 @@ public class EngineBenchmark
     [Benchmark]
     public async Task EngineV8_Run()
     {
-        var engine = new EngineV8(WarmupCandlesCount)
+        var engine = new EngineV8(WarmupCandlesCount, false)
+        {
+            OnTick = _ => Task.CompletedTask
+        };
+        await engine.RunAsync(SplittedDataV2);
+    }
+    
+    [Benchmark]
+    public async Task EngineV9_Run()
+    {
+        var engine = new EngineV9(WarmupCandlesCount, true, false)
         {
             OnTick = _ => Task.CompletedTask
         };

@@ -26,7 +26,7 @@ public class EngineTests : EngineTestsBase
     /// </summary>
     public EngineTests()
     {
-        EngineV2 = new EngineV8(WarmupCandlesCount)
+        EngineV2 = new EngineV9(WarmupCandlesCount, true, false)
         {
             OnTick = OnTickMethodV2
         };
