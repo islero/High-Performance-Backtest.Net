@@ -12,18 +12,13 @@ namespace Backtest.Net.Executors;
 /// </summary>
 public sealed class BacktestingNetExecutor
 {
+    // NOTE: Concrete types were used on purpose based on this article to improve performance
+    // CA1859: Use concrete types when possible for improved performance
+    
     // --- Properties
     public static bool IsRunning { get; private set; } // Checks whether backtesting is currently running
-    private DateTime StartDateTime { get; } // Backtesting Start DateTime
-    private int WarmupCandlesCount { get; } // The number of warmup candles count
-    private bool CorrectEndIndex { get; } // Makes sure the end index is the same for all symbols and timeframes
-    private CandlestickInterval? WarmupTimeframe { get; } // The timeframe must be warmed up and all lower timeframes
-                                                          // accordingly, if null – is set automatically
-    private int DaysPerSplit { get; } // Decides how many days in one split range should exist?
-    // Concrete types were used on purpose based on this article to improve performance
-    // CA1859: Use concrete types when possible for improved performance
-    private SymbolDataSplitterV2 Splitter { get; set;  } // Splits entire history on smaller pieces
-    private EngineV8 Engine { get; set;  } // The backtesting engine itself, performs backtesting,
+    private SymbolDataSplitterV2 Splitter { get; } // Splits entire history into smaller pieces
+    private EngineV8 Engine { get; } // The backtesting engine itself performs backtesting,
                                             // passes prepared history into strategy
 
     // --- Delegates
@@ -32,13 +27,14 @@ public sealed class BacktestingNetExecutor
     /// <summary>
     /// Constructor
     /// </summary>
-    /// <param name="startDateTime"></param>
-    /// <param name="useFullCandleForCurrent"></param>
-    /// <param name="daysPerSplit"></param>
-    /// <param name="warmupCandlesCount"></param>
-    /// <param name="onTick"></param>
-    /// <param name="correctEndIndex"></param>
-    /// <param name="warmupTimeframe"></param>
+    /// <param name="startDateTime">Backtesting Start DateTime</param>
+    /// <param name="useFullCandleForCurrent">Uses current candle full candle instead of open price of the lowest timeframe</param>
+    /// <param name="daysPerSplit">Decides how many days in one split range should exist?</param>
+    /// <param name="warmupCandlesCount">The number of warmup candles count</param>
+    /// <param name="onTick">The backtest tick function</param>
+    /// <param name="correctEndIndex">Makes sure the end index is the same for all symbols and timeframes</param>
+    /// <param name="warmupTimeframe">The timeframe must be warmed up and all lower timeframes accordingly,
+    /// if null – it sets automatically</param>
     public BacktestingNetExecutor(DateTime startDateTime,
         int warmupCandlesCount, 
         Func<SymbolDataV2[], Task> onTick, 
@@ -47,18 +43,12 @@ public sealed class BacktestingNetExecutor
         bool correctEndIndex = false,
         CandlestickInterval? warmupTimeframe = null)
     {
-        StartDateTime = startDateTime;
-        WarmupCandlesCount = warmupCandlesCount;
-        CorrectEndIndex = correctEndIndex;
-        WarmupTimeframe = warmupTimeframe;
-        DaysPerSplit = daysPerSplit;
-        
         // --- Create and Select DataSplitter version
-        Splitter = new SymbolDataSplitterV2(DaysPerSplit, WarmupCandlesCount, StartDateTime, CorrectEndIndex,
-            WarmupTimeframe);
+        Splitter = new SymbolDataSplitterV2(daysPerSplit, warmupCandlesCount, startDateTime, correctEndIndex,
+            warmupTimeframe);
 
         // --- Create and Select Engine version
-        Engine = new EngineV8(WarmupCandlesCount, useFullCandleForCurrent)
+        Engine = new EngineV8(warmupCandlesCount, useFullCandleForCurrent)
         {
             OnTick = onTick
         };
@@ -121,7 +111,7 @@ public sealed class BacktestingNetExecutor
     /// <param name="eventStatus"></param>
     /// <param name="additionalDetails"></param>
     /// <returns></returns>
-    private void NotifyBacktestingEvent(BacktestingEventStatus eventStatus, string? additionalDetails = default)
+    private void NotifyBacktestingEvent(BacktestingEventStatus eventStatus, string? additionalDetails = null)
     {
         OnBacktestingEvent?.Invoke(eventStatus, additionalDetails);
     }
