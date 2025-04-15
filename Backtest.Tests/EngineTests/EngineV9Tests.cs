@@ -75,9 +75,9 @@ public class EngineV9Tests : EngineTestsV2
             { 
                 Symbol = "BTCUSDT", Timeframes = [ 
                     new TimeframeV2 { Timeframe = CandlestickInterval.D1, Candlesticks = [ 
-                new CandlestickV2 { OpenTime = new DateTime(2024, 1, 1), Open = 100, High = 100, Low = 98, Close = 99, CloseTime = new DateTime(2024, 1, 1) }, 
-                new CandlestickV2 { OpenTime = new DateTime(2024, 1, 2), Open = 99, High = 101, Low = 97, Close = 97, CloseTime = new DateTime(2024, 1, 2) }, 
-                new CandlestickV2 { OpenTime = new DateTime(2024, 1, 3), Open = 97, High = 97, Low = 95, Close = 95, CloseTime = new DateTime(2024, 1, 3) }, ], Index = 0, EndIndex = 3, StartIndex = 0 }, 
+                new CandlestickV2 { OpenTime = new DateTime(2024, 1, 1), Open = 100, High = 100, Low = 98, Close = 99, CloseTime = new DateTime(2024, 1, 2).AddSeconds(-1) }, 
+                new CandlestickV2 { OpenTime = new DateTime(2024, 1, 2), Open = 99, High = 101, Low = 97, Close = 97, CloseTime = new DateTime(2024, 1, 3).AddSeconds(-1) }, 
+                new CandlestickV2 { OpenTime = new DateTime(2024, 1, 3), Open = 97, High = 97, Low = 95, Close = 95, CloseTime = new DateTime(2024, 1, 4).AddSeconds(-1) }, ], Index = 0, EndIndex = 3, StartIndex = 0 }, 
                     new TimeframeV2 { Timeframe = CandlestickInterval.W1, Candlesticks = [
                         new CandlestickV2 { OpenTime = new DateTime(2024, 1, 1), Open = 100, High = 102, Low = 94, Close = 93, CloseTime = new DateTime(2024, 1, 7) } ], Index = 0, EndIndex = 1, StartIndex = 0 }] 
             }]
