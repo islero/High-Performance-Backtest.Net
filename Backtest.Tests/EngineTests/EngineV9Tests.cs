@@ -5,16 +5,16 @@ namespace Backtest.Tests.EngineTests;
 /// <summary>
 /// Testing backtesting Engine V9
 /// </summary>
-public class EngineV9Tests : EngineTests
+public class EngineV9Tests : EngineTestsV2
 {
     /// <summary>
-    /// Initializing Engine V7
+    /// Initializing Engine V9
     /// </summary>
     public EngineV9Tests()
     {
         WarmupCandlesCount = 2;
         Trade = new TestTrade();
-        Strategy = new TestStrategy();
+        Strategy = new TestStrategyV2();
 
         EngineV2 = new EngineV9(WarmupCandlesCount, true, false)
         {

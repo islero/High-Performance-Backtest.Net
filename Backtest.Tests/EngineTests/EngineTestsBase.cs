@@ -55,13 +55,13 @@ public class TestStrategy : IStrategy
 /// <summary>
 /// Class for strategy testing
 /// </summary>
-public class TestStrategyV2 : IStrategy
+public class TestStrategyV2
 {
-    public Action<List<ISymbolData>>? ExecuteStrategyDelegate { get; set; }
-
-    public Task<List<IConditionParameter>> Execute(List<ISymbolData> symbolDataList)
+    public Action<List<SymbolDataV2>>? ExecuteStrategyDelegateV2 { get; set; }
+    
+    public Task<List<IConditionParameter>> ExecuteV2(List<SymbolDataV2> symbolDataList)
     {
-        ExecuteStrategyDelegate?.Invoke(symbolDataList);
+        ExecuteStrategyDelegateV2?.Invoke(symbolDataList);
             
         return Task.FromResult(Enumerable.Empty<IConditionParameter>().ToList());
     }

@@ -5,18 +5,18 @@ namespace Backtest.Tests.EngineTests;
 /// <summary>
 /// Testing backtesting Engine V8
 /// </summary>
-public class EngineV8Tests : EngineTests
+public class EngineV8Tests : EngineTestsV2
 {
     /// <summary>
-    /// Initializing Engine V7
+    /// Initializing Engine V8
     /// </summary>
     public EngineV8Tests()
     {
         WarmupCandlesCount = 2;
         Trade = new TestTrade();
-        Strategy = new TestStrategy();
+        Strategy = new TestStrategyV2();
 
-        EngineV2 = new EngineV8(WarmupCandlesCount, true)
+        EngineV2 = new EngineV8(WarmupCandlesCount, false)
         {
             OnTick = OnTickMethodV2
         };
