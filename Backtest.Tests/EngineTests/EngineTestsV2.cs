@@ -261,7 +261,7 @@ public class EngineTestsV2 : EngineTestsBase
 
         Assert.True(allCurrentCandleOhlcAreEqual);
     }
-        
+    
     /// <summary>
     /// Checking if strategy gets all TF sorted in Ascending order
     /// </summary>
@@ -295,7 +295,7 @@ public class EngineTestsV2 : EngineTestsBase
     }
         
     /// <summary>
-    /// Testing that each next TF open and close contains prior timeframe open close inside its range,
+    /// Testing that each next TF open and close contains a prior timeframe open close inside its range,
     /// For example, if 5m tf openTime = 1/1/23 12:00:00 and closeTime 1/1/23 12:05:00
     /// 1d tf can't have openTime 1/2/23 12:00:00 and closeTime 1/2/23 23:59:59
     /// </summary>
@@ -417,7 +417,7 @@ public class EngineTestsV2 : EngineTestsBase
     /// Generates a fake symbol data list
     /// </summary>
     /// <returns></returns>
-    private static List<List<SymbolDataV2>> GenerateSymbolDataList(DateTime startingDate, int totalCandlesCount,
+    protected static List<List<SymbolDataV2>> GenerateSymbolDataList(DateTime startingDate, int totalCandlesCount,
         int daysPerSplit, int warmupCandlesCount)
     {
         var symbolDataSplitter = new SymbolDataSplitterV2(daysPerSplit, warmupCandlesCount, startingDate, true);

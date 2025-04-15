@@ -22,13 +22,12 @@ public static class CandleHelper
         CandlestickV2 referenceCandle,
         DateTime openTime)
     {
-        var count = candles.Count;
-        var result = new List<CandlestickV2>(count) { referenceCandle };
+        var n = candles.Count;
+        // Binary search for the first index (starting at index 0) where OpenTime >= openTime.
+        var lo = 0;
+        var hi = n - 1;
+        var firstValidIndex = n; // default value if none is found
 
-        // Find the first index >= 1 where candle.OpenTime >= openTime.
-        var lo = 1;
-        var hi = count - 1;
-        var firstValidIndex = count; // default, if none found
         while (lo <= hi)
         {
             var mid = lo + ((hi - lo) >> 1);
@@ -43,12 +42,21 @@ public static class CandleHelper
             }
         }
 
-        // If we found any valid candles, append them all at once.
-        if (firstValidIndex < count)
+        // Calculate the number of valid candidate candles.
+        var validCount = firstValidIndex < n ? n - firstValidIndex : 0;
+
+        // If no valid candles or only one valid candle exist,
+        // then return a list with the reference candle.
+        if (validCount <= 1)
         {
-            result.AddRange(candles.GetRange(firstValidIndex, count - firstValidIndex));
+            return [referenceCandle];
         }
 
+        // When there are at least 2 valid candles, replace the last candidate.
+        // Get all but the final candidate.
+        var result = candles.GetRange(firstValidIndex, validCount - 1);
+        // Append the reference candle at the end.
+        result.Add(referenceCandle);
         return result;
     }
 

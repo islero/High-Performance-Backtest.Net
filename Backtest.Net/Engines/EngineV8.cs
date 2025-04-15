@@ -171,7 +171,7 @@ public class EngineV8(int warmupCandlesCount, bool useFullCandleForCurrent) : IE
     /// </summary>
     /// <param name="symbolData"></param>
     /// <returns></returns>
-    protected Task IncrementIndexes(List<SymbolDataV2> symbolData)
+    protected Task IncrementIndexesOld(List<SymbolDataV2> symbolData)
     {
         // Use Parallel.ForEach to process symbolData concurrently.
         Parallel.ForEach(symbolData, symbol =>
@@ -210,11 +210,73 @@ public class EngineV8(int warmupCandlesCount, bool useFullCandleForCurrent) : IE
                 {
                     // Compare the current candlestick's CloseTime to the "lowest" timeframe's OpenTime
                     var closeTime = timeframe.Candlesticks[idx].CloseTime;
-                    if (closeTime < lowestTimeframeIndexTime)
+                    // firstTimeframeIndex > firstTimeframe.Index means there are no candles left 
+                    if (closeTime < lowestTimeframeIndexTime/* || (i == 1 && firstTimeframeIndex > firstTimeframe.Index)*/)
                     {
                         // Only increment if it is strictly below the reference time
                         idx++;
                         timeframe.Index = idx;
+                    }
+                }
+            }
+        });
+
+        return Task.CompletedTask;
+    }
+    
+    protected Task IncrementIndexes(List<SymbolDataV2> symbolData)
+    {
+        Parallel.ForEach(symbolData, symbol =>
+        {
+            var timeframes = symbol.Timeframes;
+            var tfCount = timeframes.Count;
+
+            // Find the first timeframe with an Index < EndIndex.
+            // This becomes our base timeframe.
+            var baseTfIndex = -1;
+            for (var i = 0; i < tfCount; i++)
+            {
+                if (timeframes[i].Index + 1 < timeframes[i].EndIndex)
+                {
+                    baseTfIndex = i;
+                    break;
+                }
+
+                timeframes[i].Index = timeframes[i].EndIndex;
+                Index = MaxIndex;
+            }
+
+            // No valid timeframe found – nothing to update.
+            if (baseTfIndex == -1)
+                return;
+
+            var baseTf = timeframes[baseTfIndex];
+
+            // Ensure the base timeframe is within the valid range.
+            if (baseTf.Index < baseTf.StartIndex || baseTf.Index >= baseTf.EndIndex)
+                return;
+
+            // Increment the base timeframe's index and use its new candle's OpenTime as the reference.
+            baseTf.Index++;
+            // Optionally track this globally/externally
+            if (Index != MaxIndex)
+                Index = baseTf.Index;
+            
+            var referenceTime = baseTf.Candlesticks[baseTf.Index].OpenTime;
+
+            // For all other timeframes, increment their index if the current candle's CloseTime is strictly less than
+            // the reference time.
+            for (var i = 0; i < tfCount; i++)
+            {
+                if (i <= baseTfIndex)
+                    continue;
+
+                var tf = timeframes[i];
+                if (tf.Index >= tf.StartIndex && tf.Index < tf.EndIndex)
+                {
+                    if (tf.Candlesticks[tf.Index].CloseTime < referenceTime)
+                    {
+                        tf.Index++;
                     }
                 }
             }
