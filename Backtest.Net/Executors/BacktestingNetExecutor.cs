@@ -18,7 +18,7 @@ public sealed class BacktestingNetExecutor
     // --- Properties
     public static bool IsRunning { get; private set; } // Checks whether backtesting is currently running
     private SymbolDataSplitterV2 Splitter { get; } // Splits entire history into smaller pieces
-    private EngineV8 Engine { get; } // The backtesting engine itself performs backtesting,
+    private EngineV9 Engine { get; } // The backtesting engine itself performs backtesting,
                                             // passes prepared history into strategy
 
     // --- Delegates
