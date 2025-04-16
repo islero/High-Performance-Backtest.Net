@@ -171,7 +171,7 @@ public class EngineV8(int warmupCandlesCount, bool useFullCandleForCurrent) : IE
     /// </summary>
     /// <param name="symbolData"></param>
     /// <returns></returns>
-    private Task IncrementIndexes(List<SymbolDataV2> symbolData)
+    protected Task IncrementIndexes(List<SymbolDataV2> symbolData)
     {
         // Use Parallel.ForEach to process symbolData concurrently.
         Parallel.ForEach(symbolData, symbol =>

@@ -137,7 +137,7 @@ public sealed class EngineV9(int warmupCandlesCount, bool sortCandlesInDescOrder
     /// </summary>
     /// <param name="symbolData">A list of symbol data containing timeframes and their corresponding candlestick information.</param>
     /// <returns>A completed task once the indexes have been incremented.</returns>
-    private Task IncrementIndexes(List<SymbolDataV2> symbolData)
+    private Task IncrementIndexes2(List<SymbolDataV2> symbolData)
     {
         Parallel.ForEach(symbolData, symbol =>
         {

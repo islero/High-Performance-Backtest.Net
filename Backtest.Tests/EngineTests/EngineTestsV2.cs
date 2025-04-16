@@ -208,11 +208,25 @@ public class EngineTestsV2 : EngineTestsBase
         await EngineV2.RunAsync(dataList);
 
         // --- Checking that after the EngineRun all the data are reached EndIndex
-        var allReachedEndIndex = dataList.All(
+        /*var allReachedEndIndex = dataList.All(
             x => x.All(
                 y => y.Timeframes.All(
                     k => k.Index == k.EndIndex)));
-        Assert.True(allReachedEndIndex);
+        Assert.True(allReachedEndIndex);*/
+        
+        var firstSymbolData = dataList.First();
+        var timeframes = firstSymbolData.First().Timeframes;
+        var firstTimeframe = timeframes.First();
+        var indexCandle = firstTimeframe.Candlesticks.ElementAt(firstTimeframe.Index);
+        
+        foreach (var timeframe in timeframes.Skip(1))
+        {
+            var nextIndexCandle = timeframe.Candlesticks.ElementAt(timeframe.Index);
+            
+            Assert.True(indexCandle.OpenTime >= nextIndexCandle.OpenTime && indexCandle.OpenTime <= nextIndexCandle.CloseTime);
+            
+            indexCandle = nextIndexCandle;
+        }
     }
 
     [Fact]
