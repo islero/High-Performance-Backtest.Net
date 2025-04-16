@@ -42,10 +42,9 @@ public class EngineV8(int warmupCandlesCount, bool useFullCandleForCurrent) : IE
             {
                 // Pre-extract the first timeframes for faster checks
                 var firstTimeframes = part.Select(x => x.Timeframes.First()).ToList();
-                var lastTimeframes = part.Select(x => x.Timeframes.Last()).ToList();
 
                 // Main cycle
-                while (firstTimeframes.All(tf => tf.Index < tf.EndIndex) && lastTimeframes.All(tf => tf.Index < tf.EndIndex))
+                while (firstTimeframes.All(tf => tf.Index < tf.EndIndex))
                 {
                     // Check for cancellation
                     if (ct.IsCancellationRequested)
@@ -171,7 +170,7 @@ public class EngineV8(int warmupCandlesCount, bool useFullCandleForCurrent) : IE
     /// </summary>
     /// <param name="symbolData"></param>
     /// <returns></returns>
-    protected Task IncrementIndexes(List<SymbolDataV2> symbolData)
+    private Task IncrementIndexes(List<SymbolDataV2> symbolData)
     {
         // Use Parallel.ForEach to process symbolData concurrently.
         Parallel.ForEach(symbolData, symbol =>

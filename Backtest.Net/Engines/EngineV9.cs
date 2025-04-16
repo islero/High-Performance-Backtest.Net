@@ -30,10 +30,9 @@ public sealed class EngineV9(int warmupCandlesCount, bool sortCandlesInDescOrder
             {
                 // Pre-extract the first timeframes for faster checks
                 var firstTimeframes = part.Select(x => x.Timeframes.First()).ToList();
-                var lastTimeframes = part.Select(x => x.Timeframes.Last()).ToList();
 
                 // Main cycle
-                while (firstTimeframes.All(tf => tf.Index < tf.EndIndex) && lastTimeframes.All(tf => tf.Index < tf.EndIndex))
+                while (firstTimeframes.All(tf => tf.Index < tf.EndIndex))
                 {
                     // Check for cancellation
                     if (ct.IsCancellationRequested)
@@ -137,7 +136,7 @@ public sealed class EngineV9(int warmupCandlesCount, bool sortCandlesInDescOrder
     /// </summary>
     /// <param name="symbolData">A list of symbol data containing timeframes and their corresponding candlestick information.</param>
     /// <returns>A completed task once the indexes have been incremented.</returns>
-    private Task IncrementIndexes2(List<SymbolDataV2> symbolData)
+    private Task IncrementIndexes(List<SymbolDataV2> symbolData)
     {
         Parallel.ForEach(symbolData, symbol =>
         {
