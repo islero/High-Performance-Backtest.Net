@@ -29,7 +29,7 @@ public class EngineBenchmark
     public async Task Setup()
     {
         StartingDate = new DateTime(2023, 1, 1, 3, 6, 50);
-        DaysPerSplit = 0;
+        DaysPerSplit = 1;
         WarmupCandlesCount = 2;
 
         GeneratedSymbolsData = SymbolDataSplitterBenchmark.GenerateFakeSymbolsData(["BTCUSDT"],
@@ -43,8 +43,8 @@ public class EngineBenchmark
             [CandlestickInterval.M5, CandlestickInterval.D1],
             StartingDate.AddHours(-WarmupCandlesCount), 5000);
         
-        var symbolDataSplitterV2 = new SymbolDataSplitterV2(DaysPerSplit, WarmupCandlesCount, StartingDate, true);
-        SplittedDataV2 = await symbolDataSplitterV2.SplitAsyncV2(GeneratedSymbolsDataV2!);
+        var symbolDataSplitterV2 = new SymbolDataSplitterV2(DaysPerSplit, WarmupCandlesCount, StartingDate, false);
+        SplittedDataV2 = await symbolDataSplitterV2.SplitAsyncV2(GeneratedSymbolsDataV2);
     }
     
     //[Benchmark(Baseline = true)]
