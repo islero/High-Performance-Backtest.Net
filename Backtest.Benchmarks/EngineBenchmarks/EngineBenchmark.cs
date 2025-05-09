@@ -29,7 +29,7 @@ public class EngineBenchmark
     public async Task Setup()
     {
         StartingDate = new DateTime(2023, 1, 1, 3, 6, 50);
-        DaysPerSplit = 1;
+        DaysPerSplit = 0;
         WarmupCandlesCount = 2;
 
         GeneratedSymbolsData = SymbolDataSplitterBenchmark.GenerateFakeSymbolsData(["BTCUSDT"],
