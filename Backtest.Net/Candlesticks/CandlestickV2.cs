@@ -11,6 +11,7 @@ public sealed class CandlestickV2
     public decimal Low { get; set; }
     public decimal Close { get; set; }
     public DateTime CloseTime { get; set; }
+    public decimal Volume { get; set; }
 
     /// <summary>
     /// Cloning themselves method
@@ -25,7 +26,8 @@ public sealed class CandlestickV2
             High = High,
             Low = Low,
             Close = Close,
-            CloseTime = CloseTime
+            CloseTime = CloseTime,
+            Volume = Volume
         };
 
         return candlestickV1Clone;
