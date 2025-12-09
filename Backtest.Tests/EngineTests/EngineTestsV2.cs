@@ -191,7 +191,7 @@ public class EngineTestsV2 : EngineTestsBase
     }
 
     [Fact]
-    public async Task TestIfAllIndexesReachedTheEndIndex()
+    public virtual async Task TestIfAllIndexesReachedTheEndIndex()
     {
         // --- Generate fake SymbolData splitter
         var data = GenerateSymbolDataList(new DateTime(2023, 1, 1), 500, 0, WarmupCandlesCount);
@@ -230,7 +230,7 @@ public class EngineTestsV2 : EngineTestsBase
     }
 
     [Fact]
-    public async Task TestCurrentCandleOhlcAreEqual()
+    public virtual async Task TestCurrentCandleOhlcAreEqual()
     {
         var tokenSource = new CancellationTokenSource();
 
