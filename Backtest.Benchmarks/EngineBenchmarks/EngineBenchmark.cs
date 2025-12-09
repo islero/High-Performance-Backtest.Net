@@ -137,4 +137,14 @@ public class EngineBenchmark
         };
         await engine.RunAsync(SplittedDataV2);
     }
+
+    [Benchmark]
+    public async Task EngineV10_Run()
+    {
+        var engine = new EngineV10(WarmupCandlesCount, true, false)
+        {
+            OnTick = _ => Task.CompletedTask
+        };
+        await engine.RunAsync(SplittedDataV2);
+    }
 }
