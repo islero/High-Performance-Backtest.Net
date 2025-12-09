@@ -4,7 +4,7 @@ using Backtest.Net.Utils;
 namespace Backtest.Net.Engines;
 
 /// <summary>
-/// The EngineV8 is responsible for running backtesting simulations
+/// The EngineV9 is responsible for running backtesting simulations
 /// Aiming to use .NET 9 performance gains as much as possible
 /// </summary>
 public sealed class EngineV9(int warmupCandlesCount, bool sortCandlesInDescOrder, bool useFullCandleForCurrent) : EngineV8(warmupCandlesCount, useFullCandleForCurrent)
