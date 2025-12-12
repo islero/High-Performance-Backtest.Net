@@ -18,7 +18,7 @@ public sealed class BacktestingNetExecutor
     // --- Properties
     public static bool IsRunning { get; private set; } // Checks whether backtesting is currently running
     private SymbolDataSplitterV2 Splitter { get; } // Splits entire history into smaller pieces
-    private EngineV9 Engine { get; } // The backtesting engine itself performs backtesting,
+    private EngineV10 Engine { get; } // The backtesting engine itself performs backtesting,
                                             // passes prepared history into strategy
 
     // --- Delegates
@@ -50,7 +50,7 @@ public sealed class BacktestingNetExecutor
             warmupTimeframe);
 
         // --- Create and Select Engine version
-        Engine = new EngineV9(warmupCandlesCount, sortCandlesInDescOrder, useFullCandleForCurrent)
+        Engine = new EngineV10(warmupCandlesCount, sortCandlesInDescOrder, useFullCandleForCurrent)
         {
             OnTick = onTick
         };

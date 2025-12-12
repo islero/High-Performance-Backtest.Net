@@ -8,7 +8,7 @@
     <Platforms>AnyCPU</Platforms>
     <AssemblyVersion>4.1.9</AssemblyVersion>
     <FileVersion>4.1.9</FileVersion>
-    <Version>4.1.9</Version>
+    <Version>4.1.11</Version>
     <RepositoryUrl>https://github.com/islero/High-Performance-Backtest.Net</RepositoryUrl>
     <Description></Description>
     <PackageReleaseNotes>Added volume to candlesticks</PackageReleaseNotes>

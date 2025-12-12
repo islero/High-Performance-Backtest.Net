@@ -16,6 +16,8 @@ namespace Backtest.Net.Engines;
 public sealed class EngineV10(int warmupCandlesCount, bool sortCandlesInDescOrder, bool useFullCandleForCurrent)
     : EngineV8(warmupCandlesCount, useFullCandleForCurrent)
 {
+    private readonly bool _useFullCandleForCurrent = useFullCandleForCurrent;
+
     /// <summary>
     /// Starts the engine and feeds the strategy with data
     /// </summary>
@@ -46,7 +48,7 @@ public sealed class EngineV10(int warmupCandlesCount, bool sortCandlesInDescOrde
 
                     var feedingData = await CloneFeedingSymbolData(part).ConfigureAwait(false);
 
-                    if (!useFullCandleForCurrent)
+                    if (!_useFullCandleForCurrent)
                         HandleCurrentCandleOhlcOptimized(feedingData);
 
                     if (sortCandlesInDescOrder)
