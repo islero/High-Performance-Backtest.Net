@@ -1,5 +1,53 @@
-bin
-obj
-.vs
+# Build results
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+# Visual Studio
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# JetBrains Rider
+.idea/
+*.sln.iml
+
+# VS Code
+.vscode/
+
+# NuGet
+*.nupkg
+*.snupkg
+*.nuget.props
+*.nuget.targets
+project.lock.json
+project.fragment.lock.json
+artifacts/
+packages/
+
+# Test results
+TestResults/
+*.trx
+coverage*.xml
+coverage*.json
+
+# Benchmark results
+BenchmarkDotNet.Artifacts/
+
+# User-specific files
 nuget.config
-.idea
+*.DotSettings.user
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Secrets (should never be committed)
+*.pfx
+*.snk
+secrets.json
+appsettings.*.json
+!appsettings.json

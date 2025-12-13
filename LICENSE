@@ -1,0 +1,39 @@
+[LICENSE FILE - MAINTAINER ACTION REQUIRED]
+
+TODO: Insert license text after selecting your preferred open-source license.
+
+Recommended options for this project:
+
+1. MIT License (Recommended)
+   - Simple and permissive
+   - Allows commercial use, modification, distribution
+   - Requires license and copyright notice
+   - URL: https://opensource.org/licenses/MIT
+
+2. Apache License 2.0
+   - Permissive with patent protection
+   - Explicit grant of patent rights
+   - Requires license, copyright, and state changes
+   - URL: https://opensource.org/licenses/Apache-2.0
+
+3. LGPL-3.0
+   - Copyleft for library use
+   - Allows proprietary use via linking
+   - Derivative works must be LGPL
+   - URL: https://opensource.org/licenses/LGPL-3.0
+
+STEPS:
+1. Choose a license from above (MIT recommended for libraries)
+2. Go to https://choosealicense.com/ for full text
+3. Replace this file contents with the license text
+4. Update the year and copyright holder:
+   Copyright (c) 2024 Yurii Dumanskyi
+5. Update README.md to reflect the chosen license
+6. Uncomment PackageLicenseExpression in Directory.Build.props
+
+CHECKLIST:
+[ ] License selected
+[ ] License text inserted
+[ ] Copyright year/holder updated
+[ ] README.md License section updated
+[ ] Directory.Build.props PackageLicenseExpression uncommented

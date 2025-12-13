@@ -1,0 +1,41 @@
+<Project>
+  <PropertyGroup>
+    <!-- Common settings for all projects -->
+    <TargetFramework>net9.0</TargetFramework>
+    <LangVersion>latestmajor</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <AnalysisLevel>latest-recommended</AnalysisLevel>
+
+    <!-- Deterministic builds for reproducibility -->
+    <Deterministic>true</Deterministic>
+    <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
+  </PropertyGroup>
+
+  <!-- Package metadata (for packable projects) -->
+  <PropertyGroup>
+    <Authors>Yurii Dumanskyi</Authors>
+    <Company>islero</Company>
+    <Copyright>Copyright (c) Yurii Dumanskyi 2024</Copyright>
+    <RepositoryUrl>https://github.com/islero/High-Performance-Backtest.Net</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageProjectUrl>https://github.com/islero/High-Performance-Backtest.Net</PackageProjectUrl>
+    <PackageTags>backtest;backtesting;trading;algorithmic;finance;quantitative;high-performance</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <!-- TODO: Uncomment after adding LICENSE file with chosen license -->
+    <!-- <PackageLicenseExpression>MIT</PackageLicenseExpression> -->
+  </PropertyGroup>
+
+  <!-- Source Link for debugging -->
+  <PropertyGroup>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All"/>
+  </ItemGroup>
+</Project>

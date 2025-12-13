@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- Package-specific settings (common settings in Directory.Build.props) -->
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <IsPackable>true</IsPackable>
+
+    <!-- Version -->
+    <Version>4.1.11</Version>
+    <AssemblyVersion>4.1.9</AssemblyVersion>
+    <FileVersion>4.1.9</FileVersion>
+
+    <!-- Package metadata -->
+    <Title>High-Performance Backtest.Net</Title>
+    <Description>A high-performance backtesting engine for algorithmic trading strategies. Features multi-symbol/multi-timeframe support, parallel processing, zero-allocation patterns, and SIMD acceleration.</Description>
+    <PackageReleaseNotes>Added volume to candlesticks. Upgraded to EngineV10 with performance optimizations.</PackageReleaseNotes>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="models.net" Version="1.0.39" />
+    <PackageReference Include="SimdLinq" Version="1.3.2" />
+  </ItemGroup>
+
+</Project>
