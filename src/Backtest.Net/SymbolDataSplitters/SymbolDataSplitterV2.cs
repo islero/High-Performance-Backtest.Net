@@ -1,15 +1,14 @@
 ﻿using Backtest.Net.Candlesticks;
+using Backtest.Net.Enums;
 using Backtest.Net.SymbolsData;
 using Backtest.Net.Timeframes;
-using Models.Net.Enums;
-using Models.Net.Interfaces;
 
 namespace Backtest.Net.SymbolDataSplitters;
 
 /// <summary>
 /// Symbol data splitter V2
-/// The main goal is split Symbol Data on smaller parts with recalculating indexes of these parts in the most efficient
-/// way and use this smaller parts to speed up the backtesting process
+/// The main goal is to split Symbol Data on smaller parts with recalculating indexes of these parts in the most efficient
+/// way and use this smaller part to speed up the backtesting process
 /// </summary>
 public class SymbolDataSplitterV2(
     int daysPerSplit,
@@ -32,24 +31,24 @@ public class SymbolDataSplitterV2(
     {
         // --- Enumerating Symbols Data
         var symbolsDataList = symbolsData.ToList();
-            
+
         // --- Quick Symbol Data validation
         if (!QuickSymbolDataValidationV2(symbolsDataList))
             throw new ArgumentException("symbolsData argument contains invalid or not properly sorted data");
 
         // --- Symbol or timeframe duplicates validation
         if (IsThereSymbolTimeframeDuplicatesV2(symbolsDataList))
-            throw new Exception("symbolsData contain duplicated symbols or timeframes");
-            
+            throw new ArgumentException("symbolsData contain duplicated symbols or timeframes");
+
         // --- Creating Result Split Symbols Data
         List<List<SymbolDataV2>> splitSymbolsData = [];
-            
+
         // --- Checking if splitting is enabled
         if(DaysPerSplit <= 0)
         {
-            foreach (var symbol in symbolsData)
+            foreach (SymbolDataV2 symbol in symbolsData)
             {
-                foreach (var timeframe in symbol.Timeframes)
+                foreach (TimeframeV2 timeframe in symbol.Timeframes)
                 {
                     // --- Setting indexes without adjusting
                     timeframe.Index =
@@ -68,11 +67,11 @@ public class SymbolDataSplitterV2(
         // --- Getting the correct warmup timeframe
         WarmupTimeframe = GetWarmupTimeframeV2(symbolsDataList);
 
-        var ongoingBacktestingTime = BacktestingStartDateTime;
+        DateTime ongoingBacktestingTime = BacktestingStartDateTime;
         while (!AreAllSymbolDataReachedHistoryEndV2(symbolsDataList))
         {
             var symbolsDataPart = new List<SymbolDataV2>();
-            foreach (var symbol in symbolsDataList)
+            foreach (SymbolDataV2 symbol in symbolsDataList)
             {
                 // --- Checking if there is any symbol with no more history
                 if (symbol.Timeframes.Any(x => x.NoMoreHistory))
@@ -89,7 +88,7 @@ public class SymbolDataSplitterV2(
                     Symbol = symbol.Symbol
                 };
 
-                foreach (var timeframe in symbol.Timeframes)
+                foreach (TimeframeV2 timeframe in symbol.Timeframes)
                 {
                     // --- Setting indexes without adjusting
                     timeframe.Index =
@@ -104,11 +103,11 @@ public class SymbolDataSplitterV2(
                     if (CorrectEndIndex && !timeframe.NoMoreHistory)
                     {
                         // --- Searching for a Timeframe that has no more history
-                        var targetTimeframe = symbol.Timeframes.FirstOrDefault(x => x.NoMoreHistory);
+                        TimeframeV2? targetTimeframe = symbol.Timeframes.FirstOrDefault(x => x.NoMoreHistory);
                         if (targetTimeframe != null)
                         {
-                            // --- Searching for target candle
-                            var targetCandle = targetTimeframe.Candlesticks.ElementAt(targetTimeframe.EndIndex);
+                            // --- Searching for a target candle
+                            CandlestickV2 targetCandle = targetTimeframe.Candlesticks.ElementAt(targetTimeframe.EndIndex);
                             timeframe.EndIndex = GetCandlesticksIndexByCloseTimeV2(timeframe.Candlesticks,
                                 targetCandle.CloseTime);
                         }
@@ -117,7 +116,7 @@ public class SymbolDataSplitterV2(
                     // --- Validating EndIndex
                     if (timeframe.EndIndex == -1)
                     {
-                        timeframe.EndIndex = timeframe.Candlesticks.Count() - 1;
+                        timeframe.EndIndex = timeframe.Candlesticks.Count - 1;
                         timeframe.NoMoreHistory = true;
                     }
 
@@ -170,22 +169,22 @@ public class SymbolDataSplitterV2(
 
         return Task.FromResult(splitSymbolsData);
     }
-    
+
     /// <summary>
-    /// Quick not a very accurate way to perform a validation, maybe it will not be necessary in future, and I'll remove it
+    /// Quick not a very accurate way to perform a validation, maybe it will not be necessary in the future, and I'll remove it
     /// </summary>
     /// <param name="symbolsData"></param>
     /// <returns></returns>
     private static bool QuickSymbolDataValidationV2(List<SymbolDataV2> symbolsData)
     {
-        foreach (var symbol in symbolsData)
+        foreach (SymbolDataV2 symbol in symbolsData)
         {
             // --- Validating timeframes
             if(symbol.Timeframes.Count == 0)
                 continue;
-            
-            var priorTimeframe = symbol.Timeframes.First();
-            foreach (var timeframe in symbol.Timeframes.Skip(1))
+
+            TimeframeV2 priorTimeframe = symbol.Timeframes.First();
+            foreach (TimeframeV2 timeframe in symbol.Timeframes.Skip(1))
             {
                 // --- Validating that timeframes are sorted by ascending
                 if (timeframe.Timeframe < priorTimeframe.Timeframe)
@@ -197,7 +196,7 @@ public class SymbolDataSplitterV2(
                 // --- Validating that candles are sorted by ascending
                 if(timeframe.Candlesticks.Count < 2)
                     continue;
-                
+
                 if (timeframe.Candlesticks.Skip(1).First().OpenTime < timeframe.Candlesticks.First().OpenTime)
                 {
                     // --- Candles aren't sorted (very rough check, but it is quicker)
@@ -220,9 +219,9 @@ public class SymbolDataSplitterV2(
     private static bool IsThereSymbolTimeframeDuplicatesV2(List<SymbolDataV2> symbolsData)
     {
         var symbolDataList = symbolsData.ToList();
-        var symbolDuplicatesExist = symbolDataList.GroupBy(x => x.Symbol).Any(symbol => symbol.Count() > 1);
-        var timeframeDuplicatesExist = false;
-        foreach (var symbol in symbolDataList)
+        bool symbolDuplicatesExist = symbolDataList.GroupBy(x => x.Symbol).Any(symbol => symbol.Count() > 1);
+        bool timeframeDuplicatesExist = false;
+        foreach (SymbolDataV2 symbol in symbolDataList)
         {
             // Validating
             if (timeframeDuplicatesExist) continue;
@@ -234,7 +233,7 @@ public class SymbolDataSplitterV2(
 
         return symbolDuplicatesExist || timeframeDuplicatesExist;
     }
-    
+
     /// <summary>
     /// Returns the candlestick index of the targetDateTime by candle OpenTime, or -1 if the index wasn't found
     /// </summary>
@@ -244,20 +243,20 @@ public class SymbolDataSplitterV2(
     private static int GetCandlesticksIndexByOpenTimeV2(List<CandlestickV2> candlesticks, DateTime targetDateTime)
     {
         var candlesticksList = candlesticks.ToList();
-        var index = candlesticksList.FindIndex(candle => candle.OpenTime >= targetDateTime);
+        int index = candlesticksList.FindIndex(candle => candle.OpenTime >= targetDateTime);
 
         if (index < 0) index = 0;
 
         return index;
     }
-    
+
     /// <summary>
-    /// Gets WarmupTimeframe, if WarmupTimeframe is null then calculates the WarmupTimeframe automatically based on constant that 
+    /// Gets WarmupTimeframe if WarmupTimeframe is null, then calculates the WarmupTimeframe automatically based on constant that
     /// defines how much of the history can be maximum allocated for a warmup period
     /// </summary>
     /// <param name="symbolsData"></param>
     /// <returns></returns>
-    protected CandlestickInterval GetWarmupTimeframeV2(List<SymbolDataV2> symbolsData)
+    private CandlestickInterval GetWarmupTimeframeV2(List<SymbolDataV2> symbolsData)
     {
         // --- Return WarmupTimeframe value if it is not null
         if (WarmupTimeframe.HasValue)
@@ -265,11 +264,11 @@ public class SymbolDataSplitterV2(
 
         // --- Setting the lowest symbolsData timeframe
         var symbolDataList = symbolsData.ToList();
-        var potentialWarmupTimeframe = symbolDataList.Min(x => x.Timeframes.Min(y => y.Timeframe));
+        CandlestickInterval potentialWarmupTimeframe = symbolDataList.Min(x => x.Timeframes.Min(y => y.Timeframe));
 
-        foreach (var symbol in symbolDataList)
+        foreach (SymbolDataV2 symbol in symbolDataList)
         {
-            foreach (var timeframe in symbol.Timeframes)
+            foreach (TimeframeV2 timeframe in symbol.Timeframes)
             {
                 // --- No need to perform calculations for same or lower timeframes that has been already set
                 if (timeframe.Timeframe <= potentialWarmupTimeframe)
@@ -277,31 +276,27 @@ public class SymbolDataSplitterV2(
 
                 // --- Count Validation
                 if (timeframe.Candlesticks.Count <= WarmupCandlesCount) continue;
-                    
-                var warmupCandlesCountDate = timeframe.Candlesticks.ElementAt(WarmupCandlesCount).OpenTime;
 
-                // --- Checking if warming up by using this timeframe will not exceed backtesting start date time
+                DateTime warmupCandlesCountDate = timeframe.Candlesticks.ElementAt(WarmupCandlesCount).OpenTime;
+
+                // --- Checking if warming up by using this timeframe will not exceed the backtesting start date time
                 if (warmupCandlesCountDate < BacktestingStartDateTime && timeframe.Timeframe > potentialWarmupTimeframe)
-                {
                     potentialWarmupTimeframe = timeframe.Timeframe;
-                }
             }
         }
 
-        // --- It basically returns the highest timeframe that after warming up not exceed backtesting starting date
+        // --- It basically returns the highest timeframe that after warming up not exceeds backtesting starting date
         return potentialWarmupTimeframe;
     }
-    
+
     /// <summary>
     /// Checks if all the symbols reached the history end
     /// </summary>
     /// <param name="symbolsData"></param>
     /// <returns></returns>
-    private static bool AreAllSymbolDataReachedHistoryEndV2(List<SymbolDataV2> symbolsData)
-    {
-        return symbolsData.All(x => x.Timeframes.Any(tf => tf.NoMoreHistory));
-    }
-    
+    private static bool AreAllSymbolDataReachedHistoryEndV2(List<SymbolDataV2> symbolsData) =>
+        symbolsData.All(x => x.Timeframes.Any(tf => tf.NoMoreHistory));
+
     /// <summary>
     /// Returns the candlestick index of the targetDateTime by candle CloseTime, or -1 if the index wasn't found
     /// </summary>
@@ -312,10 +307,5 @@ public class SymbolDataSplitterV2(
     {
         var candlesticksList = candlesticks.ToList();
         return candlesticksList.FindIndex(candle => candle.CloseTime >= targetDateTime);
-    }
-
-    public override Task<List<List<ISymbolData>>> SplitAsync(List<ISymbolData> symbolsData)
-    {
-        throw new NotImplementedException();
     }
 }

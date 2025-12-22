@@ -1,10 +1,9 @@
 ﻿using Backtest.Net.Candlesticks;
+using Backtest.Net.Enums;
 using Backtest.Net.SymbolsData;
 using Backtest.Net.Timeframes;
-using Models.Net.Enums;
-using Models.Net.Interfaces;
 
-namespace Backtest.Tests;
+namespace Backtest.Net.Tests;
 
 /// <summary>
 /// Base class for all tests
@@ -19,61 +18,7 @@ public abstract class TestBase
     /// <param name="startDate"></param>
     /// <param name="candlesCount"></param>
     /// <returns></returns>
-    protected static List<ISymbolData> GenerateFakeSymbolsData(List<string> symbols, List<CandlestickInterval> intervals, DateTime startDate, int candlesCount)
-    {
-        var result = new List<ISymbolData>();
-
-        // --- Create symbols
-        foreach (var symbol in symbols)
-        {
-            // --- Generating candles
-            var filledTimeframes = new List<ITimeframe>();
-            foreach (var interval in intervals)
-            {
-                var currentTimeframe = new TimeframeV1
-                {
-                    Timeframe = interval
-                };
-                    
-                for (var i = 0; i < candlesCount; i++)
-                {
-                    var basePrice = Random.Shared.NextDouble() * Random.Shared.Next(1000, 10000);
-                    var baseMovement = (basePrice * 0.8) * Random.Shared.NextSingle();
-
-                    ICandlestick candlestick = new CandlestickV1
-                    {
-                        OpenTime = startDate.AddSeconds(i * (int)currentTimeframe.Timeframe),
-                        Open = (decimal)basePrice,
-                        High = (decimal)basePrice + (decimal)baseMovement,
-                        Low = (decimal)basePrice - (decimal)baseMovement,
-                        Close = Random.Shared.NextSingle() > 0.5 ? (decimal)basePrice + (decimal)baseMovement * (decimal)0.7 : (decimal)basePrice - (decimal)baseMovement * (decimal)0.7,
-                        CloseTime = startDate.AddSeconds(i * (int)currentTimeframe.Timeframe).AddSeconds((int)currentTimeframe.Timeframe).AddSeconds(-1)
-
-                    };
-                    currentTimeframe.Candlesticks.Add(candlestick);
-                }
-                filledTimeframes.Add(currentTimeframe);
-            }
-
-            result.Add(new SymbolDataV1
-            {
-                Symbol = symbol,
-                Timeframes = filledTimeframes,
-            });
-        }
-
-        return result;
-    }
-        
-    /// <summary>
-    /// Generates Fake Symbols Data for testing purposes
-    /// </summary>
-    /// <param name="symbols"></param>
-    /// <param name="intervals"></param>
-    /// <param name="startDate"></param>
-    /// <param name="candlesCount"></param>
-    /// <returns></returns>
-    protected static List<SymbolDataV2> GenerateFakeSymbolsDataV2(List<string> symbols, List<CandlestickInterval> intervals, 
+    protected static List<SymbolDataV2> GenerateFakeSymbolsDataV2(List<string> symbols, List<CandlestickInterval> intervals,
         DateTime startDate, int candlesCount)
     {
         var result = new List<SymbolDataV2>();
@@ -89,7 +34,7 @@ public abstract class TestBase
                 {
                     Timeframe = interval
                 };
-                
+
                 for (var i = 0; i < candlesCount; i++)
                 {
                     var basePrice = Random.Shared.NextDouble() * Random.Shared.Next(1000, 10000);

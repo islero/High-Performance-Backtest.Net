@@ -1,9 +1,4 @@
-﻿using Backtest.Benchmarks;
-using Backtest.Benchmarks.EngineBenchmarks;
+﻿using Backtest.Net.Benchmarks.EngineBenchmarks;
 using BenchmarkDotNet.Running;
 
-//var eb = new EngineBenchmark();
-//await eb.Setup();
-//await eb.EngineV1_Run();
 BenchmarkRunner.Run<EngineBenchmark>();
-//BenchmarkRunner.Run<OneBillionLoopBenchmark>();

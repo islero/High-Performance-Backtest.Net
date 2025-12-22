@@ -1,8 +1,8 @@
-﻿using Backtest.Net.SymbolsData;
-using Models.Net.ApiResults;
-using Models.Net.Interfaces;
+﻿using Backtest.Net.Interfaces;
+using Backtest.Net.Results;
+using Backtest.Net.SymbolsData;
 
-namespace Backtest.Tests.EngineTests;
+namespace Backtest.Net.Tests.EngineTests;
 
 /// <summary>
 /// Base class for all engine tests
@@ -30,39 +30,16 @@ public class TestTrade : ITrade
 }
 
 /// <summary>
-/// Class for strategy testing
-/// </summary>
-public class TestStrategy : IStrategy
-{
-    public Action<List<ISymbolData>>? ExecuteStrategyDelegate { get; set; }
-    public Action<List<SymbolDataV2>>? ExecuteStrategyDelegateV2 { get; set; }
-
-    public Task<List<IConditionParameter>> Execute(List<ISymbolData> symbolDataList)
-    {
-        ExecuteStrategyDelegate?.Invoke(symbolDataList);
-            
-        return Task.FromResult(Enumerable.Empty<IConditionParameter>().ToList());
-    }
-    
-    public Task<List<IConditionParameter>> ExecuteV2(List<SymbolDataV2> symbolDataList)
-    {
-        ExecuteStrategyDelegateV2?.Invoke(symbolDataList);
-            
-        return Task.FromResult(Enumerable.Empty<IConditionParameter>().ToList());
-    }
-}
-
-/// <summary>
-/// Class for strategy testing
+/// Represents a test strategy implementation designed for use in backtesting scenarios.
 /// </summary>
 public class TestStrategyV2
 {
     public Action<List<SymbolDataV2>>? ExecuteStrategyDelegateV2 { get; set; }
-    
+
     public Task<List<IConditionParameter>> ExecuteV2(List<SymbolDataV2> symbolDataList)
     {
         ExecuteStrategyDelegateV2?.Invoke(symbolDataList);
-            
+
         return Task.FromResult(Enumerable.Empty<IConditionParameter>().ToList());
     }
 }

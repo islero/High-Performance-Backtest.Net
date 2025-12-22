@@ -3,7 +3,6 @@ using Backtest.Net.Engines;
 using Backtest.Net.Enums;
 using Backtest.Net.SymbolDataSplitters;
 using Backtest.Net.SymbolsData;
-using Models.Net.Enums;
 
 namespace Backtest.Net.Executors;
 
@@ -14,7 +13,7 @@ public sealed class BacktestingNetExecutor
 {
     // NOTE: Concrete types were used on purpose based on this article to improve performance
     // CA1859: Use concrete types when possible for improved performance
-    
+
     // --- Properties
     public static bool IsRunning { get; private set; } // Checks whether backtesting is currently running
     private SymbolDataSplitterV2 Splitter { get; } // Splits entire history into smaller pieces
@@ -37,8 +36,8 @@ public sealed class BacktestingNetExecutor
     /// <param name="warmupTimeframe">The timeframe must be warmed up and all lower timeframes accordingly,
     /// if null – it sets automatically</param>
     public BacktestingNetExecutor(DateTime startDateTime,
-        int warmupCandlesCount, 
-        Func<SymbolDataV2[], Task> onTick, 
+        int warmupCandlesCount,
+        Func<SymbolDataV2[], Task> onTick,
         bool sortCandlesInDescOrder = true,
         bool useFullCandleForCurrent = false,
         int daysPerSplit = 0,
@@ -55,7 +54,7 @@ public sealed class BacktestingNetExecutor
             OnTick = onTick
         };
     }
-    
+
     // --- Methods
     /// <summary>
     /// Performing the actual backtesting process
@@ -82,17 +81,17 @@ public sealed class BacktestingNetExecutor
         // --- Removing invalid indexes
         foreach (var part in symbolDataParts)
         {
-            part.RemoveAll(symbolData => 
+            part.RemoveAll(symbolData =>
                 symbolData.Timeframes.Any(timeframe => timeframe.EndIndex < 0));
         }
-        
+
         // --- Run Engine
         NotifyBacktestingEvent(BacktestingEventStatus.EngineStarted, Engine.GetType().Name);
         await Engine.RunAsync(symbolDataParts, cancellationToken);
         NotifyBacktestingEvent(BacktestingEventStatus.EngineFinished, Engine.GetType().Name);
-        
+
         IsRunning = false;
-        
+
         // --- Triggering On Finished Backtesting Status
         NotifyBacktestingEvent(BacktestingEventStatus.Finished,
             Assembly.GetExecutingAssembly().GetName().Version?.ToString());
@@ -106,7 +105,7 @@ public sealed class BacktestingNetExecutor
     {
         return Engine.GetProgress();
     }
-    
+
     /// <summary>
     /// Notifies Subscribed Objects about backtesting status
     /// </summary>

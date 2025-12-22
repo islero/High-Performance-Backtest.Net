@@ -1,4 +1,5 @@
 ﻿using Backtest.Net.Engines;
+using Backtest.Net.Tests.EngineTests;
 
 namespace Backtest.Tests.EngineTests;
 
