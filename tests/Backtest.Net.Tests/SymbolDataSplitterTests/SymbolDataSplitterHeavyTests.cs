@@ -111,7 +111,8 @@ namespace Backtest.Net.Tests.SymbolDataSplitterTests
                 [CandlestickInterval.M5, CandlestickInterval.M15],
                 new DateTime(2023, 1, 19), 672);
 
-            Exception exception = await Assert.ThrowsAsync<Exception>(async () => await SymbolDataSplitter.SplitAsyncV2(duplicatedSymbolsData));
+            ArgumentException exception = await Assert.ThrowsAsync<ArgumentException>(async () =>
+                await SymbolDataSplitter.SplitAsyncV2(duplicatedSymbolsData));
 
             Assert.Equal("symbolsData contain duplicated symbols or timeframes", exception.Message);
         }
@@ -127,7 +128,7 @@ namespace Backtest.Net.Tests.SymbolDataSplitterTests
                 [CandlestickInterval.M5, CandlestickInterval.M5, CandlestickInterval.M15],
                 new DateTime(2023, 1, 19), 672);
 
-            Exception exception = await Assert.ThrowsAsync<Exception>(async () =>
+            ArgumentException exception = await Assert.ThrowsAsync<ArgumentException>(async () =>
                 await SymbolDataSplitter.SplitAsyncV2(duplicatedSymbolsData));
 
             Assert.Equal("symbolsData contain duplicated symbols or timeframes", exception.Message);
