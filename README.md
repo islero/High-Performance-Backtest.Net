@@ -74,7 +74,7 @@ using Backtest.Net.Engines;
 using Backtest.Net.SymbolsData;
 using Backtest.Net.SymbolDataSplitters;
 using Backtest.Net.Timeframes;
-using Models.Net.Enums;
+using Backtest.Net.Enums;
 
 // 1. Prepare your symbol data (candlesticks per timeframe)
 var symbolsData = new List<SymbolDataV2>
@@ -153,7 +153,6 @@ await engine.RunAsync(splitData, cts.Token);
 
 | Engine | Description | Use Case |
 |--------|-------------|----------|
-| `EngineV1-V7` | Legacy engines | Backward compatibility |
 | `EngineV8` | SymbolDataV2 support | Standard workloads |
 | `EngineV9` | Optimized OHLC handling | Memory-sensitive scenarios |
 | `EngineV10` | Full optimization suite | **Production recommended** |
@@ -224,8 +223,7 @@ Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for gu
 
 ## License
 
-<!-- TODO: Update after selecting license -->
-See the [LICENSE](LICENSE) file for details.
+This project is licensed under the [GNU Lesser General Public License v3.0](LICENSE).
 
 ---
 

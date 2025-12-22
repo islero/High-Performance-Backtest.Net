@@ -13,20 +13,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Comprehensive documentation (README, CONTRIBUTING, etc.)
 - EditorConfig and code style configuration
 - Directory.Build.props for centralized build configuration
+- NuGet package icon
 
 ### Changed
+- License updated to GNU Lesser General Public License v3.0
+- Tests refactored for improved type safety and readability
 
 ### Deprecated
 
 ### Removed
+- Legacy engine versions (V1-V7) - use EngineV8+ instead
+- Models.Net library dependency
+- CandlestickV1 implementation
 
 ### Fixed
+- Exception handling in SymbolDataSplitterHeavyTests
 
 ### Security
 
 ---
 
-## [4.1.11] - 2024-XX-XX
+## [4.1.11] - 2024-12-22
 
 ### Added
 - Volume property to CandlestickV2
@@ -36,7 +43,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [4.1.0] - 2024-XX-XX
+## [4.1.0] - 2024-12-22
 
 ### Added
 - EngineV10 with zero-allocation patterns
