@@ -57,7 +57,7 @@ dotnet add package Backtest.Net
 ### PackageReference
 
 ```xml
-<PackageReference Include="Backtest.Net" Version="4.1.11" />
+<PackageReference Include="Backtest.Net" Version="4.1.14" />
 ```
 
 > [!NOTE]
