@@ -57,7 +57,7 @@ public class SymbolDataSplitterBenchmark
 
                     var candlestick = new CandlestickV2
                     {
-                        OpenTime = startDate.AddSeconds(i * (int)currentTimeframe.Timeframe),
+                        OpenTime = startDate.AddSeconds((double)i * (int)currentTimeframe.Timeframe),
                         Open = (decimal)basePrice,
                         High = (decimal)basePrice + (decimal)baseMovement,
                         Low = (decimal)basePrice - (decimal)baseMovement,
