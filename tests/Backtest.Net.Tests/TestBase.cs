@@ -24,30 +24,30 @@ public abstract class TestBase
         var result = new List<SymbolDataV2>();
 
         // --- Create symbols
-        foreach (var symbol in symbols)
+        foreach (string symbol in symbols)
         {
             // --- Generating candles
             var filledTimeframes = new List<TimeframeV2>();
-            foreach (var interval in intervals)
+            foreach (CandlestickInterval interval in intervals)
             {
                 var currentTimeframe = new TimeframeV2
                 {
                     Timeframe = interval
                 };
 
-                for (var i = 0; i < candlesCount; i++)
+                for (int i = 0; i < candlesCount; i++)
                 {
-                    var basePrice = Random.Shared.NextDouble() * Random.Shared.Next(1000, 10000);
-                    var baseMovement = (basePrice * 0.8) * Random.Shared.NextSingle();
+                    double basePrice = Random.Shared.NextDouble() * Random.Shared.Next(1000, 10000);
+                    double baseMovement = (basePrice * 0.8) * Random.Shared.NextSingle();
 
                     var candlestick = new CandlestickV2
                     {
-                        OpenTime = startDate.AddSeconds(i * (int)currentTimeframe.Timeframe),
+                        OpenTime = startDate.AddSeconds((double)i * (int)currentTimeframe.Timeframe),
                         Open = (decimal)basePrice,
                         High = (decimal)basePrice + (decimal)baseMovement,
                         Low = (decimal)basePrice - (decimal)baseMovement,
                         Close = Random.Shared.NextSingle() > 0.5 ? (decimal)basePrice + (decimal)baseMovement * (decimal)0.7 : (decimal)basePrice - (decimal)baseMovement * (decimal)0.7,
-                        CloseTime = startDate.AddSeconds(i * (int)currentTimeframe.Timeframe).AddSeconds((int)currentTimeframe.Timeframe).AddSeconds(-1)
+                        CloseTime = startDate.AddSeconds((double)i * (int)currentTimeframe.Timeframe).AddSeconds((int)currentTimeframe.Timeframe).AddSeconds(-1)
 
                     };
                     currentTimeframe.Candlesticks.Add(candlestick);
