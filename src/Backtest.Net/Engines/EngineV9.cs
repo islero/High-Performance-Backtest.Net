@@ -186,13 +186,8 @@ public sealed class EngineV9(int warmupCandlesCount, bool sortCandlesInDescOrder
                     continue;
 
                 TimeframeV2 tf = timeframes[i];
-                if (tf.Index >= tf.StartIndex && tf.Index < tf.EndIndex)
-                {
-                    if (tf.Candlesticks[tf.Index].CloseTime < referenceTime)
-                    {
-                        tf.Index++;
-                    }
-                }
+                if (tf.Index >= tf.StartIndex && tf.Index < tf.EndIndex &&
+                    tf.Candlesticks[tf.Index].CloseTime < referenceTime) tf.Index++;
             }
         });
 
