@@ -1,7 +1,6 @@
 ﻿using Backtest.Net.Engines;
-using Backtest.Net.Tests.EngineTests;
 
-namespace Backtest.Tests.EngineTests;
+namespace Backtest.Net.Tests.EngineTests;
 
 /// <summary>
 /// Testing backtesting Engine V8

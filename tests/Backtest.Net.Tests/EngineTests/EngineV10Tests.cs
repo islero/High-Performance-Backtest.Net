@@ -34,7 +34,7 @@ public class EngineV10Tests : EngineTestsV2
     [Fact]
     public override async Task TestCurrentCandleOhlcAreEqual()
     {
-        var tokenSource = new CancellationTokenSource();
+        using var tokenSource = new CancellationTokenSource();
 
         Strategy.ExecuteStrategyDelegateV2 = symbols =>
         {
@@ -116,7 +116,7 @@ public class EngineV10Tests : EngineTestsV2
     [Fact]
     public async Task TestCurrentCandleOhlcConsolidation()
     {
-        var tokenSource = new CancellationTokenSource();
+        using var tokenSource = new CancellationTokenSource();
 
         Strategy.ExecuteStrategyDelegateV2 = symbols =>
         {

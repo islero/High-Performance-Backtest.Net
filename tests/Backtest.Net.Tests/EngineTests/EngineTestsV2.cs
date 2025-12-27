@@ -5,7 +5,6 @@ using Backtest.Net.Interfaces;
 using Backtest.Net.SymbolDataSplitters;
 using Backtest.Net.SymbolsData;
 using Backtest.Net.Timeframes;
-using Backtest.Tests.EngineTests;
 
 namespace Backtest.Net.Tests.EngineTests;
 
@@ -41,7 +40,7 @@ public class EngineTestsV2 : EngineTestsBase
     /// <param name="symbolData"></param>
     protected async Task OnTickMethodV2(SymbolDataV2[] symbolData)
     {
-        var signals = await Strategy.ExecuteV2(symbolData.ToList());
+        List<IConditionParameter> signals = await Strategy.ExecuteV2(symbolData.ToList());
         if (signals.Count != 0)
         {
             _ = await Trade.Execute(signals);
@@ -57,7 +56,7 @@ public class EngineTestsV2 : EngineTestsBase
         };
 
         // --- Generate fake SymbolData splitter
-        var data = GenerateSymbolDataList(new DateTime(2023, 1, 1), 500, 1, WarmupCandlesCount);
+        List<List<SymbolDataV2>> data = GenerateSymbolDataList(new DateTime(2023, 1, 1), 500, 1, WarmupCandlesCount);
 
         await EngineV2.RunAsync(data);
 
@@ -67,11 +66,12 @@ public class EngineTestsV2 : EngineTestsBase
     [Fact]
     public async Task TestCancellationToken()
     {
-        var tokenSource = new CancellationTokenSource();
+        using var tokenSource = new CancellationTokenSource();
+        CancellationTokenSource cts = tokenSource;
 
         Strategy.ExecuteStrategyDelegateV2 = _ =>
         {
-            tokenSource.Cancel();
+            cts.Cancel();
         };
 
         EngineV2.OnCancellationFinishedDelegate = () =>
@@ -80,7 +80,7 @@ public class EngineTestsV2 : EngineTestsBase
         };
 
         // --- Generate fake SymbolData splitter
-        var data = GenerateSymbolDataList(new DateTime(2023, 1, 1), 500, 1, WarmupCandlesCount);
+        List<List<SymbolDataV2>> data = GenerateSymbolDataList(new DateTime(2023, 1, 1), 500, 1, WarmupCandlesCount);
 
         await EngineV2.RunAsync(data, tokenSource.Token);
     }
@@ -88,7 +88,8 @@ public class EngineTestsV2 : EngineTestsBase
     [Fact]
     public async Task TestCandlesOrder()
     {
-        var tokenSource = new CancellationTokenSource();
+        using var tokenSource = new CancellationTokenSource();
+        CancellationTokenSource cts = tokenSource;
 
         Strategy.ExecuteStrategyDelegateV2 = symbols =>
         {
@@ -97,12 +98,12 @@ public class EngineTestsV2 : EngineTestsBase
 
             if (symbolsList.Count == 0) Assert.Fail("There is no symbols exist in test data");
 
-            var firstSymbol = symbolsList.First();
-            if (firstSymbol.Timeframes.Any())
+            SymbolDataV2 firstSymbol = symbolsList.First();
+            if (firstSymbol.Timeframes.Count != 0)
             {
-                var firstTimeframe = firstSymbol.Timeframes.First();
+                TimeframeV2 firstTimeframe = firstSymbol.Timeframes.First();
 
-                if (firstTimeframe.Candlesticks.Count() >= 2)
+                if (firstTimeframe.Candlesticks.Count >= 2)
                 {
                     var firstCandles = firstTimeframe.Candlesticks.Take(2).ToList();
 
@@ -110,11 +111,11 @@ public class EngineTestsV2 : EngineTestsBase
                 }
             }
 
-            tokenSource.Cancel();
+            cts.Cancel();
         };
 
         // --- Generate fake SymbolData splitter
-        var data = GenerateSymbolDataList(new DateTime(2023, 1, 1), 500, 1, WarmupCandlesCount);
+        List<List<SymbolDataV2>> data = GenerateSymbolDataList(new DateTime(2023, 1, 1), 500, 1, WarmupCandlesCount);
 
         await EngineV2.RunAsync(data, tokenSource.Token);
     }
@@ -122,7 +123,8 @@ public class EngineTestsV2 : EngineTestsBase
     [Fact]
     public async Task TestWarmupCandlesResultCount()
     {
-        var tokenSource = new CancellationTokenSource();
+        using var tokenSource = new CancellationTokenSource();
+        CancellationTokenSource cts = tokenSource;
 
         bool allWarmupCandlesResultsAreCorrect = true;
 
@@ -143,7 +145,7 @@ public class EngineTestsV2 : EngineTestsBase
                 }
             }
 
-            tokenSource.Cancel();
+            cts.Cancel();
         };
 
         // --- Generate fake SymbolData splitter
@@ -157,7 +159,8 @@ public class EngineTestsV2 : EngineTestsBase
     [Fact]
     public async Task TestFirstCandleEqualToStartBacktestingDate()
     {
-        var tokenSource = new CancellationTokenSource();
+        using var tokenSource = new CancellationTokenSource();
+        CancellationTokenSource cts = tokenSource;
 
         var backtestingStartingDate = new DateTime(2023, 1, 1);
         bool allStartingDatesAreCorrect = true;
@@ -168,11 +171,11 @@ public class EngineTestsV2 : EngineTestsBase
             var symbolsList = symbols.ToList();
             if (symbolsList.Count == 0) Assert.Fail("There is no symbols exist in test data");
 
-            foreach (var symbol in symbolsList)
+            foreach (SymbolDataV2 symbol in symbolsList)
             {
-                foreach (var timeframe in symbol.Timeframes)
+                foreach (TimeframeV2 timeframe in symbol.Timeframes)
                 {
-                    var firstCandle = timeframe.Candlesticks.FirstOrDefault();
+                    CandlestickV2? firstCandle = timeframe.Candlesticks.FirstOrDefault();
                     if (firstCandle == null)
                         Assert.Fail("Engine Returned candle equal to null");
 
@@ -181,11 +184,11 @@ public class EngineTestsV2 : EngineTestsBase
                 }
             }
 
-            tokenSource.Cancel();
+            cts.Cancel();
         };
 
         // --- Generate fake SymbolData splitter
-        var data = GenerateSymbolDataList(backtestingStartingDate, 500, 1, WarmupCandlesCount);
+        List<List<SymbolDataV2>> data = GenerateSymbolDataList(backtestingStartingDate, 500, 1, WarmupCandlesCount);
 
         await EngineV2.RunAsync(data, tokenSource.Token);
 
@@ -216,14 +219,14 @@ public class EngineTestsV2 : EngineTestsBase
                     k => k.Index == k.EndIndex)));
         Assert.True(allReachedEndIndex);*/
 
-        var firstSymbolData = dataList.First();
-        var timeframes = firstSymbolData.First().Timeframes;
-        var firstTimeframe = timeframes.First();
-        var indexCandle = firstTimeframe.Candlesticks.ElementAt(firstTimeframe.Index);
+        List<SymbolDataV2> firstSymbolData = dataList.First();
+        List<TimeframeV2> timeframes = firstSymbolData.First().Timeframes;
+        TimeframeV2 firstTimeframe = timeframes.First();
+        CandlestickV2 indexCandle = firstTimeframe.Candlesticks.ElementAt(firstTimeframe.Index);
 
-        foreach (var timeframe in timeframes.Skip(1))
+        foreach (TimeframeV2 timeframe in timeframes.Skip(1))
         {
-            var nextIndexCandle = timeframe.Candlesticks.ElementAt(timeframe.Index);
+            CandlestickV2 nextIndexCandle = timeframe.Candlesticks.ElementAt(timeframe.Index);
 
             Assert.True(indexCandle.OpenTime >= nextIndexCandle.OpenTime && indexCandle.OpenTime <= nextIndexCandle.CloseTime);
 
@@ -234,7 +237,7 @@ public class EngineTestsV2 : EngineTestsBase
     [Fact]
     public virtual async Task TestCurrentCandleOhlcAreEqual()
     {
-        var tokenSource = new CancellationTokenSource();
+        using var tokenSource = new CancellationTokenSource();
 
         bool allCurrentCandleOhlcAreEqual = true;
 
@@ -292,9 +295,9 @@ public class EngineTestsV2 : EngineTestsBase
 
             if (symbolsList.Count == 0) Assert.Fail("There is no symbols exist in test data");
 
-            foreach (var symbol in symbolsList)
+            foreach (SymbolDataV2 symbol in symbolsList)
             {
-                var isSorted = symbol.Timeframes.SequenceEqual(symbol.Timeframes.OrderBy(t => t.Timeframe));
+                bool isSorted = symbol.Timeframes.SequenceEqual(symbol.Timeframes.OrderBy(t => t.Timeframe));
                 if (!isSorted)
                 {
                     Assert.Fail("Timeframes aren't sorted in ascending order");
@@ -303,7 +306,7 @@ public class EngineTestsV2 : EngineTestsBase
         };
 
         // --- Generate fake SymbolData splitter
-        var data = GenerateSymbolDataList(new DateTime(2023, 1, 1), 500, 1, WarmupCandlesCount);
+        List<List<SymbolDataV2>> data = GenerateSymbolDataList(new DateTime(2023, 1, 1), 500, 1, WarmupCandlesCount);
 
         await EngineV2.RunAsync(data);
 
@@ -311,7 +314,7 @@ public class EngineTestsV2 : EngineTestsBase
     }
 
     /// <summary>
-    /// Testing that each next TF open and close contains a prior timeframe open close inside its range,
+    /// Testing that each next TF open and close contain a prior timeframe open close inside its range,
     /// For example, if 5m tf openTime = 1/1/23 12:00:00 and closeTime 1/1/23 12:05:00
     /// 1d tf can't have openTime 1/2/23 12:00:00 and closeTime 1/2/23 23:59:59
     /// </summary>
@@ -326,16 +329,16 @@ public class EngineTestsV2 : EngineTestsBase
 
             if (symbolsList.Count == 0) Assert.Fail("There is no symbols exist in test data");
 
-            foreach (var symbol in symbolsList)
+            foreach (SymbolDataV2 symbol in symbolsList)
             {
                 // Validation Timeframes count
-                if(symbol.Timeframes.Count() < 2) Assert.Fail("There must be at least 2 timeframes to continue test");
+                if(symbol.Timeframes.Count < 2) Assert.Fail("There must be at least 2 timeframes to continue test");
 
-                var priorTf = symbol.Timeframes.First();
-                foreach (var timeframe in symbol.Timeframes.Skip(1))
+                TimeframeV2 priorTf = symbol.Timeframes.First();
+                foreach (TimeframeV2 timeframe in symbol.Timeframes.Skip(1))
                 {
-                    var lowerTfCandle = priorTf.Candlesticks.ElementAt(priorTf.Index);
-                    var higherTfCandle = timeframe.Candlesticks.ElementAt(timeframe.Index);
+                    CandlestickV2 lowerTfCandle = priorTf.Candlesticks.ElementAt(priorTf.Index);
+                    CandlestickV2 higherTfCandle = timeframe.Candlesticks.ElementAt(timeframe.Index);
 
                     // Checking fail conditions
                     if (higherTfCandle.OpenTime > lowerTfCandle.OpenTime
@@ -348,7 +351,7 @@ public class EngineTestsV2 : EngineTestsBase
         };
 
         // --- Generate fake SymbolData splitter
-        var data = GenerateSymbolDataList(new DateTime(2023, 1, 1), 500, 1, WarmupCandlesCount);
+        List<List<SymbolDataV2>> data = GenerateSymbolDataList(new DateTime(2023, 1, 1), 500, 1, WarmupCandlesCount);
 
         await EngineV2.RunAsync(data);
 
@@ -356,7 +359,7 @@ public class EngineTestsV2 : EngineTestsBase
     }
 
     /// <summary>
-    /// Testing backtesting progress is 100 at the end of the backtesting for single symbol
+    /// Testing backtesting progress is 100 at the end of the backtesting for a single symbol
     /// </summary>
     [Theory]
     [InlineData(0, 2)]
