@@ -9,9 +9,6 @@ updates:
     open-pull-requests-limit: 10
     commit-message:
       prefix: "deps"
-    labels:
-      - "dependencies"
-      - "nuget"
     groups:
       nuget-minor:
         patterns:
@@ -27,6 +24,3 @@ updates:
       interval: "weekly"
     commit-message:
       prefix: "ci"
-    labels:
-      - "dependencies"
-      - "github-actions"

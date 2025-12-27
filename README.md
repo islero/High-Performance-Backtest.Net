@@ -77,6 +77,7 @@ using Backtest.Net.Timeframes;
 using Backtest.Net.Enums;
 
 // 1. Prepare your symbol data (candlesticks per timeframe)
+// Candlestick properties: OpenTime, Open, High, Low, Close, CloseTime, Volume
 var symbolsData = new List<SymbolDataV2>
 {
     new SymbolDataV2
