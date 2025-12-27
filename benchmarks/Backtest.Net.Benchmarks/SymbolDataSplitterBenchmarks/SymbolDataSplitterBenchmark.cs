@@ -50,7 +50,7 @@ public class SymbolDataSplitterBenchmark
                     Timeframe = interval
                 };
 
-                for (var i = 0; i < candlesCount; i++)
+                for (int i = 0; i < candlesCount; i++)
                 {
                     double basePrice = Random.Shared.NextDouble() * Random.Shared.Next(1000, 10000);
                     double baseMovement = (basePrice * 0.8) * Random.Shared.NextSingle();
@@ -61,9 +61,8 @@ public class SymbolDataSplitterBenchmark
                         Open = (decimal)basePrice,
                         High = (decimal)basePrice + (decimal)baseMovement,
                         Low = (decimal)basePrice - (decimal)baseMovement,
-                        Close = Random.Shared.NextSingle() > 0.5 ? (decimal)basePrice + ((decimal)baseMovement * (decimal)0.7) : (decimal)basePrice - ((decimal)baseMovement * (decimal)0.7),
-                        CloseTime = startDate.AddSeconds(i * (int)currentTimeframe.Timeframe).AddSeconds((int)currentTimeframe.Timeframe).AddSeconds(-1)
-
+                        Close = Random.Shared.NextSingle() > 0.5 ? (decimal)basePrice + (decimal)baseMovement * (decimal)0.7 : (decimal)basePrice - (decimal)baseMovement * (decimal)0.7,
+                        CloseTime = startDate.AddSeconds((double)i * (int)currentTimeframe.Timeframe).AddSeconds((int)currentTimeframe.Timeframe).AddSeconds(-1)
                     };
                     currentTimeframe.Candlesticks.Add(candlestick);
                 }
