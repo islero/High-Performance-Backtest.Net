@@ -2,6 +2,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Backtest.Net.Candlesticks;
 using Backtest.Net.SymbolsData;
+using Backtest.Net.Timeframes;
 
 namespace Backtest.Net.Engines;
 
@@ -28,25 +29,21 @@ public sealed class EngineV10(int warmupCandlesCount, bool sortCandlesInDescOrde
         {
             ApplySumOfEndIndexes(symbolDataParts);
 
-            var ct = cancellationToken ?? CancellationToken.None;
+            CancellationToken ct = cancellationToken ?? CancellationToken.None;
 
-            foreach (var part in symbolDataParts)
+            foreach (List<SymbolDataV2> part in symbolDataParts)
             {
                 // Pre-extract first timeframes for faster loop condition check
-                var partCount = part.Count;
-                var firstTimeframes = new List<Backtest.Net.Timeframes.TimeframeV2>(partCount);
-                for (var i = 0; i < partCount; i++)
-                {
-                    firstTimeframes.Add(part[i].Timeframes[0]);
-                }
+                int partCount = part.Count;
+                var firstTimeframes = new List<TimeframeV2>(partCount);
+                for (int i = 0; i < partCount; i++) firstTimeframes.Add(part[i].Timeframes[0]);
 
                 // Main cycle
                 while (AllTimeframesHaveMoreData(firstTimeframes))
                 {
-                    if (ct.IsCancellationRequested)
-                        throw new OperationCanceledException();
+                    ct.ThrowIfCancellationRequested();
 
-                    var feedingData = await CloneFeedingSymbolData(part).ConfigureAwait(false);
+                    SymbolDataV2[] feedingData = await CloneFeedingSymbolData(part).ConfigureAwait(false);
 
                     if (!_useFullCandleForCurrent)
                         HandleCurrentCandleOhlcOptimized(feedingData);
@@ -71,12 +68,12 @@ public sealed class EngineV10(int warmupCandlesCount, bool sortCandlesInDescOrde
     /// Avoids LINQ allocation overhead.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static bool AllTimeframesHaveMoreData(List<Backtest.Net.Timeframes.TimeframeV2> timeframes)
+    private static bool AllTimeframesHaveMoreData(List<TimeframeV2> timeframes)
     {
-        var span = CollectionsMarshal.AsSpan(timeframes);
-        for (var i = 0; i < span.Length; i++)
+        Span<TimeframeV2> span = CollectionsMarshal.AsSpan(timeframes);
+        foreach (TimeframeV2 t in span)
         {
-            if (span[i].Index >= span[i].EndIndex)
+            if (t.Index >= t.EndIndex)
                 return false;
         }
         return true;
@@ -90,31 +87,31 @@ public sealed class EngineV10(int warmupCandlesCount, bool sortCandlesInDescOrde
     {
         Parallel.ForEach(symbolData, symbol =>
         {
-            var timeframes = symbol.Timeframes;
-            var firstTimeframe = timeframes[0];
-            var firstTfCandles = firstTimeframe.Candlesticks;
-            var lastIndex = firstTfCandles.Count - 1;
+            List<TimeframeV2> timeframes = symbol.Timeframes;
+            TimeframeV2 firstTimeframe = timeframes[0];
+            List<CandlestickV2> firstTfCandles = firstTimeframe.Candlesticks;
+            int lastIndex = firstTfCandles.Count - 1;
 
             // Extract reference values directly without cloning
-            var refCandle = firstTfCandles[lastIndex];
-            var refOpen = refCandle.Open;
-            var refOpenTime = refCandle.OpenTime;
-            var refCloseTime = refCandle.CloseTime; // Original close time before modification
+            CandlestickV2 refCandle = firstTfCandles[lastIndex];
+            decimal refOpen = refCandle.Open;
+            DateTime refOpenTime = refCandle.OpenTime;
+            DateTime refCloseTime = refCandle.CloseTime; // Original close time before modification
 
             // Process each timeframe
-            var tfCount = timeframes.Count;
-            for (var tfIdx = 0; tfIdx < tfCount; tfIdx++)
+            int tfCount = timeframes.Count;
+            for (int tfIdx = 0; tfIdx < tfCount; tfIdx++)
             {
-                var timeframe = timeframes[tfIdx];
-                var candles = timeframe.Candlesticks;
-                var candleIndex = candles.Count - 1;
-                var candle = candles[candleIndex];
+                TimeframeV2 timeframe = timeframes[tfIdx];
+                List<CandlestickV2> candles = timeframe.Candlesticks;
+                int candleIndex = candles.Count - 1;
+                CandlestickV2 candle = candles[candleIndex];
 
                 // Skip if close times match but open times differ
                 if (candle.CloseTime == refCloseTime && candle.OpenTime != refOpenTime)
                     continue;
 
-                // Create new candle with optimized values
+                // Create a new candle with optimized values
                 var newCandle = new CandlestickV2
                 {
                     OpenTime = candle.OpenTime,
@@ -130,7 +127,7 @@ public sealed class EngineV10(int warmupCandlesCount, bool sortCandlesInDescOrde
                 // compute actual High/Low from candles in range
                 if (refOpenTime > candle.OpenTime && refCloseTime < candle.CloseTime)
                 {
-                    var (high, low) = ComputeHighLowFromOpenTime(
+                    (decimal high, decimal low) = ComputeHighLowFromOpenTime(
                         firstTfCandles, refOpen, refOpen, candle.OpenTime);
                     newCandle.High = high;
                     newCandle.Low = low;
@@ -152,25 +149,23 @@ public sealed class EngineV10(int warmupCandlesCount, bool sortCandlesInDescOrde
         decimal refLow,
         DateTime openTime)
     {
-        var n = candles.Count;
+        int n = candles.Count;
 
-        // Binary search for first index where OpenTime >= openTime
-        var lo = 0;
-        var hi = n - 1;
-        var firstValidIndex = n;
+        // Binary search for the first index where OpenTime >= openTime
+        int lo = 0;
+        int hi = n - 1;
+        int firstValidIndex = n;
 
         while (lo <= hi)
         {
-            var mid = lo + ((hi - lo) >> 1);
+            int mid = lo + ((hi - lo) >> 1);
             if (candles[mid].OpenTime >= openTime)
             {
                 firstValidIndex = mid;
                 hi = mid - 1;
             }
             else
-            {
                 lo = mid + 1;
-            }
         }
 
         // No valid candles found
@@ -178,15 +173,15 @@ public sealed class EngineV10(int warmupCandlesCount, bool sortCandlesInDescOrde
             return (refHigh, refLow);
 
         // Single-pass to compute min/max, excluding the last candle (will use ref values)
-        var high = refHigh;
-        var low = refLow;
-        var endIndex = n - 1; // Exclude last candle, we use ref values for it
+        decimal high = refHigh;
+        decimal low = refLow;
+        int endIndex = n - 1; // Exclude the last candle, we use ref values for it
 
         // Use span for faster iteration
-        var span = CollectionsMarshal.AsSpan(candles);
-        for (var i = firstValidIndex; i < endIndex; i++)
+        Span<CandlestickV2> span = CollectionsMarshal.AsSpan(candles);
+        for (int i = firstValidIndex; i < endIndex; i++)
         {
-            var c = span[i];
+            CandlestickV2 c = span[i];
             if (c.High > high) high = c.High;
             if (c.Low < low) low = c.Low;
         }
@@ -201,14 +196,14 @@ public sealed class EngineV10(int warmupCandlesCount, bool sortCandlesInDescOrde
     {
         Parallel.ForEach(symbolData, symbol =>
         {
-            var timeframes = symbol.Timeframes;
-            var tfCount = timeframes.Count;
+            List<TimeframeV2> timeframes = symbol.Timeframes;
+            int tfCount = timeframes.Count;
 
             // Find the first timeframe with Index + 1 < EndIndex
-            var baseTfIndex = -1;
-            for (var i = 0; i < tfCount; i++)
+            int baseTfIndex = -1;
+            for (int i = 0; i < tfCount; i++)
             {
-                var tf = timeframes[i];
+                TimeframeV2 tf = timeframes[i];
                 if (tf.Index + 1 < tf.EndIndex)
                 {
                     baseTfIndex = i;
@@ -221,7 +216,7 @@ public sealed class EngineV10(int warmupCandlesCount, bool sortCandlesInDescOrde
             if (baseTfIndex == -1)
                 return;
 
-            var baseTf = timeframes[baseTfIndex];
+            TimeframeV2 baseTf = timeframes[baseTfIndex];
 
             if (baseTf.Index < baseTf.StartIndex || baseTf.Index >= baseTf.EndIndex)
                 return;
@@ -230,12 +225,12 @@ public sealed class EngineV10(int warmupCandlesCount, bool sortCandlesInDescOrde
             if (Index != MaxIndex)
                 Index = baseTf.Index;
 
-            var referenceTime = baseTf.Candlesticks[baseTf.Index].OpenTime;
+            DateTime referenceTime = baseTf.Candlesticks[baseTf.Index].OpenTime;
 
             // Update higher timeframes
-            for (var i = baseTfIndex + 1; i < tfCount; i++)
+            for (int i = baseTfIndex + 1; i < tfCount; i++)
             {
-                var tf = timeframes[i];
+                TimeframeV2 tf = timeframes[i];
                 if (tf.Index >= tf.StartIndex && tf.Index < tf.EndIndex)
                 {
                     if (tf.Candlesticks[tf.Index].CloseTime < referenceTime)
@@ -255,13 +250,13 @@ public sealed class EngineV10(int warmupCandlesCount, bool sortCandlesInDescOrde
     {
         Parallel.ForEach(symbolData, symbol =>
         {
-            var timeframes = symbol.Timeframes;
-            var tfCount = timeframes.Count;
+            List<TimeframeV2> timeframes = symbol.Timeframes;
+            int tfCount = timeframes.Count;
 
-            for (var i = 0; i < tfCount; i++)
+            for (int i = 0; i < tfCount; i++)
             {
-                var candles = timeframes[i].Candlesticks;
-                var span = CollectionsMarshal.AsSpan(candles);
+                List<CandlestickV2> candles = timeframes[i].Candlesticks;
+                Span<CandlestickV2> span = CollectionsMarshal.AsSpan(candles);
                 span.Reverse();
             }
         });

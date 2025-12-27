@@ -1,4 +1,6 @@
+using Backtest.Net.Candlesticks;
 using Backtest.Net.SymbolsData;
+using Backtest.Net.Timeframes;
 using Backtest.Net.Utils;
 
 namespace Backtest.Net.Engines;
@@ -9,6 +11,8 @@ namespace Backtest.Net.Engines;
 /// </summary>
 public sealed class EngineV9(int warmupCandlesCount, bool sortCandlesInDescOrder, bool useFullCandleForCurrent) : EngineV8(warmupCandlesCount, useFullCandleForCurrent)
 {
+    private readonly bool _useFullCandleForCurrent = useFullCandleForCurrent;
+
     /// <summary>
     /// Starts the engine and feeds the strategy with data
     /// </summary>
@@ -23,10 +27,10 @@ public sealed class EngineV9(int warmupCandlesCount, bool sortCandlesInDescOrder
             // Apply the sum of all parts' EndIndexes to MaxIndex
             ApplySumOfEndIndexes(symbolDataParts);
 
-            var ct = cancellationToken ?? CancellationToken.None;
+            CancellationToken ct = cancellationToken ?? CancellationToken.None;
 
             // Iterate through each symbolDataPart
-            foreach (var part in symbolDataParts)
+            foreach (List<SymbolDataV2> part in symbolDataParts)
             {
                 // Pre-extract the first timeframes for faster checks
                 var firstTimeframes = part.Select(x => x.Timeframes.First()).ToList();
@@ -34,15 +38,13 @@ public sealed class EngineV9(int warmupCandlesCount, bool sortCandlesInDescOrder
                 // Main cycle
                 while (firstTimeframes.All(tf => tf.Index < tf.EndIndex))
                 {
-                    // Check for cancellation
-                    if (ct.IsCancellationRequested)
-                        throw new OperationCanceledException();
+                    ct.ThrowIfCancellationRequested();
 
                     // Prepare feeding data (synchronous parallel code now returns CompletedTask)
-                    var feedingData = await CloneFeedingSymbolData(part).ConfigureAwait(false);
+                    SymbolDataV2[] feedingData = await CloneFeedingSymbolData(part).ConfigureAwait(false);
 
                     // Apply open price to OHLC for all first candles (also synchronous parallel)
-                    if (!useFullCandleForCurrent)
+                    if (!_useFullCandleForCurrent)
                         await HandleCurrentCandleOhlc(feedingData).ConfigureAwait(false);
 
                     // Sorting candles in descending order
@@ -74,14 +76,14 @@ public sealed class EngineV9(int warmupCandlesCount, bool sortCandlesInDescOrder
         Parallel.ForEach(symbolData, symbol =>
         {
             // The lowest timeframe from the list of symbol.Timeframes
-            var firstTimeframe = symbol.Timeframes[0];
-            
+            TimeframeV2 firstTimeframe = symbol.Timeframes[0];
+
             // Clone the last candle of the first timeframe
-            var referenceCandle = firstTimeframe.Candlesticks[^1].Clone();
-            
+            CandlestickV2 referenceCandle = firstTimeframe.Candlesticks[^1].Clone();
+
             // Reserving the reference candle close time
-            var referenceCandleCloseTime = referenceCandle.CloseTime;
-            
+            DateTime referenceCandleCloseTime = referenceCandle.CloseTime;
+
             // Setting the reference candle OHLC to open price and time to open time
             // This is necessary to avoid using the data from the future
             referenceCandle.High = referenceCandle.Open;
@@ -89,10 +91,10 @@ public sealed class EngineV9(int warmupCandlesCount, bool sortCandlesInDescOrder
             referenceCandle.Close = referenceCandle.Open;
             referenceCandle.CloseTime = referenceCandle.OpenTime;
 
-            foreach (var timeframe in symbol.Timeframes)
+            foreach (TimeframeV2 timeframe in symbol.Timeframes)
             {
                 // Getting the current candle
-                var candle = timeframe.Candlesticks[^1];
+                CandlestickV2 candle = timeframe.Candlesticks[^1];
 
                 // Don't update the candle at the close time
                 if (candle.CloseTime == referenceCandleCloseTime
@@ -101,25 +103,25 @@ public sealed class EngineV9(int warmupCandlesCount, bool sortCandlesInDescOrder
                 {
                     continue;
                 }
-                
+
                 // Cloning the latest candle (the current candle)
-                var candleClone = timeframe.Candlesticks[^1].Clone();
-                
+                CandlestickV2 candleClone = timeframe.Candlesticks[^1].Clone();
+
                 // Resetting a current if the open time is the same as for the reference candle
                 candleClone.Close = referenceCandle.Close;
                 candleClone.CloseTime = referenceCandle.CloseTime;
                 candleClone.High = referenceCandle.High;
                 candleClone.Low = referenceCandle.Low;
-                
+
                 // Make sure the candle is in between the higher timeframe open time and close time
                 if(referenceCandle.OpenTime > candle.OpenTime && referenceCandleCloseTime < candle.CloseTime)
                 {
                     candleClone.Close = referenceCandle.Close;
                     candleClone.CloseTime = referenceCandle.CloseTime;
 
-                    var candlesFromOpenTime = CandleHelper.TakeCandlesFromOpenTime(firstTimeframe.Candlesticks,
-                        referenceCandle, candle.OpenTime);
-                    
+                    List<CandlestickV2> candlesFromOpenTime = CandleHelper.TakeCandlesFromOpenTime(
+                        firstTimeframe.Candlesticks, referenceCandle, candle.OpenTime);
+
                     candleClone.High = candlesFromOpenTime.Max(x => x.High);
                     candleClone.Low = candlesFromOpenTime.Min(x => x.Low);
                 }
@@ -130,7 +132,7 @@ public sealed class EngineV9(int warmupCandlesCount, bool sortCandlesInDescOrder
 
         return Task.CompletedTask;
     }
-    
+
     /// <summary>
     /// Updates the indexes of timeframes in the provided symbol data to align with the latest available timestamps.
     /// </summary>
@@ -140,13 +142,13 @@ public sealed class EngineV9(int warmupCandlesCount, bool sortCandlesInDescOrder
     {
         Parallel.ForEach(symbolData, symbol =>
         {
-            var timeframes = symbol.Timeframes;
-            var tfCount = timeframes.Count;
+            List<TimeframeV2> timeframes = symbol.Timeframes;
+            int tfCount = timeframes.Count;
 
             // Find the first timeframe with an Index < EndIndex.
             // This becomes our base timeframe.
-            var baseTfIndex = -1;
-            for (var i = 0; i < tfCount; i++)
+            int baseTfIndex = -1;
+            for (int i = 0; i < tfCount; i++)
             {
                 if (timeframes[i].Index + 1 < timeframes[i].EndIndex)
                 {
@@ -162,7 +164,7 @@ public sealed class EngineV9(int warmupCandlesCount, bool sortCandlesInDescOrder
             if (baseTfIndex == -1)
                 return;
 
-            var baseTf = timeframes[baseTfIndex];
+            TimeframeV2 baseTf = timeframes[baseTfIndex];
 
             // Ensure the base timeframe is within the valid range.
             if (baseTf.Index < baseTf.StartIndex || baseTf.Index >= baseTf.EndIndex)
@@ -173,17 +175,17 @@ public sealed class EngineV9(int warmupCandlesCount, bool sortCandlesInDescOrder
             // Optionally track this globally/externally
             if (Index != MaxIndex)
                 Index = baseTf.Index;
-            
-            var referenceTime = baseTf.Candlesticks[baseTf.Index].OpenTime;
+
+            DateTime referenceTime = baseTf.Candlesticks[baseTf.Index].OpenTime;
 
             // For all other timeframes, increment their index if the current candle's CloseTime is strictly less than
             // the reference time.
-            for (var i = 0; i < tfCount; i++)
+            for (int i = 0; i < tfCount; i++)
             {
                 if (i <= baseTfIndex)
                     continue;
 
-                var tf = timeframes[i];
+                TimeframeV2 tf = timeframes[i];
                 if (tf.Index >= tf.StartIndex && tf.Index < tf.EndIndex)
                 {
                     if (tf.Candlesticks[tf.Index].CloseTime < referenceTime)

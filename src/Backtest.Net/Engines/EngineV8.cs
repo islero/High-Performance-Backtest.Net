@@ -1,3 +1,4 @@
+using Backtest.Net.Candlesticks;
 using Backtest.Net.Interfaces;
 using Backtest.Net.SymbolsData;
 using Backtest.Net.Timeframes;
@@ -15,12 +16,12 @@ public class EngineV8(int warmupCandlesCount, bool useFullCandleForCurrent) : IE
     /// Main Action of the Engine, it passes data to OnTick function
     /// </summary>
     public required Func<SymbolDataV2[], Task> OnTick { get; set; }
-    
+
     /// <summary>
     /// Notifies about backtesting cancellation
     /// </summary>
     public Action? OnCancellationFinishedDelegate { get; set; }
-    
+
     /// <summary>
     /// Starts the engine and feeds the strategy with data
     /// </summary>
@@ -35,10 +36,10 @@ public class EngineV8(int warmupCandlesCount, bool useFullCandleForCurrent) : IE
             // Apply the sum of all parts' EndIndexes to MaxIndex
             ApplySumOfEndIndexes(symbolDataParts);
 
-            var ct = cancellationToken ?? CancellationToken.None;
+            CancellationToken ct = cancellationToken ?? CancellationToken.None;
 
             // Iterate through each symbolDataPart
-            foreach (var part in symbolDataParts)
+            foreach (List<SymbolDataV2> part in symbolDataParts)
             {
                 // Pre-extract the first timeframes for faster checks
                 var firstTimeframes = part.Select(x => x.Timeframes.First()).ToList();
@@ -46,12 +47,10 @@ public class EngineV8(int warmupCandlesCount, bool useFullCandleForCurrent) : IE
                 // Main cycle
                 while (firstTimeframes.All(tf => tf.Index < tf.EndIndex))
                 {
-                    // Check for cancellation
-                    if (ct.IsCancellationRequested)
-                        throw new OperationCanceledException();
+                    ct.ThrowIfCancellationRequested();
 
                     // Prepare feeding data (synchronous parallel code now returns CompletedTask)
-                    var feedingData = await CloneFeedingSymbolData(part).ConfigureAwait(false);
+                    SymbolDataV2[] feedingData = await CloneFeedingSymbolData(part).ConfigureAwait(false);
 
                     // Apply open price to OHLC for all first candles (also synchronous parallel)
                     if (!useFullCandleForCurrent)
@@ -79,34 +78,34 @@ public class EngineV8(int warmupCandlesCount, bool useFullCandleForCurrent) : IE
     /// <returns></returns>
     protected Task<SymbolDataV2[]> CloneFeedingSymbolData(List<SymbolDataV2> symbolData)
     {
-        var count = symbolData.Count;
+        int count = symbolData.Count;
         var result = new SymbolDataV2[count];
 
         // Execute in parallel to boost performance for large symbolData lists.
         Parallel.For(0, count, i =>
         {
-            var originalSymbol = symbolData[i];
-            var originalTimeframes = originalSymbol.Timeframes;
-            var timeframeCount = originalTimeframes.Count;
+            SymbolDataV2 originalSymbol = symbolData[i];
+            List<TimeframeV2> originalTimeframes = originalSymbol.Timeframes;
+            int timeframeCount = originalTimeframes.Count;
 
             // Pre-allocate a timeframe list matching the symbol's timeframe count.
             var clonedTimeframes = new List<TimeframeV2>(timeframeCount);
 
-            for (var j = 0; j < timeframeCount; j++)
+            for (int j = 0; j < timeframeCount; j++)
             {
-                var originalTimeframe = originalTimeframes[j];
+                TimeframeV2 originalTimeframe = originalTimeframes[j];
 
                 // Calculate the 'warmed-up' start index.
-                var warmedUpIndex = 
+                int warmedUpIndex =
                     originalTimeframe.Index - warmupCandlesCount > originalTimeframe.StartIndex
                         ? originalTimeframe.Index - warmupCandlesCount
                         : originalTimeframe.StartIndex;
 
                 // Determine how many candlesticks to copy.
-                var length = originalTimeframe.Index + 1 - warmedUpIndex;
+                int length = originalTimeframe.Index + 1 - warmedUpIndex;
 
                 // Clone the necessary candlesticks.
-                var clonedCandlesticks = originalTimeframe.Candlesticks.GetRange(warmedUpIndex, length);
+                List<CandlestickV2> clonedCandlesticks = originalTimeframe.Candlesticks.GetRange(warmedUpIndex, length);
 
                 // Create the new timeframe.
                 clonedTimeframes.Add(new TimeframeV2
@@ -138,20 +137,20 @@ public class EngineV8(int warmupCandlesCount, bool useFullCandleForCurrent) : IE
         Parallel.ForEach(symbolData, symbol =>
         {
             // Clone the last candle of the first timeframe
-            var firstTimeframe = symbol.Timeframes[0];
-            var referenceCandle = firstTimeframe.Candlesticks[^1].Clone();
+            TimeframeV2 firstTimeframe = symbol.Timeframes[0];
+            CandlestickV2 referenceCandle = firstTimeframe.Candlesticks[^1].Clone();
             referenceCandle.High = referenceCandle.Open;
             referenceCandle.Low = referenceCandle.Open;
             referenceCandle.Close = referenceCandle.Open;
             referenceCandle.CloseTime = referenceCandle.OpenTime;
 
-            foreach (var timeframe in symbol.Timeframes)
+            foreach (TimeframeV2 timeframe in symbol.Timeframes)
             {
                 // If we must reverse:
                 timeframe.Candlesticks.Reverse();
 
                 // Now the last candle is at index 0 due to the reversal
-                var candle = timeframe.Candlesticks[0].Clone();
+                CandlestickV2 candle = timeframe.Candlesticks[0].Clone();
 
                 candle.Close = referenceCandle.Close;
                 candle.CloseTime = referenceCandle.CloseTime;
@@ -175,12 +174,12 @@ public class EngineV8(int warmupCandlesCount, bool useFullCandleForCurrent) : IE
         // Use Parallel.ForEach to process symbolData concurrently.
         Parallel.ForEach(symbolData, symbol =>
         {
-            var timeframes = symbol.Timeframes;
-            var firstTimeframe = timeframes[0];
-            var firstTimeframeIndex = firstTimeframe.Index;
+            List<TimeframeV2> timeframes = symbol.Timeframes;
+            TimeframeV2 firstTimeframe = timeframes[0];
+            int firstTimeframeIndex = firstTimeframe.Index;
 
             // Initialize this to an invalid date so we can compare with valid times later.
-            var lowestTimeframeIndexTime = DateTime.MinValue;
+            DateTime lowestTimeframeIndexTime = DateTime.MinValue;
 
             // 1) Handle the lowest timeframe (index = 0)
             // Make sure we're within the valid range [StartIndex..EndIndex).
@@ -198,18 +197,18 @@ public class EngineV8(int warmupCandlesCount, bool useFullCandleForCurrent) : IE
             }
 
             // 2) Handle the higher timeframes (index = 1..Count-1)
-            var timeframesCount = timeframes.Count;
-            for (var i = 1; i < timeframesCount; i++)
+            int timeframesCount = timeframes.Count;
+            for (int i = 1; i < timeframesCount; i++)
             {
-                var timeframe = timeframes[i];
-                var idx = timeframe.Index;
+                TimeframeV2 timeframe = timeframes[i];
+                int idx = timeframe.Index;
 
                 // Still within the valid range
                 if (idx >= timeframe.StartIndex && idx < timeframe.EndIndex)
                 {
                     // Compare the current candlestick's CloseTime to the "lowest" timeframe's OpenTime
-                    var closeTime = timeframe.Candlesticks[idx].CloseTime;
-                    // firstTimeframeIndex > firstTimeframe.Index means there are no candles left 
+                    DateTime closeTime = timeframe.Candlesticks[idx].CloseTime;
+                    // firstTimeframeIndex > firstTimeframe.Index means there are no candles left
                     if (closeTime < lowestTimeframeIndexTime/* || (i == 1 && firstTimeframeIndex > firstTimeframe.Index)*/)
                     {
                         // Only increment if it is strictly below the reference time
@@ -227,12 +226,12 @@ public class EngineV8(int warmupCandlesCount, bool useFullCandleForCurrent) : IE
     /// Index iterator to manage backtesting progress
     /// </summary>
     protected decimal Index { get; set; }
-    
+
     /// <summary>
     /// Max Index property to calculate the total index increments during the backtesting
     /// </summary>
-    protected decimal MaxIndex { get; set; }
-    
+    protected decimal MaxIndex { get; private set; }
+
     /// <summary>
     /// Applies Sum of all EndIndexes to MaxIndex
     /// </summary>
@@ -240,12 +239,12 @@ public class EngineV8(int warmupCandlesCount, bool useFullCandleForCurrent) : IE
     protected void ApplySumOfEndIndexes(List<List<SymbolDataV2>> symbolDataParts)
     {
         // --- Getting Symbols Data that have highest EndIndexes
-        var maxSymbol = symbolDataParts.Select(x => x.MaxBy(
+        IEnumerable<SymbolDataV2?> maxSymbol = symbolDataParts.Select(x => x.MaxBy(
             y => y.Timeframes.First().EndIndex));
 
         // --- Selecting EndIndexes and forming an array from them
-        var endIndexesArray = maxSymbol.Select(x => x!.Timeframes.First().EndIndex).ToArray();
-        
+        int[] endIndexesArray = maxSymbol.Select(x => x!.Timeframes.First().EndIndex).ToArray();
+
         // --- Calculating Sum of the all-parts max indexes
         MaxIndex = endIndexesArray.Sum();
     }
@@ -258,7 +257,7 @@ public class EngineV8(int warmupCandlesCount, bool useFullCandleForCurrent) : IE
     {
         // --- Validating dividing by 0
         if (MaxIndex == 0) return 0;
-        
+
         // --- Returning current accurate progress
         return Index / MaxIndex * 100;
     }
