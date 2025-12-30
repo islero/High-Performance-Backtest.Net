@@ -163,6 +163,25 @@ await engine.RunAsync(splitData, cts.Token);
 
 ---
 
+## Benchmarks
+
+Performance benchmarks run on Apple M3 Max with .NET 9.0, processing **4 million candlesticks** (1 symbol × 4 timeframes × 1,000,000 candles each):
+
+| Method       | Mean     | Error   | StdDev  | Gen0   | Allocated |
+|------------- |---------:|--------:|--------:|-------:|----------:|
+| EngineV8Run  | 125.7 ns | 0.45 ns | 0.42 ns | 0.0620 |     520 B |
+| EngineV9Run  | 128.4 ns | 2.31 ns | 2.16 ns | 0.0629 |     528 B |
+| EngineV10Run | 102.0 ns | 2.00 ns | 1.96 ns | 0.0545 |     456 B |
+
+**Key findings:**
+- **EngineV10** is ~19% faster than EngineV8 and ~21% faster than EngineV9
+- **EngineV10** allocates 12% less memory than EngineV8
+- All engines maintain sub-microsecond per-tick latency
+
+> Benchmarks run with BenchmarkDotNet v0.15.8 on macOS Tahoe 26.2, Apple M3 Max, .NET 9.0.8
+
+---
+
 ## Development
 
 ### Prerequisites

@@ -29,8 +29,8 @@ public class EngineBenchmark
         WarmupCandlesCount = 2;
 
         GeneratedSymbolsDataV2 = SymbolDataSplitterBenchmark.GenerateFakeSymbolsDataV2(["BTCUSDT"],
-            [CandlestickInterval.M5, CandlestickInterval.D1],
-            StartingDate.AddHours(-WarmupCandlesCount), 5000);
+            [CandlestickInterval.M5, CandlestickInterval.M15, CandlestickInterval.M30, CandlestickInterval.H4],
+            StartingDate.AddHours(-WarmupCandlesCount), 1_000_000);
 
         var symbolDataSplitterV2 = new SymbolDataSplitterV2(DaysPerSplit, WarmupCandlesCount, StartingDate);
         SplitDataV2 = await symbolDataSplitterV2.SplitAsyncV2(GeneratedSymbolsDataV2);
