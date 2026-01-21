@@ -29,15 +29,12 @@ public class SymbolDataSplitterV2(
     /// <returns></returns>
     public Task<List<List<SymbolDataV2>>> SplitAsyncV2(List<SymbolDataV2> symbolsData)
     {
-        // --- Enumerating Symbols Data
-        var symbolsDataList = symbolsData.ToList();
-
         // --- Quick Symbol Data validation
-        if (!QuickSymbolDataValidationV2(symbolsDataList))
+        if (!QuickSymbolDataValidationV2(symbolsData))
             throw new ArgumentException("symbolsData argument contains invalid or not properly sorted data");
 
         // --- Symbol or timeframe duplicates validation
-        if (IsThereSymbolTimeframeDuplicatesV2(symbolsDataList))
+        if (IsThereSymbolTimeframeDuplicatesV2(symbolsData))
             throw new ArgumentException("symbolsData contain duplicated symbols or timeframes");
 
         // --- Creating Result Split Symbols Data
@@ -65,19 +62,19 @@ public class SymbolDataSplitterV2(
         }
 
         // --- Getting the correct warmup timeframe
-        WarmupTimeframe = GetWarmupTimeframeV2(symbolsDataList);
+        WarmupTimeframe = GetWarmupTimeframeV2(symbolsData);
 
         DateTime ongoingBacktestingTime = BacktestingStartDateTime;
-        while (!AreAllSymbolDataReachedHistoryEndV2(symbolsDataList))
+        while (!AreAllSymbolDataReachedHistoryEndV2(symbolsData))
         {
             var symbolsDataPart = new List<SymbolDataV2>();
-            foreach (SymbolDataV2 symbol in symbolsDataList)
+            foreach (SymbolDataV2 symbol in symbolsData)
             {
                 // --- Checking if there is any symbol with no more history
                 if (symbol.Timeframes.Any(x => x.NoMoreHistory))
                 {
                     // --- Adding days per split to ongoing backtesting time
-                    ongoingBacktestingTime = AddDaysToOngoingBacktestingTime(ongoingBacktestingTime, symbol == symbolsDataList.Last());
+                    ongoingBacktestingTime = AddDaysToOngoingBacktestingTime(ongoingBacktestingTime, symbol == symbolsData.Last());
 
                     continue;
                 }
@@ -127,8 +124,8 @@ public class SymbolDataSplitterV2(
                     // --- Deleting source candles and readjusting indexes
                     if (timeframe.StartIndex > 0)
                     {
-                        // --- Note that candles readjusting is corrupting source candles perform readjusting
-                        timeframe.Candlesticks = timeframe.Candlesticks.Skip(timeframe.StartIndex).ToList();
+                        // --- Remove source candles in-place (more efficient than Skip().ToList())
+                        timeframe.Candlesticks.RemoveRange(0, timeframe.StartIndex);
 
                         // --- Perform reindexing
                         timeframe.Index -= timeframe.StartIndex;
@@ -159,7 +156,7 @@ public class SymbolDataSplitterV2(
                     symbolsDataPart.Add(symbolDataPart);
 
                 // --- Adding days per split to ongoing backtesting time
-                ongoingBacktestingTime = AddDaysToOngoingBacktestingTime(ongoingBacktestingTime, symbol == symbolsDataList.Last());
+                ongoingBacktestingTime = AddDaysToOngoingBacktestingTime(ongoingBacktestingTime, symbol == symbolsData.Last());
             }
 
             // --- Append symbolsDataPart if it contains any record
@@ -218,10 +215,9 @@ public class SymbolDataSplitterV2(
     /// <returns></returns>
     private static bool IsThereSymbolTimeframeDuplicatesV2(List<SymbolDataV2> symbolsData)
     {
-        var symbolDataList = symbolsData.ToList();
-        bool symbolDuplicatesExist = symbolDataList.GroupBy(x => x.Symbol).Any(symbol => symbol.Count() > 1);
+        bool symbolDuplicatesExist = symbolsData.GroupBy(x => x.Symbol).Any(symbol => symbol.Count() > 1);
         bool timeframeDuplicatesExist = false;
-        foreach (SymbolDataV2 symbol in symbolDataList)
+        foreach (SymbolDataV2 symbol in symbolsData)
         {
             // Validating
             if (timeframeDuplicatesExist) continue;
@@ -242,8 +238,7 @@ public class SymbolDataSplitterV2(
     /// <returns></returns>
     private static int GetCandlesticksIndexByOpenTimeV2(List<CandlestickV2> candlesticks, DateTime targetDateTime)
     {
-        var candlesticksList = candlesticks.ToList();
-        int index = candlesticksList.FindIndex(candle => candle.OpenTime >= targetDateTime);
+        int index = candlesticks.FindIndex(candle => candle.OpenTime >= targetDateTime);
 
         if (index < 0) index = 0;
 
@@ -263,10 +258,9 @@ public class SymbolDataSplitterV2(
             return WarmupTimeframe.Value;
 
         // --- Setting the lowest symbolsData timeframe
-        var symbolDataList = symbolsData.ToList();
-        CandlestickInterval potentialWarmupTimeframe = symbolDataList.Min(x => x.Timeframes.Min(y => y.Timeframe));
+        CandlestickInterval potentialWarmupTimeframe = symbolsData.Min(x => x.Timeframes.Min(y => y.Timeframe));
 
-        foreach (SymbolDataV2 symbol in symbolDataList)
+        foreach (SymbolDataV2 symbol in symbolsData)
         {
             foreach (TimeframeV2 timeframe in symbol.Timeframes)
             {
@@ -305,7 +299,6 @@ public class SymbolDataSplitterV2(
     /// <returns></returns>
     private static int GetCandlesticksIndexByCloseTimeV2(List<CandlestickV2> candlesticks, DateTime targetDateTime)
     {
-        var candlesticksList = candlesticks.ToList();
-        return candlesticksList.FindIndex(candle => candle.CloseTime >= targetDateTime);
+        return candlesticks.FindIndex(candle => candle.CloseTime >= targetDateTime);
     }
 }

@@ -3,7 +3,7 @@
 [![NuGet](https://img.shields.io/nuget/v/Backtest.Net.svg)](https://www.nuget.org/packages/Backtest.Net/)
 [![NuGet Downloads](https://img.shields.io/nuget/dt/Backtest.Net.svg)](https://www.nuget.org/packages/Backtest.Net/)
 [![Build Status](https://github.com/islero/High-Performance-Backtest.Net/actions/workflows/ci.yml/badge.svg)](https://github.com/islero/High-Performance-Backtest.Net/actions/workflows/ci.yml)
-[![.NET](https://img.shields.io/badge/.NET-9.0-512BD4)](https://dotnet.microsoft.com/)
+[![.NET](https://img.shields.io/badge/.NET-10.0-512BD4)](https://dotnet.microsoft.com/)
 
 A high-performance backtesting engine for algorithmic trading strategies in .NET.
 
@@ -61,7 +61,7 @@ dotnet add package Backtest.Net
 ```
 
 > [!NOTE]
-> Requires .NET 9.0 or later.
+> Requires .NET 10.0 or later.
 
 ---
 
@@ -165,20 +165,21 @@ await engine.RunAsync(splitData, cts.Token);
 
 ## Benchmarks
 
-Performance benchmarks run on Apple M3 Max with .NET 9.0, processing **4 million candlesticks** (1 symbol × 4 timeframes × 1,000,000 candles each):
+Performance benchmarks run on Apple M3 Max with .NET 10.0, processing **4 million candlesticks** (1 symbol × 4 timeframes × 1,000,000 candles each):
 
-| Method       | Mean     | Error   | StdDev  | Gen0   | Allocated |
-|------------- |---------:|--------:|--------:|-------:|----------:|
-| EngineV8Run  | 125.7 ns | 0.45 ns | 0.42 ns | 0.0620 |     520 B |
-| EngineV9Run  | 128.4 ns | 2.31 ns | 2.16 ns | 0.0629 |     528 B |
-| EngineV10Run | 102.0 ns | 2.00 ns | 1.96 ns | 0.0545 |     456 B |
+| Method       | Mean     | Error    | StdDev   | Gen0   | Allocated |
+|------------- |---------:|---------:|---------:|-------:|----------:|
+| EngineV8Run  | 99.78 ns | 1.564 ns | 1.463 ns | 0.0621 |     520 B |
+| EngineV9Run  | 96.69 ns | 1.933 ns | 2.148 ns | 0.0631 |     528 B |
+| EngineV10Run | 80.16 ns | 1.553 ns | 1.453 ns | 0.0545 |     456 B |
 
 **Key findings:**
-- **EngineV10** is ~19% faster than EngineV8 and ~21% faster than EngineV9
+- **EngineV10** is ~20% faster than EngineV8 and ~17% faster than EngineV9
 - **EngineV10** allocates 12% less memory than EngineV8
-- All engines maintain sub-microsecond per-tick latency
+- All engines maintain sub-100ns per-tick latency
+- **.NET 10 migration** improved all engines by ~20% compared to .NET 9
 
-> Benchmarks run with BenchmarkDotNet v0.15.8 on macOS Tahoe 26.2, Apple M3 Max, .NET 9.0.8
+> Benchmarks run with BenchmarkDotNet v0.15.8 on macOS Tahoe 26.2, Apple M3 Max, .NET 10.0
 
 ---
 
@@ -186,7 +187,7 @@ Performance benchmarks run on Apple M3 Max with .NET 9.0, processing **4 million
 
 ### Prerequisites
 
-- [.NET 9.0 SDK](https://dotnet.microsoft.com/download/dotnet/9.0) or later
+- [.NET 10.0 SDK](https://dotnet.microsoft.com/download/dotnet/10.0) or later
 - Git
 
 ### Build
