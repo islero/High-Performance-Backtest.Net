@@ -7,8 +7,8 @@
 
     <!-- Version -->
     <Version>4.1.15</Version>
-    <AssemblyVersion>4.1.9</AssemblyVersion>
-    <FileVersion>4.1.9</FileVersion>
+    <AssemblyVersion>4.1.15</AssemblyVersion>
+    <FileVersion>4.1.15</FileVersion>
 
     <!-- Package metadata -->
     <Title>High-Performance Backtest.Net</Title>
