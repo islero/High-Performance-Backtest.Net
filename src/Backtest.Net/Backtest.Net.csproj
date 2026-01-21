@@ -6,14 +6,14 @@
     <IsPackable>true</IsPackable>
 
     <!-- Version -->
-    <Version>4.1.14</Version>
+    <Version>4.1.15</Version>
     <AssemblyVersion>4.1.9</AssemblyVersion>
     <FileVersion>4.1.9</FileVersion>
 
     <!-- Package metadata -->
     <Title>High-Performance Backtest.Net</Title>
     <Description>A high-performance backtesting engine for algorithmic trading strategies. Features multi-symbol/multi-timeframe support, parallel processing, zero-allocation patterns, and SIMD acceleration.</Description>
-    <PackageReleaseNotes>Added volume to candlesticks. Upgraded to EngineV10 with performance optimizations.</PackageReleaseNotes>
+    <PackageReleaseNotes>Migrated project to .NET 10, updated benchmarks and README accordingly, optimized `SymbolDataSplitterV2` by removing redundant `.ToList()` calls, and improved candlestick processing efficiency with in-place modifications.</PackageReleaseNotes>
     <PackageIcon>icon.png</PackageIcon>
   </PropertyGroup>
 
