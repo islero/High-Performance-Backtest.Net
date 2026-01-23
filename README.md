@@ -163,6 +163,104 @@ await engine.RunAsync(splitData, cts.Token);
 
 ---
 
+## Integration with History-Vault.Net
+
+This library works seamlessly with [History-Vault.Net](https://github.com/islero/History-Vault.Net) - a high-performance historical market data storage solution. Both libraries use identical data structures (`SymbolDataV2`, `TimeframeV2`, `CandlestickV2`) with the same properties, differing only in namespaces:
+
+| Library | Namespace |
+|---------|-----------|
+| **Backtest.Net** | `Backtest.Net.SymbolsData`, `Backtest.Net.Timeframes`, `Backtest.Net.Candlesticks` |
+| **History-Vault.Net** | `HistoryVault.Models` |
+
+### Converting Between Types
+
+The easiest way to convert between the two libraries' types is using JSON serialization:
+
+```csharp
+using System.Text.Json;
+using Backtest.Net.SymbolsData;
+
+// Convert from History-Vault.Net to Backtest.Net
+public static List<SymbolDataV2> ConvertFromHistoryVault(List<HistoryVault.Models.SymbolDataV2> historyVaultData)
+{
+    var json = JsonSerializer.Serialize(historyVaultData);
+    return JsonSerializer.Deserialize<List<SymbolDataV2>>(json)!;
+}
+
+// Convert from Backtest.Net to History-Vault.Net
+public static List<HistoryVault.Models.SymbolDataV2> ConvertToHistoryVault(List<SymbolDataV2> backtestData)
+{
+    var json = JsonSerializer.Serialize(backtestData);
+    return JsonSerializer.Deserialize<List<HistoryVault.Models.SymbolDataV2>>(json)!;
+}
+```
+
+### Complete Workflow Example
+
+```csharp
+using Backtest.Net.Engines;
+using Backtest.Net.SymbolsData;
+using Backtest.Net.SymbolDataSplitters;
+using System.Text.Json;
+using HistoryVault;
+using HistoryVault.Configuration;
+using HistoryVault.Models;
+using HistoryVault.Storage;
+
+// Configure the vault (paths are auto-detected based on OS and scope)
+var options = new HistoryVaultOptions
+{
+    DefaultScope = StorageScope.Local
+};
+
+await using var vault = new HistoryVaultStorage(options);
+
+// Save candlestick data
+var symbolData = new SymbolDataV2
+{
+    Symbol = "BTCUSDT",
+    Timeframes = new List<TimeframeV2>
+    {
+        new TimeframeV2
+        {
+            Timeframe = CandlestickInterval.M1,
+            Candlesticks = candlesticks // Your candlestick list
+        }
+    }
+};
+
+// Load candlestick data
+var loadOptions = LoadOptions.ForSymbol(
+    "BTCUSDT",
+    new DateTime(2025, 1, 1),
+    new DateTime(2025, 1, 31),
+    CandlestickInterval.M1
+);
+
+var historyData = await vault.LoadAsync(loadOptions);
+
+// 2. Convert to Backtest.Net types via JSON
+var json = JsonSerializer.Serialize(historyData);
+var backtestData = JsonSerializer.Deserialize<List<SymbolDataV2>>(json)!;
+
+// 3. Run backtest
+var splitter = new SymbolDataSplitterV2(daysPerSplit: 30, warmupCandlesCount: 100);
+var splitData = await splitter.SplitAsyncV2(backtestData);
+
+var engine = new EngineV10(warmupCandlesCount: 100);
+engine.OnTick = async (symbolData) =>
+{
+    // Your strategy logic
+};
+
+await engine.RunAsync(splitData);
+```
+
+> [!NOTE]
+> JSON conversion is the recommended approach as it cleanly handles namespace differences without requiring manual mapping or shared assemblies.
+
+---
+
 ## Benchmarks
 
 Performance benchmarks run on Apple M3 Max with .NET 10.0, processing **4 million candlesticks** (1 symbol × 4 timeframes × 1,000,000 candles each):
