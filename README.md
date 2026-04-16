@@ -17,7 +17,7 @@ A high-performance backtesting engine for algorithmic trading strategies in .NET
 
 - **Multi-Symbol Support**: Process multiple trading symbols in parallel
 - **Multi-Timeframe**: Handle multiple timeframes per symbol with automatic synchronization
-- **Performance Optimized**: 10 iteratively optimized engine versions with zero-allocation patterns
+- **Performance Optimized**: 11 iteratively optimized engine versions, including an opt-in reusable-buffer engine for allocation-sensitive workloads
 - **Data Splitting**: Intelligent data partitioning for memory-efficient large-scale backtests
 - **Cancellation Support**: Graceful async cancellation with progress tracking
 
@@ -27,7 +27,8 @@ A high-performance backtesting engine for algorithmic trading strategies in .NET
 
 | Feature | Description |
 |---------|-------------|
-| **EngineV10** | Latest engine with Span-based iteration, binary search, and parallel processing |
+| **EngineV10** | Stable optimized engine with Span-based iteration, binary search, and parallel processing |
+| **EngineV11** | Reusable feed-buffer engine designed to avoid per-tick feed graph allocations |
 | **SymbolDataSplitter** | Partitions large datasets into memory-efficient chunks |
 | **Warmup Handling** | Configurable warmup candle counts per timeframe |
 | **OHLC Simulation** | Accurate current-candle OHLC handling during backtest |
@@ -36,10 +37,11 @@ A high-performance backtesting engine for algorithmic trading strategies in .NET
 
 ### Performance Optimizations
 
-The library implements sophisticated performance techniques:
+The library implements focused performance techniques:
 
-- **Zero-Allocation Hot Paths**: Uses `Span<T>` and `CollectionsMarshal.AsSpan`
-- **Parallel Processing**: `Parallel.ForEach` for symbol-level parallelism
+- **Allocation-Aware Hot Paths**: `EngineV11` reuses feed buffers instead of cloning the strategy feed graph on every tick
+- **Span-Based Iteration**: Uses `Span<T>` and `CollectionsMarshal.AsSpan` in tight loops where it is safe
+- **Parallel Processing**: `EngineV9` and `EngineV10` use `Parallel.ForEach` for symbol-level work
 - **Binary Search**: O(log n) candlestick lookups
 - **Aggressive Inlining**: `[MethodImpl(MethodImplOptions.AggressiveInlining)]`
 - **Sealed Classes**: JIT optimization hints
@@ -57,7 +59,7 @@ dotnet add package Backtest.Net
 ### PackageReference
 
 ```xml
-<PackageReference Include="Backtest.Net" Version="4.1.14" />
+<PackageReference Include="Backtest.Net" Version="4.2.0" />
 ```
 
 > [!NOTE]
@@ -87,12 +89,12 @@ var symbolsData = new List<SymbolDataV2>
         {
             new TimeframeV2
             {
-                Timeframe = CandlestickInterval.OneMinute,
+                Timeframe = CandlestickInterval.M1,
                 Candlesticks = yourOneMinuteCandles
             },
             new TimeframeV2
             {
-                Timeframe = CandlestickInterval.OneHour,
+                Timeframe = CandlestickInterval.H1,
                 Candlesticks = yourOneHourCandles
             }
         }
@@ -156,10 +158,11 @@ await engine.RunAsync(splitData, cts.Token);
 |--------|-------------|----------|
 | `EngineV8` | SymbolDataV2 support | Standard workloads |
 | `EngineV9` | Optimized OHLC handling | Memory-sensitive scenarios |
-| `EngineV10` | Full optimization suite | **Production recommended** |
+| `EngineV10` | Full optimization suite with the existing per-tick feed contract | **Safe default for new projects** |
+| `EngineV11` | Reusable feed buffers and steady-state allocation reduction | Allocation-sensitive strategies that do not retain `OnTick` references |
 
 > [!TIP]
-> Use `EngineV10` for new projects. It provides the best performance through zero-allocation patterns and parallel processing.
+> Use `EngineV10` when you want the safest compatibility profile. Use `EngineV11` when your strategy only reads `OnTick` data during the callback and does not store references to the supplied array, symbols, timeframes, candle lists, or current-candle objects.
 
 ---
 
@@ -265,17 +268,14 @@ await engine.RunAsync(splitData);
 
 Performance benchmarks run on Apple M3 Max with .NET 10.0, processing **4 million candlesticks** (1 symbol × 4 timeframes × 1,000,000 candles each):
 
-| Method       | Mean     | Error    | StdDev   | Gen0   | Allocated |
-|------------- |---------:|---------:|---------:|-------:|----------:|
-| EngineV8Run  | 99.78 ns | 1.564 ns | 1.463 ns | 0.0621 |     520 B |
-| EngineV9Run  | 96.69 ns | 1.933 ns | 2.148 ns | 0.0631 |     528 B |
-| EngineV10Run | 80.16 ns | 1.553 ns | 1.453 ns | 0.0545 |     456 B |
+| Method       | Mean     | Error    | StdDev   | Gen0 | Gen1 | Allocated |
+|------------- |---------:|---------:|---------:|-----:|-----:|----------:|
+| EngineV11Run | 84.82 ms | 0.539 ms | 0.478 ms |    - |    - |   1.62 KB |
 
 **Key findings:**
-- **EngineV10** is ~20% faster than EngineV8 and ~17% faster than EngineV9
-- **EngineV10** allocates 12% less memory than EngineV8
-- All engines maintain sub-100ns per-tick latency
-- **.NET 10 migration** improved all engines by ~20% compared to .NET 9
+- The benchmark resets mutated timeframe indexes before each engine run.
+- `EngineV11` is designed to avoid per-tick feed graph allocations after setup; the measured allocation reflects remaining setup/runtime overhead, not the old per-tick clone path.
+- Choose `EngineV10` for broad compatibility and `EngineV11` for allocation-sensitive strategies that follow the borrowed-snapshot callback contract.
 
 > Benchmarks run with BenchmarkDotNet v0.15.8 on macOS Tahoe 26.2, Apple M3 Max, .NET 10.0
 

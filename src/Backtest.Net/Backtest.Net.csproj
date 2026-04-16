@@ -6,14 +6,14 @@
     <IsPackable>true</IsPackable>
 
     <!-- Version -->
-    <Version>4.1.15</Version>
-    <AssemblyVersion>4.1.15</AssemblyVersion>
-    <FileVersion>4.1.15</FileVersion>
+    <Version>4.2.0</Version>
+    <AssemblyVersion>4.2.0</AssemblyVersion>
+    <FileVersion>4.2.0</FileVersion>
 
     <!-- Package metadata -->
     <Title>High-Performance Backtest.Net</Title>
-    <Description>A high-performance backtesting engine for algorithmic trading strategies. Features multi-symbol/multi-timeframe support, parallel processing, zero-allocation patterns, and SIMD acceleration.</Description>
-    <PackageReleaseNotes>Migrated project to .NET 10, updated benchmarks and README accordingly, optimized `SymbolDataSplitterV2` by removing redundant `.ToList()` calls, and improved candlestick processing efficiency with in-place modifications.</PackageReleaseNotes>
+    <Description>A high-performance backtesting engine for algorithmic trading strategies. Features multi-symbol/multi-timeframe support, current-candle OHLC simulation, data splitting, parallel optimized engines, and an opt-in reusable feed-buffer engine for allocation-sensitive strategies.</Description>
+    <PackageReleaseNotes>Added EngineV11 with reusable feed buffers and a borrowed-snapshot OnTick contract; added EngineV11 unit tests and benchmark coverage; corrected engine benchmark input reset so runs start from fresh indexes; updated README benchmark and engine guidance.</PackageReleaseNotes>
     <PackageIcon>icon.png</PackageIcon>
   </PropertyGroup>
 

@@ -17,14 +17,13 @@
   <PropertyGroup>
     <Authors>Yurii Dumanskyi</Authors>
     <Company>islero</Company>
-    <Copyright>Copyright (c) Yurii Dumanskyi 2024</Copyright>
+    <Copyright>Copyright (c) Yurii Dumanskyi 2024-2026</Copyright>
     <RepositoryUrl>https://github.com/islero/High-Performance-Backtest.Net</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageProjectUrl>https://github.com/islero/High-Performance-Backtest.Net</PackageProjectUrl>
-    <PackageTags>backtest;backtesting;trading;algorithmic;finance;quantitative;high-performance</PackageTags>
+    <PackageTags>backtest;backtesting;trading;algorithmic;finance;quantitative;high-performance;low-allocation;net10</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <!-- TODO: Uncomment after adding LICENSE file with chosen license -->
-    <!-- <PackageLicenseExpression>MIT</PackageLicenseExpression> -->
+    <PackageLicenseExpression>LGPL-3.0-only</PackageLicenseExpression>
   </PropertyGroup>
 
   <!-- Source Link for debugging -->

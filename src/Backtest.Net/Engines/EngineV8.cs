@@ -238,15 +238,28 @@ public class EngineV8(int warmupCandlesCount, bool useFullCandleForCurrent) : IE
     /// <param name="symbolDataParts"></param>
     protected void ApplySumOfEndIndexes(List<List<SymbolDataV2>> symbolDataParts)
     {
-        // --- Getting Symbols Data that have highest EndIndexes
-        IEnumerable<SymbolDataV2?> maxSymbol = symbolDataParts.Select(x => x.MaxBy(
-            y => y.Timeframes.First().EndIndex));
+        decimal maxIndex = 0;
 
-        // --- Selecting EndIndexes and forming an array from them
-        int[] endIndexesArray = maxSymbol.Select(x => x!.Timeframes.First().EndIndex).ToArray();
+        foreach (List<SymbolDataV2> part in symbolDataParts)
+        {
+            int maxEndIndex = 0;
+            bool hasSymbols = false;
 
-        // --- Calculating Sum of the all-parts max indexes
-        MaxIndex = endIndexesArray.Sum();
+            foreach (SymbolDataV2 symbolData in part)
+            {
+                int endIndex = symbolData.Timeframes[0].EndIndex;
+                if (!hasSymbols || endIndex > maxEndIndex)
+                {
+                    maxEndIndex = endIndex;
+                    hasSymbols = true;
+                }
+            }
+
+            if (hasSymbols)
+                maxIndex += maxEndIndex;
+        }
+
+        MaxIndex = maxIndex;
     }
 
     /// <summary>
