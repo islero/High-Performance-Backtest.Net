@@ -6,7 +6,7 @@
     <IsPackable>true</IsPackable>
 
     <!-- Version -->
-    <Version>4.2.0</Version>
+    <Version>4.2.1</Version>
     <AssemblyVersion>4.2.0</AssemblyVersion>
     <FileVersion>4.2.0</FileVersion>
 
